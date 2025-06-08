@@ -1,29 +1,24 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PostController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
+Route::prefix('/auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+});
 
-//Route::get('/user', function (Request $request) {
-//    return $request->user();
-//})->middleware('auth:sanctum');
+Route::middleware('auth:api')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
 
-Route::apiResource('/posts', PostController::class);
+    Route::post('user/{user}/role', [UserController::class, 'updateRole'])
+        ->middleware('role:admin');
 
-//Route::post('/auth/register', [AuthController::class, 'register']);
-//Route::post('/auth/login', [AuthController::class, 'login']);
-//Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-//Route::post('/auth/delete-all-tokens', [AuthController::class, 'deleteAllTokens'])->middleware('auth:sanctum');
+    Route::apiResource('users', UserController::class)
+        ->only(['index', 'show'])
+        ->middleware('role:admin');
 
-Route::group([
-
-    'middleware' => 'api',
-    'prefix' => 'auth'
-
-], function ($router) {
-    Route::post('login', [AuthController::class, 'login']);
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::post('refresh', [AuthController::class, 'refresh']);
-    Route::post('me', [AuthController::class, 'me']);
+    Route::put('users/{user}', [UserController::class, 'update']);
+    Route::delete('users/{user}', [UserController::class, 'destroy']);
 });
