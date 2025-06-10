@@ -40,13 +40,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 403);
             }
         });
-        $exceptions->render(function (Exception $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'error' => 'Internal server error',
-                    'message' => $e->getMessage(),
-                ], 500);
-            }
-        });
+//        $exceptions->render(function (Exception $e, Request $request) {
+//            if ($request->is('api/*')) {
+//                return response()->json([
+//                    'error' => 'Internal server error',
+//                    'message' => $e->getMessage(),
+//                ], 500);
+//            }
+//        });
     })
     ->create();
