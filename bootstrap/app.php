@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -38,6 +39,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'error' => 'Access denied'
                 ], 403);
+            }
+        });
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'error' => 'Unauthorized',
+                ], 401);
             }
         });
 //        $exceptions->render(function (Exception $e, Request $request) {
