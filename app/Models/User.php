@@ -6,7 +6,7 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
@@ -61,14 +61,29 @@ class User extends Authenticatable implements JWTSubject
         return $this->role === UserRole::USER;
     }
 
-    public function department(): BelongsTo
+//    public function department(): BelongsTo
+//    {
+//        return $this->belongsTo(Department::class);
+//    }
+//
+//    public function managesDepartment(): HasOne
+//    {
+//        return $this->hasOne(Department::class, 'manager_id');
+//    }
+
+    public function leaveRequests(): HasMany
     {
-        return $this->belongsTo(Department::class);
+        return $this->hasMany(LeaveRequest::class, 'user_id');
     }
 
-    public function managesDepartment(): HasOne
+    public function manager(): BelongsTo
     {
-        return $this->hasOne(Department::class, 'manager_id');
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(User::class, 'manager_id');
     }
 
     protected function casts(): array

@@ -1,7 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\LeaveRequestController;
+use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,7 +24,19 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
-Route::apiResource('departments', DepartmentController::class);
+Route::middleware('auth:api')->group(function () {
+    Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
+    Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
+
+    Route::prefix('manager')->middleware('role:manager')->group(function () {
+        Route::get('/leave-requests', [ManagerLeaveRequestController::class, 'index']);
+        Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
+        Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
+    });
+
+});
+
+//Route::apiResource('departments', DepartmentController::class);
 
 
 Route::get('/login', function () {
