@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserRequest;
-use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use OpenApi\Attributes as OA;
 
 class UserController extends Controller
 {
+    public function __construct(protected UserService $userService)
+    {
+    }
+
     #[OA\Get(
         path: '/api/users',
         operationId: 'getUsers',
@@ -41,7 +45,7 @@ class UserController extends Controller
     )]
     public function index()
     {
-        return UserResource::collection(User::latest()->paginate(10));
+        return $this->userService->getAllPaginated();
     }
 
     #[OA\Get(
@@ -82,8 +86,8 @@ class UserController extends Controller
     )]
     public function show(User $user)
     {
-        Gate::authorize('manage-user', $user);
-        return new UserResource($user);
+        Gate::any('manage-user', $user);
+        return $this->userService->getById($user);
     }
 
     #[OA\Put(
@@ -135,17 +139,10 @@ class UserController extends Controller
     )]
     public function updateRole(Request $request, User $user)
     {
-        $validatedData = $request->validate([
+        $validated = $request->validate([
             'role' => 'required|in:user,admin,manager',
         ]);
-        $user->update([
-            'role' => $validatedData['role'],
-        ]);
-
-        return response()->json([
-            'message' => 'User role updated successfully',
-            'user' => new UserResource($user),
-        ]);
+        return $this->userService->updateRole($user, $validated['role']);
     }
 
     #[OA\Put(
@@ -196,15 +193,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user)
     {
         Gate::authorize('manage-profile', $user);
-
-        $validatedData = $request->validated();
-
-        if (!auth()->user()->isAdmin()) {
-            unset($validatedData['role']);
-        }
-
-        $user->update($validatedData);
-        return new UserResource($user);
+        return $this->userService->update($user, $request->validated());
     }
 
 
@@ -240,16 +229,7 @@ class UserController extends Controller
     )]
     public function destroy(User $user)
     {
-        $user = User::find($user->id);
-        if (!$user) {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        Gate::authorize('manage-user', $user);
-        if ($user->id === auth()->id()) {
-            return response()->json(['message' => 'You cannot delete your own account.'], 403);
-        }
-        $user->delete();
-        return response()->json(['message' => 'User deleted successfully.'], 204);
+        Gate::any('manage-user', $user);
+        return $this->userService->delete($user);
     }
 }

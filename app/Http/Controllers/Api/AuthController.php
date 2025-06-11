@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UserLogin;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
-use App\Models\User;
+use App\Services\AuthService;
 use OpenApi\Attributes as OA;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
+    public function __construct(protected AuthService $authService)
+    {
+    }
+
     #[OA\Post(
         path: '/api/auth/register',
         operationId: 'registerUser',
@@ -45,8 +48,7 @@ class AuthController extends Controller
     )]
     public function register(UserRequest $request)
     {
-        $data = $request->validated();
-        $user = User::create($data);
+        $user = $this->authService->register($request->validated());
         return response()->json([
             'message' => 'User registered successfully',
             'user' => new UserResource($user),
@@ -92,19 +94,13 @@ class AuthController extends Controller
     )]
     public function login(UserLogin $request)
     {
-        $credentials = $request->validated();
+        $response = $this->authService->login($request->validated());
 
-        if (!$token = JWTAuth::attempt($credentials)) {
+        if (!$response) {
             return response()->json(['error' => 'Invalid credential'], 401);
         }
 
-        $user = auth()->user();
-
-        return response()->json([
-            'access_token' => $token,
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => new UserResource($user),
-        ]);
+        return response()->json($response);
     }
 
     #[OA\Get(
@@ -165,11 +161,12 @@ class AuthController extends Controller
     )]
     public function logout()
     {
-        try {
-            JWTAuth::invalidate(JWTAuth::getToken());
+        if ($this->authService->logout()) {
             return response()->json(['message' => 'User logged out successfully']);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to logout'], 500);
         }
+
+        return response()->json([
+            'message' => 'Token is required'
+        ], 400);
     }
 }
