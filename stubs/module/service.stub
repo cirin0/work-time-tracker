@@ -1,0 +1,14 @@
+<?php
+
+namespace App\Services;
+
+use App\Repositories\{{name}}Repository;
+
+class {{name}}Service
+{
+    public function __construct({{name}}Repository ${{name}}Repository)
+    {
+    }
+
+
+}
