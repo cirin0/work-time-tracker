@@ -81,6 +81,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(User::class, 'manager_id');
     }
 
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class, 'user_id');
+    }
+
     protected function casts(): array
     {
         return [

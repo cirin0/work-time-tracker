@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
+use App\Http\Controllers\Api\TimeEntryController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,15 @@ Route::prefix('companies')->group(function () {
     Route::post('/', [CompanyController::class, 'store']);
     Route::put('/{company}', [CompanyController::class, 'update']);
     Route::delete('/{company}', [CompanyController::class, 'destroy']);
+});
+
+Route::middleware('auth:api')->group(function () {
+    Route::post('/clock-in', [TimeEntryController::class, 'start']);
+    Route::post('/clock-out', [TimeEntryController::class, 'stop']);
+
+    Route::get('/time-entries', [TimeEntryController::class, 'index']);
+
+    Route::get('/me/time-summary', [TimeEntryController::class, 'summary']);
 });
 
 
