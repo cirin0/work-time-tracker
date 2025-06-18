@@ -32,9 +32,9 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role,
-            'department' => $this->department ? [
-                'id' => $this->department->id,
-                'name' => $this->department->name,
+            'company' => $this->company ? [
+                'id' => $this->company->id,
+                'name' => $this->company->name,
             ] : null,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),

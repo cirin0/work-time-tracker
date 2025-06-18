@@ -26,6 +26,4 @@ class UserRepository
     {
         return $user->delete();
     }
-
-
 }

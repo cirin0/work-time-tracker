@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
 use App\Http\Controllers\Api\UserController;
@@ -36,7 +37,13 @@ Route::middleware('auth:api')->group(function () {
 
 });
 
-//Route::apiResource('departments', DepartmentController::class);
+Route::prefix('companies')->group(function () {
+    Route::get('/{company}', [CompanyController::class, 'showById']);
+    Route::get('/name/{company}', [CompanyController::class, 'showByName']);
+    Route::post('/', [CompanyController::class, 'store']);
+    Route::put('/{company}', [CompanyController::class, 'update']);
+    Route::delete('/{company}', [CompanyController::class, 'destroy']);
+});
 
 
 Route::get('/login', function () {

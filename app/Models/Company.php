@@ -4,15 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Department extends Model
+class Company extends Model
 {
-    use Notifiable;
-
     protected $fillable = [
         'name',
         'description',
+        'logo',
         'manager_id',
     ];
 
@@ -21,8 +20,13 @@ class Department extends Model
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    public function users()
+    public function getEmployeeCountAttribute(): int
     {
-        return $this->hasMany(User::class);
+        return $this->employees()->count();
+    }
+
+    public function employees(): HasMany
+    {
+        return $this->hasMany(User::class, 'company_id');
     }
 }

@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DepResource extends JsonResource
+class CompanyResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,22 +18,23 @@ class DepResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'manager' => $this->manager_id ? [
+            'logo' => $this->logo,
+            'manager' => $this->manager ? [
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,
                 'email' => $this->manager->email,
             ] : null,
-            'users' => $this->users->filter(function ($user) {
+            'employees' => $this->employees->filter(function ($user) {
                 return $user->role !== 'manager';
-            })->map(function ($user) {
+            })->map(function ($employee) {
                 return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role,
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'role' => $employee->role,
                 ];
             }),
-            'users_count' => $this->users()->count(),
+            'users_count' => $this->employeeCount,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];
