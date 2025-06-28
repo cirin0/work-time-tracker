@@ -31,10 +31,9 @@ class CompanyResource extends JsonResource
                     'id' => $employee->id,
                     'name' => $employee->name,
                     'email' => $employee->email,
-                    'role' => $employee->role,
                 ];
             }),
-            'users_count' => $this->employeeCount,
+            'users_count' => $this->employee_count,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];

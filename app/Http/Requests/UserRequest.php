@@ -38,14 +38,14 @@ class UserRequest extends FormRequest
             'name' => 'required|string|',
             'email' => 'required|string|email|unique:users,email',
             'password' => 'required|string|',
-            'role' => 'sometimes|in:user,admin,manager',
+            'role' => 'sometimes|in:employee,admin,manager',
         ];
     }
 
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'role' => $this->role ?? 'user', // Default role if not provided
+            'role' => $this->role ?? 'employee', // Default role if not provided
         ]);
     }
 }

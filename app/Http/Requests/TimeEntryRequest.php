@@ -3,7 +3,16 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use OpenApi\Attributes as OA;
 
+#[OA\Schema(
+    schema: 'TimeEntryRequest',
+    description: 'Request for creating or updating a time entry',
+    properties: [
+        new OA\Property(property: 'comment', type: 'string', maxLength: 255, example: 'Worked on project X', nullable: true),
+    ],
+    type: 'object',
+)]
 class TimeEntryRequest extends FormRequest
 {
 

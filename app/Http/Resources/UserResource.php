@@ -20,6 +20,8 @@ use OpenApi\Attributes as OA;
 )]
 class UserResource extends JsonResource
 {
+    public static $wrap = null;
+
     /**
      * Transform the resource into an array.
      *
