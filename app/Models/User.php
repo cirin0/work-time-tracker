@@ -20,7 +20,8 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'role',
-        'department_id',
+        'company_id',
+        'manager_id',
     ];
 
     protected $hidden = [
@@ -43,7 +44,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function getRole(): UserRole
     {
-        return UserRole::from($this->role);
+        return $this->role;
     }
 
     public function isAdmin(): bool
@@ -91,6 +92,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => UserRole::class,
         ];
     }
 }
