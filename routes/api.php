@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
+use App\Http\Controllers\Api\Manager\CompanyController as ManagerCompanyController;
 use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
 use App\Http\Controllers\Api\TimeEntryController;
 use App\Http\Controllers\Api\UserController;
@@ -34,11 +35,15 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/leave-requests', [ManagerLeaveRequestController::class, 'index']);
         Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
         Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
+
+        Route::post('/companies/{company}/add-employee', [ManagerCompanyController::class, 'addEmployeeToCompany']);
+        Route::post('/companies/{company}/remove-employee', [ManagerCompanyController::class, 'deleteEmployeeFromCompany']);
+        Route::post('/companies/{company}/remove-employee/{employee_id}', [ManagerCompanyController::class, 'deleteEmployeeFromCompanyById']);
     });
 
 });
 
-Route::prefix('companies')->group(function () {
+Route::middleware('auth:api')->prefix('companies')->group(function () {
     Route::get('/{company}', [CompanyController::class, 'showById']);
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
     Route::post('/', [CompanyController::class, 'store']);
@@ -49,9 +54,7 @@ Route::prefix('companies')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::post('/clock-in', [TimeEntryController::class, 'start']);
     Route::post('/clock-out', [TimeEntryController::class, 'stop']);
-
     Route::get('/time-entries', [TimeEntryController::class, 'index']);
-
     Route::get('/me/time-summary', [TimeEntryController::class, 'summary']);
 });
 
@@ -59,3 +62,8 @@ Route::middleware('auth:api')->group(function () {
 Route::get('/login', function () {
     return response()->json(['message' => 'Please authenticate'], 401);
 })->name('login');
+
+
+Route::get('/test', function () {
+    return response()->json(['message' => 'API is working']);
+})->name('test');
