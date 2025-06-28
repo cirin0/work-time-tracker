@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\LeaveRequestResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,8 +14,8 @@ class LeaveRequestController extends Controller
      */
     public function index()
     {
-        $requests = Auth::user()->leaveRequests()->latest()->get();
-        return response()->json($requests);
+        $requests = Auth::user()->leaveRequests()->latest()->paginate();
+        return LeaveRequestResource::collection($requests);
     }
 
     /**

@@ -161,12 +161,8 @@ class AuthController extends Controller
     )]
     public function logout()
     {
-        if ($this->authService->logout()) {
-            return response()->json(['message' => 'User logged out successfully']);
-        }
+        $this->authService->logout();
 
-        return response()->json([
-            'message' => 'Token is required'
-        ], 400);
+        return response()->json(['message' => 'User logged out successfully']);
     }
 }

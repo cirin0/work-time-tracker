@@ -44,30 +44,10 @@ class TimeEntryRepository
             ->get();
     }
 
-    public function getSummaryForUser(int $userId): array
+    public function getSummaryForUser(int $userId): Collection
     {
-        $entries = TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()->where('user_id', $userId)
             ->whereNotNull('stop_time')
             ->get();
-
-        $totalDuration = $entries->sum('duration');
-        $todayDuration = $entries->filter(function ($entry) {
-            return $entry->start_time->isToday();
-        })->sum('duration');
-
-        $weekDuration = $entries->filter(function ($entry) {
-            return $entry->start_time->isCurrentWeek();
-        })->sum('duration');
-
-        $monthDuration = $entries->filter(function ($entry) {
-            return $entry->start_time->isCurrentMonth();
-        })->sum('duration');
-
-        return [
-            'total' => $totalDuration,
-            'today' => $todayDuration,
-            'week' => $weekDuration,
-            'month' => $monthDuration,
-        ];
     }
 }

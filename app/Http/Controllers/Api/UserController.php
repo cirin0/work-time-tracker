@@ -86,7 +86,7 @@ class UserController extends Controller
     )]
     public function show(User $user)
     {
-        Gate::any('manage-user', $user);
+        Gate::any('manage-profile', $user);
         return $this->userService->getById($user);
     }
 
@@ -139,8 +139,9 @@ class UserController extends Controller
     )]
     public function updateRole(Request $request, User $user)
     {
+        Gate::authorize('update-role', $user);
         $validated = $request->validate([
-            'role' => 'required|in:user,admin,manager',
+            'role' => 'required|in:employee,admin,manager',
         ]);
         return $this->userService->updateRole($user, $validated['role']);
     }
@@ -229,7 +230,7 @@ class UserController extends Controller
     )]
     public function destroy(User $user)
     {
-        Gate::any('manage-user', $user);
+        Gate::any('manage-profile', $user);
         return $this->userService->delete($user);
     }
 }
