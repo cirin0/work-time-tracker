@@ -6,6 +6,7 @@ use App\Repositories\TimeEntryRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class TimeEntryService
 {
@@ -14,8 +15,9 @@ class TimeEntryService
     {
     }
 
-    public function startTimeEntry(int $userId, ?string $comment = null)
+    public function startTimeEntry(?string $comment = null)
     {
+        $userId = Auth::id();
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($userId);
 
         if ($activeEntry) {
@@ -29,8 +31,9 @@ class TimeEntryService
         ]);
     }
 
-    public function stopTimeEntry(int $userId, ?string $comment = null)
+    public function stopTimeEntry(?string $comment = null)
     {
+        $userId = Auth::id();
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($userId);
 
         if (!$activeEntry) {
@@ -53,13 +56,14 @@ class TimeEntryService
         return $this->timeEntryRepository->update($activeEntry->id, $data);
     }
 
-    public function getTimeEntries(int $userId): Collection
+    public function getTimeEntries(): Collection
     {
-        return $this->timeEntryRepository->getAllForUser($userId);
+        return $this->timeEntryRepository->getAllForUser(Auth::id());
     }
 
-    public function getTimeSummary(int $userId): array
+    public function getTimeSummary(): array
     {
+        $userId = Auth::id();
         $completedEntries = $this->timeEntryRepository->getSummaryForUser($userId);
 
         $totalMinutes = $completedEntries->sum(function ($entry) {
@@ -94,11 +98,11 @@ class TimeEntryService
         ];
     }
 
-    public function deleteTimeEntry(int $id, int $userId): ?bool
+    public function deleteTimeEntry(int $id): ?bool
     {
         $timeEntry = $this->timeEntryRepository->getById($id);
 
-        if ($timeEntry->user_id !== $userId) {
+        if ($timeEntry->user_id !== Auth::id()) {
             throw new Exception('You do not have permission to delete this time entry.');
         }
 

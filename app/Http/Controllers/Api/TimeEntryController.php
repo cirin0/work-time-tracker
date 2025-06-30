@@ -52,11 +52,10 @@ class TimeEntryController extends Controller
     )]
     public function start(TimeEntryRequest $request)
     {
-        $user = Auth::user();
         $comment = $request->input('comment');
 
         try {
-            $timeEntry = $this->timeEntryService->startTimeEntry($user->id, $comment);
+            $timeEntry = $this->timeEntryService->startTimeEntry($comment);
             return response()->json([
                 'message' => 'Time entry started successfully',
                 'data' => new TimeEntryStartResource($timeEntry)
@@ -99,11 +98,10 @@ class TimeEntryController extends Controller
     )]
     public function stop(TimeEntryRequest $request)
     {
-        $user = Auth::user();
         $comment = $request->input('comment');
 
         try {
-            $timeEntry = $this->timeEntryService->stopTimeEntry($user->id, $comment);
+            $timeEntry = $this->timeEntryService->stopTimeEntry($comment);
             return response()->json([
                 'message' => 'Time entry stopped successfully',
                 'data' => new TimeEntryStopResource($timeEntry)
@@ -139,8 +137,7 @@ class TimeEntryController extends Controller
     )]
     public function index()
     {
-        $user = Auth::user();
-        $timeEntries = $this->timeEntryService->getTimeEntries($user->id);
+        $timeEntries = $this->timeEntryService->getTimeEntries();
 
         return TimeEntryResource::collection($timeEntries);
     }
@@ -170,8 +167,7 @@ class TimeEntryController extends Controller
     )]
     public function summary()
     {
-        $user = Auth::user();
-        $summary = $this->timeEntryService->getTimeSummary($user->id);
+        $summary = $this->timeEntryService->getTimeSummary();
         return response()->json([
             'message' => 'Time summary retrieved successfully',
             'data' => new TimeEntrySummaryResource($summary)
@@ -180,10 +176,8 @@ class TimeEntryController extends Controller
 
     public function destroy(string $id)
     {
-        $user = Auth::user();
-
         try {
-            $this->timeEntryService->deleteTimeEntry((int)$id, $user->id);
+            $this->timeEntryService->deleteTimeEntry((int)$id);
             return response()->json([
                 'message' => 'Time entry deleted successfully'
             ]);
