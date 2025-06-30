@@ -24,8 +24,14 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
         Route::get('/{user}', [UserController::class, 'show']);
     });
     Route::put('/{user}', [UserController::class, 'update']);
+    Route::post('/{user}/avatar', [UserController::class, 'uploadAvatar']);
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
+
+// Route::prefix('users')->group(function () {
+//     Route::get('/', [UserController::class, 'index']);
+//     Route::get('/{user}', [UserController::class, 'show']);
+// });
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);

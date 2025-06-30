@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
@@ -50,5 +52,17 @@ class UserService
         return response()->json([
             'message' => 'User deleted successfully',
         ], 204);
+    }
+
+    public function updateAvatar(User $user, UploadedFile $avatar): UserResource
+    {
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        $path = $avatar->store('avatars', 'public');
+        $user->update(['avatar' => $path]);
+
+        return new UserResource($user);
     }
 }

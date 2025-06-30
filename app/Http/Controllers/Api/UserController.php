@@ -233,4 +233,70 @@ class UserController extends Controller
         Gate::any('manage-profile', $user);
         return $this->userService->delete($user);
     }
+
+    #[OA\Post(
+        path: '/api/users/{id}/avatar',
+        operationId: 'uploadUserAvatar',
+        description: 'Upload an avatar for a user.',
+        summary: 'Upload user avatar',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    properties: [
+                        new OA\Property(property: 'avatar', type: 'string', format: 'binary')
+                    ]
+                )
+            )
+        ),
+        tags: ['Users'],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'The ID of the user to upload avatar for',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: '200',
+                description: 'User avatar uploaded successfully',
+                content: new OA\MediaType(
+                    mediaType: 'application/json',
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: 'avatar_url', type: 'string', example: 'http://localhost/storage/avatars/avatar.png')
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(
+                response: '422',
+                description: 'Validation Error'
+            ),
+            new OA\Response(
+                response: '404',
+                description: 'User not found'
+            ),
+            new OA\Response(
+                response: '403',
+                description: 'Forbidden'
+            )
+        ]
+    )]
+    public function uploadAvatar(Request $request, User $user)
+    {
+        Gate::authorize('manage-profile', $user);
+
+        $validated = $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $updatedUser = $this->userService->updateAvatar($user, $validated['avatar']);
+
+        return response()->json(['message' => 'Avatar updated successfully.', 'user' => $updatedUser]);
+    }
 }

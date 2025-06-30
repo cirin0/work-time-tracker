@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -90,5 +92,23 @@ class UserTest extends TestCase
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
+
+    public function test_user_can_upload_avatar()
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $file = UploadedFile::fake()->image('avatar.jpg');
+
+        $response = $this->actingAs($user, 'api')->postJson("/api/users/{$user->id}/avatar", [
+            'avatar' => $file,
+        ]);
+
+        $response->assertStatus(200);
+
+        $user->refresh();
+        $this->assertNotNull($user->avatar);
+        Storage::disk('public')->assertExists($user->avatar);
     }
 }

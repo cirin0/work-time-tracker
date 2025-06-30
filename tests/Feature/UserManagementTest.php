@@ -1,9 +1,12 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Enums\UserRole;
 use App\Models\User;
+use Tests\TestCase;
 
-class UserManagementTest extends \Tests\TestCase
+class UserManagementTest extends TestCase
 {
     public function test_admin_can_list_all_users()
     {
