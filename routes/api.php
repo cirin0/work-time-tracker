@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Manager\CompanyController as ManagerCompanyControll
 use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
 use App\Http\Controllers\Api\TimeEntryController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WorkScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
@@ -20,18 +21,18 @@ Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
 Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::post('{user}/role', [UserController::class, 'updateRole']);
-        Route::get('/', [UserController::class, 'index']);
-        Route::get('/{user}', [UserController::class, 'show']);
+        //   Route::get('/', [UserController::class, 'index']);
+        //   Route::get('/{user}', [UserController::class, 'show']);
     });
     Route::put('/{user}', [UserController::class, 'update']);
     Route::post('/{user}/avatar', [UserController::class, 'uploadAvatar']);
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
-// Route::prefix('users')->group(function () {
-//     Route::get('/', [UserController::class, 'index']);
-//     Route::get('/{user}', [UserController::class, 'show']);
-// });
+Route::prefix('/users')->group(function () {
+    Route::get('/', [UserController::class, 'index']);
+    Route::get('/{user}', [UserController::class, 'show']);
+});
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
@@ -62,6 +63,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/clock-out', [TimeEntryController::class, 'stop']);
     Route::get('/time-entries', [TimeEntryController::class, 'index']);
     Route::get('/me/time-summary', [TimeEntryController::class, 'summary']);
+});
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::apiResource('work-schedules', WorkScheduleController::class);
+    Route::get('users/{user}/work-schedule', [UserController::class, 'getWorkSchedule']);
+    Route::put('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
 });
 
 
