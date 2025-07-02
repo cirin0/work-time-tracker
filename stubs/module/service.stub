@@ -6,7 +6,7 @@ use App\Repositories\{{name}}Repository;
 
 class {{name}}Service
 {
-    public function __construct({{name}}Repository ${{name}}Repository)
+    public function __construct(protected {{name}}Repository ${{name}}Repository)
     {
     }
 
