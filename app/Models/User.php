@@ -23,6 +23,7 @@ class User extends Authenticatable implements JWTSubject
         'company_id',
         'manager_id',
         'avatar',
+        'work_schedule_id',
     ];
 
     protected $hidden = [
@@ -58,9 +59,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->role === UserRole::MANAGER;
     }
 
-    public function isUser(): bool
+    public function isEmployee(): bool
     {
-        return $this->role === UserRole::USER;
+        return $this->role === UserRole::EMPLOYEE;
     }
 
     public function company(): BelongsTo
@@ -86,6 +87,11 @@ class User extends Authenticatable implements JWTSubject
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class, 'user_id');
+    }
+
+    public function workSchedule(): BelongsTo
+    {
+        return $this->belongsTo(WorkSchedule::class, 'work_schedule_id');
     }
 
     protected function casts(): array

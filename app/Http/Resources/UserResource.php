@@ -20,13 +20,6 @@ use OpenApi\Attributes as OA;
 )]
 class UserResource extends JsonResource
 {
-    public static $wrap = null;
-
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -38,6 +31,10 @@ class UserResource extends JsonResource
             'company' => $this->company ? [
                 'id' => $this->company->id,
                 'name' => $this->company->name,
+            ] : null,
+            'work_schedule' => $this->workSchedule ? [
+                'id' => $this->workSchedule->id,
+                'name' => $this->workSchedule->name,
             ] : null,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),

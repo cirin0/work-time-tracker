@@ -37,13 +37,19 @@ class UserService
         ]);
     }
 
-    public function update(User $user, array $data): UserResource
+    public function updateAvatar(User $user, UploadedFile $avatar): JsonResponse
     {
-        if (!auth()->user()->isAdmin()) {
-            unset($data['role']);
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
         }
-        $user->update($data);
-        return new UserResource($user);
+
+        $path = $avatar->store('avatars', 'public');
+        $user->update(['avatar' => $path]);
+
+        return response()->json([
+            'message' => 'Avatar updated successfully',
+            'user' => new UserResource($user),
+        ]);
     }
 
     public function delete(User $user): JsonResponse
@@ -54,15 +60,38 @@ class UserService
         ], 204);
     }
 
-    public function updateAvatar(User $user, UploadedFile $avatar): UserResource
+    public function update(User $user, array $data): UserResource
     {
-        if ($user->avatar) {
-            Storage::disk('public')->delete($user->avatar);
+        if (!auth()->user()->isAdmin()) {
+            unset($data['role']);
+        }
+        $user->update($data);
+        return new UserResource($user);
+    }
+
+    public function getWorkSchedule(User $user): array
+    {
+        $workSchedule = $user->workSchedule;
+        if (!$workSchedule) {
+            return [
+                'message' => 'User has no work schedule assigned',
+                'user' => new UserResource($user)
+            ];
         }
 
-        $path = $avatar->store('avatars', 'public');
-        $user->update(['avatar' => $path]);
+        return [
+            'work_schedule' => $workSchedule->load('dailySchedules'),
+            'user' => new UserResource($user)
+        ];
+    }
 
-        return new UserResource($user);
+    public function updateUserWorkSchedule(User $user, int $workScheduleId): array
+    {
+        $user->update(['work_schedule_id' => $workScheduleId]);
+
+        return [
+            'message' => 'Work schedule updated successfully',
+            'user' => new UserResource($user)
+        ];
     }
 }

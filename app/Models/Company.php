@@ -32,4 +32,14 @@ class Company extends Model
     {
         return $this->hasMany(User::class, 'company_id');
     }
+
+    public function defaultWorkSchedule()
+    {
+        return $this->workSchedules()->where('is_default', true)->first();
+    }
+
+    public function workSchedules(): HasMany
+    {
+        return $this->hasMany(WorkSchedule::class);
+    }
 }

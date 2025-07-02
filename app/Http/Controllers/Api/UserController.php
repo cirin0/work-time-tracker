@@ -290,13 +290,24 @@ class UserController extends Controller
     public function uploadAvatar(Request $request, User $user)
     {
         Gate::authorize('manage-profile', $user);
-
         $validated = $request->validate([
             'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $updatedUser = $this->userService->updateAvatar($user, $validated['avatar']);
+        return $this->userService->updateAvatar($user, $validated['avatar']);
+    }
 
-        return response()->json(['message' => 'Avatar updated successfully.', 'user' => $updatedUser]);
+    public function getWorkSchedule(User $user)
+    {
+        return $this->userService->getWorkSchedule($user);
+    }
+
+    public function updateWorkSchedule(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'work_schedule_id' => 'required|exists:work_schedules,id'
+        ]);
+
+        return $this->userService->updateUserWorkSchedule($user, $validated['work_schedule_id']);
     }
 }

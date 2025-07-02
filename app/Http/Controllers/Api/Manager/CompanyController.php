@@ -30,6 +30,10 @@ class CompanyController extends Controller
             return response()->json(['message' => 'This user already belongs to a company.'], 409);
         }
 
+        if ($userToAdd->manager_id !== null) {
+            return response()->json(['message' => 'This user is already assigned to a manager.'], 409);
+        }
+
         $userToAdd->update([
             'company_id' => $company->id,
             'manager_id' => $manager->id,
