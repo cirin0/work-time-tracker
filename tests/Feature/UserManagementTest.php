@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_admin_can_list_all_users()
     {
         $admin = User::factory()->create([
@@ -45,10 +48,12 @@ class UserManagementTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'id',
-                'name',
-                'email',
-                'role',
+                'data' => [
+                    'id',
+                    'name',
+                    'email',
+                    'role',
+                ]
             ]);
     }
 
