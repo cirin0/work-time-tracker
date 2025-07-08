@@ -7,6 +7,8 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TimeEntryService
 {
@@ -37,7 +39,7 @@ class TimeEntryService
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($userId);
 
         if (!$activeEntry) {
-            throw new Exception('You do not have an active time entry to stop.');
+            throw new NotFoundHttpException('You do not have an active time entry to stop.');
         }
 
         $startTime = $activeEntry->start_time;
@@ -103,7 +105,7 @@ class TimeEntryService
         $timeEntry = $this->timeEntryRepository->getById($id);
 
         if ($timeEntry->user_id !== Auth::id()) {
-            throw new Exception('You do not have permission to delete this time entry.');
+            throw new AccessDeniedHttpException('You do not have permission to delete this time entry.');
         }
 
         return $this->timeEntryRepository->delete($id);
