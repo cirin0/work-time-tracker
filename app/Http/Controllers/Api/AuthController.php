@@ -46,6 +46,9 @@ class AuthController extends Controller
             )
         ]
     )]
+    /**
+    * @unauthenticated
+    */
     public function register(UserRequest $request)
     {
         $user = $this->authService->register($request->validated());
@@ -92,6 +95,9 @@ class AuthController extends Controller
         ]
 
     )]
+    /**
+     * @unauthenticated
+     */
     public function login(UserLogin $request)
     {
         $response = $this->authService->login($request->validated());
