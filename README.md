@@ -7,6 +7,86 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+# Work Time Tracker
+
+A Laravel-based application for tracking work time.
+
+## Backend Setup Instructions
+
+### Prerequisites
+
+- PHP 8.1 or higher
+- Composer
+- PostgreSQL
+- Git
+
+### Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd work-time-tracker
+   ```
+
+2. **Install dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Environment setup**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Configure the database**
+   - Create a PostgreSQL database named `work-time-tracker`
+   - Update the database credentials in the `.env` file if needed:
+     ```
+     DB_CONNECTION=pgsql
+     DB_HOST=127.0.0.1
+     DB_PORT=5432
+     DB_DATABASE=work-time-tracker
+     DB_USERNAME=postgres
+     DB_PASSWORD=password
+     ```
+
+5. **Run migrations and seeders**
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+6. **Generate JWT secret**
+   ```bash
+   php artisan jwt:secret
+   ```
+
+7. **Start the development server**
+   ```bash
+   php artisan serve
+   ```
+   The application will be available at http://localhost:8000
+
+### Additional Commands
+
+- **Run tests**
+  ```bash
+  php artisan test
+  ```
+
+- **Clear cache**
+  ```bash
+  php artisan cache:clear
+  php artisan config:clear
+  php artisan route:clear
+  ```
+
+- **Queue worker (if needed)**
+  ```bash
+  php artisan queue:work
+  ```
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
