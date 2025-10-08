@@ -7,7 +7,7 @@ use App\Http\Requests\UserLogin;
 use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
-use OpenApi\Attributes as OA;
+use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
@@ -15,41 +15,7 @@ class AuthController extends Controller
     {
     }
 
-    #[OA\Post(
-        path: '/api/auth/register',
-        operationId: 'registerUser',
-        description: 'Register a new user.',
-        summary: 'Register a new user',
-        requestBody: new OA\RequestBody(
-            content: new OA\MediaType(
-                mediaType: 'application/json',
-                schema: new OA\Schema(
-                    ref: '#/components/schemas/UserRequest'
-                )
-            )
-        ),
-        tags: ['Auth'],
-        responses: [
-            new OA\Response(
-                response: '201',
-                description: 'User registered successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        ref: '#/components/schemas/UserResource'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '422',
-                description: 'Validation error'
-            )
-        ]
-    )]
-    /**
-    * @unauthenticated
-    */
-    public function register(UserRequest $request)
+    public function register(UserRequest $request): JsonResponse
     {
         $user = $this->authService->register($request->validated());
         return response()->json([
@@ -58,47 +24,8 @@ class AuthController extends Controller
         ], 201);
     }
 
-    #[OA\Post(
-        path: '/api/auth/login',
-        operationId: 'loginUser',
-        description: 'Login a user and return a JWT token.',
-        summary: 'Login a user',
-        requestBody: new OA\RequestBody(
-            content: new OA\MediaType(
-                mediaType: 'application/json',
-                schema: new OA\Schema(
-                    ref: '#/components/schemas/UserLogin'
-                )
-            )
-        ),
-        tags: ['Auth'],
-        responses: [
-            new OA\Response(
-                response: '200',
-                description: 'User logged in successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        properties: [
-                            new OA\Property(property: 'access_token', type: 'string'),
-                            new OA\Property(property: 'expires_in', type: 'integer'),
-                            new OA\Property(property: 'user', ref: '#/components/schemas/UserResource'),
-                        ],
-                        type: 'object'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '401',
-                description: 'Invalid credentials'
-            )
-        ]
 
-    )]
-    /**
-     * @unauthenticated
-     */
-    public function login(UserLogin $request)
+    public function login(UserLogin $request): JsonResponse
     {
         $response = $this->authService->login($request->validated());
 
@@ -109,63 +36,13 @@ class AuthController extends Controller
         return response()->json($response);
     }
 
-    #[OA\Get(
-        path: '/api/me',
-        operationId: 'getCurrentUser',
-        description: 'Get the currently authenticated user.',
-        summary: 'Get current user',
-        security: [['bearerAuth']],
-        tags: ['Users'],
-        responses: [
-            new OA\Response(
-                response: '200',
-                description: 'Current user retrieved successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        ref: '#/components/schemas/UserResource'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '401',
-                description: 'Unauthorized'
-            )
-        ]
-    )]
-    public function me()
+
+    public function me(): UserResource
     {
         return new UserResource(auth()->user());
     }
 
-    #[OA\Post(
-        path: '/api/auth/logout',
-        operationId: 'logoutUser',
-        description: 'Logout the currently authenticated user.',
-        summary: 'Logout user',
-        security: [['bearerAuth']],
-        tags: ['Auth'],
-        responses: [
-            new OA\Response(
-                response: '200',
-                description: 'User logged out successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        properties: [
-                            new OA\Property(property: 'message', type: 'string', example: 'User logged out successfully'),
-                        ],
-                        type: 'object'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '500',
-                description: 'Failed to logout'
-            )
-        ]
-    )]
-    public function logout()
+    public function logout(): JsonResponse
     {
         $this->authService->logout();
 

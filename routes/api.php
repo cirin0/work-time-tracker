@@ -21,6 +21,7 @@ Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
 Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::post('{user}/role', [UserController::class, 'updateRole']);
+        // uncomment for admin to view all users
         //   Route::get('/', [UserController::class, 'index']);
         //   Route::get('/{user}', [UserController::class, 'show']);
     });
@@ -29,6 +30,7 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
+// for testing
 Route::prefix('/users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
     Route::get('/{user}', [UserController::class, 'show']);
@@ -54,7 +56,8 @@ Route::middleware('auth:api')->prefix('companies')->group(function () {
     Route::get('/{company}', [CompanyController::class, 'showById']);
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
     Route::post('/', [CompanyController::class, 'store']);
-    Route::put('/{company}', [CompanyController::class, 'update']);
+    // change to patch in future
+    Route::post('/{company}', [CompanyController::class, 'update']);
     Route::delete('/{company}', [CompanyController::class, 'destroy']);
 });
 

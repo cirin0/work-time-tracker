@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CompanyRequest;
+use App\Http\Resources\CompanyResource;
+use App\Http\Resources\CompanyStoreResource;
 use App\Models\Company;
 use App\Services\CompanyService;
+use Illuminate\Http\JsonResponse;
 
 class CompanyController extends Controller
 {
@@ -14,44 +17,35 @@ class CompanyController extends Controller
     {
     }
 
-    public function showById(Company $company)
+    public function showById(Company $company): CompanyResource
     {
         return $this->companyService->getCompanyById($company);
     }
 
-    public function showByName(string $company)
+    public function showByName(string $company): CompanyResource
     {
         return $this->companyService->getCompanyByName($company);
     }
 
-    public function update(CompanyRequest $request, Company $company)
+    public function update(Company $company, CompanyRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('logos', 'public'); // not work
-        }
-        $company = $this->companyService->updateCompany($company, $data);
+        $company = $this->companyService->updateCompany($company, $request->validated());
         return response()->json([
             'message' => 'Company updated successfully',
-            'company' => $company,
+            'company' => new CompanyStoreResource($company),
         ]);
     }
 
-    public function store(CompanyRequest $request)
+    public function store(CompanyRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('logos', 'public');
-        }
-        $company = $this->companyService->createCompany($data);
+        $company = $this->companyService->createCompany($request->validated());
         return response()->json([
             'message' => 'Company created successfully',
-            'company' => $company,
+            'company' => new CompanyStoreResource($company),
         ], 201);
-
     }
 
-    public function destroy(Company $company)
+    public function destroy(Company $company): JsonResponse
     {
         $this->companyService->deleteCompany($company);
         return response()->json([

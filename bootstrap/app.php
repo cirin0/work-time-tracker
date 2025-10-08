@@ -23,21 +23,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'error' => 'Resource not found'
+                    'error' => 'Resource or user not found',
                 ], 404);
             }
         });
         $exceptions->render(function (BadRequestHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'error' => 'Bad request'
+                    'error' => 'Bad request',
+                    'message' => $e->getMessage(),
                 ], 400);
             }
         });
         $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
-                    'error' => 'Access denied'
+                    'error' => 'Access denied',
+                    'message' => $e->getMessage(),
                 ], 403);
             }
         });

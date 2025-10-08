@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CompanyRequest extends FormRequest
 {
@@ -23,9 +24,12 @@ class CompanyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:companies,name',
-            'description' => 'nullable|string|max:1000',
+            'name' => ['string', 'max:255', Rule::unique('companies', 'name')->ignore($this->company)],
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'description' => 'nullable|string|max:1000',
+            'address' => 'nullable|string|max:500',
             'manager_id' => 'sometimes|exists:users,id',
         ];
     }

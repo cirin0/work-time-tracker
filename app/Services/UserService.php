@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use App\Repositories\UserRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -78,7 +79,6 @@ class UserService
                 'user' => new UserResource($user)
             ];
         }
-
         return [
             'work_schedule' => $workSchedule->load('dailySchedules'),
             'user' => new UserResource($user)
@@ -87,8 +87,17 @@ class UserService
 
     public function updateUserWorkSchedule(User $user, int $workScheduleId): array
     {
+        if (!WorkSchedule::query()->find($workScheduleId)) {
+            return [
+                'message' => 'Work schedule not found',
+            ];
+        } elseif ($user->work_schedule_id === $workScheduleId) {
+            return [
+                'message' => 'User already has this work schedule assigned',
+                'user' => new UserResource($user)
+            ];
+        }
         $user->update(['work_schedule_id' => $workScheduleId]);
-
         return [
             'message' => 'Work schedule updated successfully',
             'user' => new UserResource($user)

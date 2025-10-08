@@ -5,17 +5,21 @@ namespace App\Services;
 use App\Http\Resources\CompanyResource;
 use App\Models\Company;
 use App\Repositories\CompanyRepository;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyService
 {
 
-    public function __construct(protected CompanyRepository $repository)
+    public function __construct(protected CompanyRepository $companyRepository)
     {
     }
 
     public function createCompany(array $data): Company
     {
-        return $this->repository->save($data);
+        if (isset($data['logo']) && $data['logo']) {
+            $data['logo'] = $data['logo']->store('companies_logos', 'public');
+        }
+        return $this->companyRepository->save($data);
     }
 
     public function getCompanyById(Company $company): CompanyResource
@@ -25,16 +29,22 @@ class CompanyService
 
     public function getCompanyByName(string $company): CompanyResource
     {
-        return new CompanyResource($this->repository->findByName($company));
+        return new CompanyResource($this->companyRepository->findByName($company));
     }
 
     public function updateCompany(Company $company, array $data): Company
     {
-        return $this->repository->update($company, $data);
+        if (isset($data['logo']) && $data['logo']) {
+            if ($company->logo) {
+                Storage::disk('public')->delete($company->logo);
+            }
+            $data['logo'] = $data['logo']->store('companies_logos', 'public');
+        }
+        return $this->companyRepository->update($company, $data);
     }
 
     public function deleteCompany(Company $company): bool
     {
-        return $this->repository->delete($company);
+        return $this->companyRepository->delete($company);
     }
 }

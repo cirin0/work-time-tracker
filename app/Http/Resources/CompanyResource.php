@@ -7,18 +7,19 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CompanyResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
+
+    public static $wrap = null;
+
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'description' => $this->description,
+            'email' => $this->email,
+            'phone' => $this->phone,
             'logo' => $this->logo,
+            'description' => $this->description,
+            'address' => $this->address,
             'manager' => $this->manager ? [
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,
