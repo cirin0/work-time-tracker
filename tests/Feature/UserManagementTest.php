@@ -48,12 +48,10 @@ class UserManagementTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'data' => [
-                    'id',
-                    'name',
-                    'email',
-                    'role',
-                ]
+                'id',
+                'name',
+                'email',
+                'role',
             ]);
     }
 

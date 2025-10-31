@@ -53,7 +53,7 @@ class CompanyTest extends TestCase
         $response = $this->actingAs($user, 'api')->getJson("/api/companies/{$company->id}");
 
         $response->assertStatus(200)
-            ->assertJson(['data' => ['name' => $company->name]]);
+            ->assertJson(['name' => $company->name]);
     }
 
     public function test_admin_can_update_any_company()

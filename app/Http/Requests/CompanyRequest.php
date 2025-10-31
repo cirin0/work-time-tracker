@@ -23,8 +23,15 @@ class CompanyRequest extends FormRequest
      */
     public function rules(): array
     {
+        $nameRules = ['string', 'max:255', Rule::unique('companies', 'name')->ignore($this->company)];
+        if ($this->isMethod('post')) {
+            array_unshift($nameRules, 'required');
+        } else {
+            array_unshift($nameRules, 'sometimes');
+        }
+
         return [
-            'name' => ['string', 'max:255', Rule::unique('companies', 'name')->ignore($this->company)],
+            'name' => $nameRules,
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',

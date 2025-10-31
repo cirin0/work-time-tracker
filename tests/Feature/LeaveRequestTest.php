@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\LeaveRequest;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,8 +18,8 @@ class LeaveRequestTest extends TestCase
 
         $response = $this->actingAs($user, 'api')->postJson('/api/leave-requests', [
             'type' => 'vacation',
-            'start_date' => '2025-08-01',
-            'end_date' => '2025-08-10',
+            'start_date' => Carbon::now()->format('Y-m-d'),
+            'end_date' => Carbon::now()->addDays(5)->format('Y-m-d'),
             'reason' => 'Family vacation'
         ]);
 
