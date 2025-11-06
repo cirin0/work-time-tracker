@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\Manager\CompanyController as ManagerCompanyController;
 use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
+use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\TimeEntryController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkScheduleController;
@@ -16,6 +17,10 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('logout', 'logout')->middleware('auth:api');
 });
 
+Route::middleware('auth:api')->group(function () {
+    Route::get('/messages/{receiverId}', [MessageController::class, 'index']);
+    Route::post('/messages', [MessageController::class, 'store']);
+});
 Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
