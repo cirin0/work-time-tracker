@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\Manager\CompanyController as ManagerCompanyController;
 use App\Http\Controllers\Api\Manager\LeaveRequestController as ManagerLeaveRequestController;
+use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\TimeEntryController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkScheduleController;
@@ -14,8 +15,13 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login', 'login');
     Route::post('logout', 'logout')->middleware('auth:api');
+    Route::post('refresh', 'refresh');
 });
 
+Route::middleware('auth:api')->group(function () {
+    Route::get('/messages/{receiverId}', [MessageController::class, 'index']);
+    Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:60,1');
+});
 Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
@@ -74,11 +80,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::put('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
 });
 
-
 Route::get('/login', function () {
     return response()->json(['message' => 'Please authenticate'], 401);
 })->name('login');
-
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);

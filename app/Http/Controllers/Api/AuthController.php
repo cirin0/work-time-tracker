@@ -8,6 +8,8 @@ use App\Http\Requests\UserRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 
 class AuthController extends Controller
 {
@@ -18,12 +20,12 @@ class AuthController extends Controller
     public function register(UserRequest $request): JsonResponse
     {
         $user = $this->authService->register($request->validated());
+
         return response()->json([
             'message' => 'User registered successfully',
             'user' => new UserResource($user),
         ], 201);
     }
-
 
     public function login(UserLogin $request): JsonResponse
     {
@@ -36,10 +38,31 @@ class AuthController extends Controller
         return response()->json($response);
     }
 
-
     public function me(): UserResource
     {
         return new UserResource(auth()->user());
+    }
+
+    public function refresh()
+    {
+        try {
+            return response()->json($this->authService->refresh());
+        } catch (TokenExpiredException $e) {
+            return response()->json([
+                'error' => 'Token has expired and can no longer be refreshed'
+            ], 401);
+
+        } catch (TokenInvalidException $e) {
+            return response()->json([
+                'error' => 'Token is invalid'
+            ], 401);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Could not refresh token',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function logout(): JsonResponse
