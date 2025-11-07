@@ -16,6 +16,10 @@ class Message extends Model
         'message',
     ];
 
+    protected $casts = [
+        'message' => 'encrypted',
+    ];
+
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
@@ -25,5 +29,4 @@ class Message extends Model
     {
         return $this->belongsTo(User::class, 'receiver_id');
     }
-
 }

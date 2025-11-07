@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MessageController extends Controller
 {
@@ -21,7 +22,7 @@ class MessageController extends Controller
             $query->where('sender_id', $receiverId)
                 ->where('receiver_id', $senderId);
         })
-            ->orderBy('created_at', 'asc')
+            ->orderBy('created_at')
             ->get();
 
         return response()->json($messages);
@@ -37,19 +38,32 @@ class MessageController extends Controller
 
         $user = Auth::user();
 
-        $message = Message::query()->create([
-            'sender_id' => $user->id,
-            'receiver_id' => $data['receiver_id'],
-            'message' => $data['message'],
-        ]);
+        if ((int)$data['receiver_id'] === (int)$user->id) {
+            return response()->json([
+                'message' => 'You cannot send a message to yourself.',
+            ], 422);
+        }
 
+        try {
+            $message = DB::transaction(function () use ($user, $data) {
+                return Message::query()->create([
+                    'sender_id' => $user->id,
+                    'receiver_id' => $data['receiver_id'],
+                    'message' => $data['message'],
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Failed to send message.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
 
         $event = new MessageSent(
             $message->message,
             $user,
             $data['receiver_id']
         );
-
 
         broadcast($event)->toOthers();
 
