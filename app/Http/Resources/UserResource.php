@@ -23,6 +23,10 @@ class UserResource extends JsonResource
                 'id' => $this->company->id,
                 'name' => $this->company->name,
             ] : null,
+            'manager' => $this->manager ? [
+                'id' => $this->manager->id,
+                'name' => $this->manager->name,
+            ] : null,
             'work_schedule' => $this->workSchedule ? [
                 'id' => $this->workSchedule->id,
                 'name' => $this->workSchedule->name,
