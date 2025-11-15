@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Http\Resources\AuthResource;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -17,9 +17,14 @@ class AuthService
     {
     }
 
-    public function register(array $data): User
+    public function register(array $data): array
     {
-        return $this->repository->register($data);
+        $user = $this->repository->register($data);
+
+        return [
+            'message' => 'User registered successfully',
+            'user' => new AuthResource($user),
+        ];
     }
 
     public function login(array $credentials): ?array
@@ -33,20 +38,17 @@ class AuthService
         return [
             'access_token' => $token,
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => new UserResource($user),
+            'user' => new AuthResource($user),
         ];
     }
 
-    public function logout(): bool
+    public function logout(): array
     {
-        try {
-            JWTAuth::invalidate(JWTAuth::getToken());
-            return true;
-        } catch (Exception $e) {
-            return false;
-        }
+        JWTAuth::invalidate(JWTAuth::getToken());
+        return [
+            'message' => 'Logged out successfully'
+        ];
     }
-
 
     public function refresh(): JsonResponse|array
     {
@@ -67,7 +69,6 @@ class AuthService
             ];
         } catch (TokenExpiredException|TokenInvalidException|Exception $e) {
             throw $e;
-
         }
     }
 }

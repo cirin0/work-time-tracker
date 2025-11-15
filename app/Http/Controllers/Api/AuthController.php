@@ -21,10 +21,7 @@ class AuthController extends Controller
     {
         $user = $this->authService->register($request->validated());
 
-        return response()->json([
-            'message' => 'User registered successfully',
-            'user' => new UserResource($user),
-        ], 201);
+        return response()->json($user, 201);
     }
 
     public function login(UserLogin $request): JsonResponse
@@ -67,8 +64,8 @@ class AuthController extends Controller
 
     public function logout(): JsonResponse
     {
-        $this->authService->logout();
+        $response = $this->authService->logout();
 
-        return response()->json(['message' => 'User logged out successfully']);
+        return response()->json($response);
     }
 }
