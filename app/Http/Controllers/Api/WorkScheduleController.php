@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\WorkScheduleRequest;
-use App\Http\Requests\WorkScheduleUpdateRequest;
+use App\Http\Requests\StoreWorkScheduleRequest;
+use App\Http\Requests\UpdateWorkScheduleRequest;
 use App\Http\Resources\WorkScheduleResource;
 use App\Services\WorkScheduleService;
 use Illuminate\Http\Request;
@@ -34,7 +34,7 @@ class WorkScheduleController extends Controller
         }
     }
 
-    public function store(WorkScheduleRequest $request)
+    public function store(StoreWorkScheduleRequest $request)
     {
         $data = $request->validated();
         $data['company_id'] = $request->user()->company_id;
@@ -42,7 +42,7 @@ class WorkScheduleController extends Controller
         return $this->workScheduleService->create($data);
     }
 
-    public function update(string $id, WorkScheduleUpdateRequest $request)
+    public function update(string $id, UpdateWorkScheduleRequest $request)
     {
         $data = $request->validated();
         $data['company_id'] = $request->user()->company_id;

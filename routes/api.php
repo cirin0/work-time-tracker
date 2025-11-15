@@ -22,6 +22,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/messages/{receiverId}', [MessageController::class, 'index']);
     Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:60,1');
 });
+
 Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {

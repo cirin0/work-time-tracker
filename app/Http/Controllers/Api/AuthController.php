@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UserLogin;
-use App\Http\Requests\UserRequest;
+use App\Http\Requests\LoginUserRequest;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Resources\AuthResource;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 
 class AuthController extends Controller
 {
@@ -17,22 +16,26 @@ class AuthController extends Controller
     {
     }
 
-    public function register(UserRequest $request): JsonResponse
+    public function register(StoreUserRequest $request): JsonResponse
     {
-        $user = $this->authService->register($request->validated());
+        $data = $this->authService->register($request->validated());
 
-        return response()->json($user, 201);
+        return response()->json([
+            'message' => 'User registered successfully',
+            'user' => new AuthResource($data['user']),
+        ], 201);
     }
 
-    public function login(UserLogin $request): JsonResponse
+    public function login(LoginUserRequest $request): JsonResponse
     {
-        $response = $this->authService->login($request->validated());
+        $data = $this->authService->login($request->validated());
 
-        if (!$response) {
-            return response()->json(['error' => 'Invalid credential'], 401);
-        }
+        return response()->json([
+            'access_token' => $data['token'],
+            'expires_in' => $data['expires_in'],
+            'user' => new AuthResource($data['user']),
+        ]);
 
-        return response()->json($response);
     }
 
     public function me(): UserResource
@@ -40,32 +43,25 @@ class AuthController extends Controller
         return new UserResource(auth()->user());
     }
 
-    public function refresh()
+    public function refresh(): JsonResponse
     {
-        try {
-            return response()->json($this->authService->refresh());
-        } catch (TokenExpiredException $e) {
-            return response()->json([
-                'error' => 'Token has expired and can no longer be refreshed'
-            ], 401);
+        $data = $this->authService->refresh();
 
-        } catch (TokenInvalidException $e) {
-            return response()->json([
-                'error' => 'Token is invalid'
-            ], 401);
+        return response()->json([
+            'message' => 'Token refreshed successfully',
+            'access_token' => $data['token'],
+            'expires_in' => $data['expires_in'],
+            'user' => new AuthResource($data['user']),
+        ]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Could not refresh token',
-                'message' => $e->getMessage()
-            ], 500);
-        }
     }
 
     public function logout(): JsonResponse
     {
-        $response = $this->authService->logout();
+        $this->authService->logout();
 
-        return response()->json($response);
+        return response()->json([
+            'message' => 'Logged out successfully'
+        ]);
     }
 }
