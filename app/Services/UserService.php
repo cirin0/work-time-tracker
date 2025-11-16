@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Http\Resources\UserResource;
+use App\Enums\UserRole;
 use App\Models\User;
-use App\Models\WorkSchedule;
 use App\Repositories\UserRepository;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class UserService
@@ -17,28 +16,25 @@ class UserService
     {
     }
 
-    public function getAllPaginated(): AnonymousResourceCollection
+    public function getAllPaginated(): LengthAwarePaginator
     {
-        return UserResource::collection($this->repository->getPaginated());
+        return $this->repository->getPaginated();
     }
 
-    public function getById(User $user): UserResource
+    public function getById(User $user): array
     {
-        return new UserResource($user);
+        return ['user' => $user];
     }
 
-    public function updateRole(User $user, string $role): JsonResponse
+    public function updateRole(User $user, UserRole $role): array
     {
         $user->role = $role;
         $user->save();
 
-        return response()->json([
-            'message' => 'User role updated successfully',
-            'user' => new UserResource($user),
-        ]);
+        return ['user' => $user];
     }
 
-    public function updateAvatar(User $user, UploadedFile $avatar): JsonResponse
+    public function updateAvatar(User $user, UploadedFile $avatar): array
     {
         if ($user->avatar) {
             Storage::disk('public')->delete($user->avatar);
@@ -47,60 +43,41 @@ class UserService
         $path = $avatar->store('avatars', 'public');
         $user->update(['avatar' => $path]);
 
-        return response()->json([
-            'message' => 'Avatar updated successfully',
-            'user' => new UserResource($user),
-        ]);
+        return ['user' => $user];
     }
 
-    public function delete(User $user): JsonResponse
+    public function delete(User $user): void
     {
         $user->delete();
-        return response()->json([
-            'message' => 'User deleted successfully',
-        ], 204);
     }
 
-    public function update(User $user, array $data): UserResource
+    public function update(User $user, array $data): array
     {
-        if (!auth()->user()->isAdmin()) {
+        /** @var User $authUser */
+        $authUser = Auth::user();
+
+        if (!$authUser->isAdmin()) {
             unset($data['role']);
         }
         $user->update($data);
-        return new UserResource($user);
+
+        return ['user' => $user];
     }
 
     public function getWorkSchedule(User $user): array
     {
-        $workSchedule = $user->workSchedule;
-        if (!$workSchedule) {
-            return [
-                'message' => 'User has no work schedule assigned',
-                'user' => new UserResource($user)
-            ];
-        }
+        $workSchedule = $user->workSchedule?->load('dailySchedules');
+
         return [
-            'work_schedule' => $workSchedule->load('dailySchedules'),
-            'user' => new UserResource($user)
+            'user' => $user,
+            'work_schedule' => $workSchedule,
         ];
     }
 
     public function updateUserWorkSchedule(User $user, int $workScheduleId): array
     {
-        if (!WorkSchedule::query()->find($workScheduleId)) {
-            return [
-                'message' => 'Work schedule not found',
-            ];
-        } elseif ($user->work_schedule_id === $workScheduleId) {
-            return [
-                'message' => 'User already has this work schedule assigned',
-                'user' => new UserResource($user)
-            ];
-        }
         $user->update(['work_schedule_id' => $workScheduleId]);
-        return [
-            'message' => 'Work schedule updated successfully',
-            'user' => new UserResource($user)
-        ];
+
+        return ['user' => $user];
     }
 }

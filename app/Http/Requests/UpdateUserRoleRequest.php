@@ -4,8 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
-class TimeEntryRequest extends FormRequest
+class UpdateUserRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,7 +14,7 @@ class TimeEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'comment' => 'nullable|string|max:255',
+            'role' => 'required|in:employee,admin,manager',
         ];
     }
 }
