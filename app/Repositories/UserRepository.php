@@ -22,7 +22,7 @@ class UserRepository
         return User::query()->find($id);
     }
 
-    public function delete(User $user): bool
+    public function delete(User $user): ?bool
     {
         return $user->delete();
     }

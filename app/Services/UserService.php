@@ -46,14 +46,13 @@ class UserService
         return ['user' => $user];
     }
 
-    public function delete(User $user): void
+    public function delete(User $user): ?bool
     {
-        $user->delete();
+        return $this->repository->delete($user);
     }
 
     public function update(User $user, array $data): array
     {
-        /** @var User $authUser */
         $authUser = Auth::user();
 
         if (!$authUser->isAdmin()) {
