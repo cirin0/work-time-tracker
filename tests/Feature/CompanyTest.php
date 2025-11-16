@@ -18,11 +18,15 @@ class CompanyTest extends TestCase
         $response = $this->actingAs($user, 'api')->postJson('/api/companies', [
             'name' => 'Test Company',
             'email' => 'company@test.com',
-            'website' => 'test.com'
+            'phone' => '1234567890',
         ]);
 
         $response->assertStatus(201);
-        $this->assertDatabaseHas('companies', ['name' => 'Test Company']);
+        $this->assertDatabaseHas('companies', [
+            'name' => 'Test Company',
+            'email' => 'company@test.com',
+            'phone' => '1234567890',
+        ]);
     }
 
     public function test_unauthenticated_user_cannot_create_company()
@@ -61,12 +65,19 @@ class CompanyTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $company = Company::factory()->create();
 
-        $response = $this->actingAs($admin, 'api')->putJson("/api/companies/{$company->id}", [
-            'name' => 'Updated Name'
-        ]);
+        $response = $this->actingAs($admin, 'api')
+            ->putJson("/api/companies/{$company->id}", [
+                'name' => 'Updated Name',
+                'email' => 'updated@test.com',
+            ]);
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('companies', ['id' => $company->id, 'name' => 'Updated Name']);
+
+        $this->assertDatabaseHas('companies', [
+            'id' => $company->id,
+            'name' => 'Updated Name',
+            'email' => 'updated@test.com',
+        ]);
     }
 
     public function test_admin_can_delete_any_company()

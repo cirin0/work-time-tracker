@@ -64,7 +64,7 @@ Route::middleware('auth:api')->prefix('companies')->group(function () {
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
     Route::post('/', [CompanyController::class, 'store']);
     // change to patch in future
-    Route::post('/{company}', [CompanyController::class, 'update']);
+    Route::put('/{company}', [CompanyController::class, 'update']);
     Route::delete('/{company}', [CompanyController::class, 'destroy']);
 });
 

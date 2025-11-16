@@ -9,11 +9,16 @@ class CompanyFactory extends Factory
 {
     protected $model = Company::class;
 
-    public function definition()
+    public function definition(): array
     {
         return [
-            'name' => $this->faker->company,
+            'name' => $this->faker->unique()->company,
+            'email' => $this->faker->unique()->companyEmail,
+            'phone' => $this->faker->phoneNumber,
+            'logo' => null,
             'description' => $this->faker->paragraph,
+            'address' => $this->faker->address,
+            'manager_id' => null,
         ];
     }
 }
