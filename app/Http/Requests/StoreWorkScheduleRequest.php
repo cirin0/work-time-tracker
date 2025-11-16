@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class WorkScheduleRequest extends FormRequest
+class StoreWorkScheduleRequest extends FormRequest
 {
 
     public function authorize(): bool

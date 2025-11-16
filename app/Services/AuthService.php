@@ -2,14 +2,9 @@
 
 namespace App\Services;
 
-use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Repositories\UserRepository;
-use Exception;
-use Illuminate\Http\JsonResponse;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
-use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class AuthService
 {
@@ -17,57 +12,52 @@ class AuthService
     {
     }
 
-    public function register(array $data): User
+    public function register(array $data): array
     {
-        return $this->repository->register($data);
+        $user = $this->repository->create($data);
+
+        return ['user' => $user];
     }
 
-    public function login(array $credentials): ?array
+    public function login(array $credentials): array
     {
         if (!$token = JWTAuth::attempt($credentials)) {
-            return null;
+            throw new UnauthorizedHttpException('', 'Invalid credentials');
         }
 
-        $user = auth()->user();
-
         return [
-            'access_token' => $token,
+            'user' => auth()->user(),
+            'token' => $token,
             'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => new UserResource($user),
         ];
     }
 
-    public function logout(): bool
+    public function logout(): void
     {
-        try {
-            JWTAuth::invalidate(JWTAuth::getToken());
-            return true;
-        } catch (Exception $e) {
-            return false;
+        $token = JWTAuth::getToken();
+        if (!$token) {
+            throw new UnauthorizedHttpException('', 'Token not provided');
         }
+
+        JWTAuth::invalidate($token);
     }
 
-
-    public function refresh(): JsonResponse|array
+    public function refresh(): array
     {
-        try {
-            $token = JWTAuth::getToken();
+        $token = JWTAuth::getToken();
 
-            if (!$token) {
-                return response()->json(['error' => 'Token not provided'], 401);
-            }
-            $newToken = JWTAuth::refresh($token);
-            JWTAuth::setToken($newToken);
-            $user = JWTAuth::toUser($newToken);
-
-            return [
-                'access_token' => $newToken,
-                'expires_in' => auth()->factory()->getTTL() * 60,
-                'user' => new UserResource($user),
-            ];
-        } catch (TokenExpiredException|TokenInvalidException|Exception $e) {
-            throw $e;
-
+        if (!$token) {
+            throw new UnauthorizedHttpException('', 'Token not provided');
         }
+
+        $newToken = JWTAuth::refresh($token);
+
+        $user = JWTAuth::setToken($newToken)->toUser();
+
+        return [
+            'user' => $user,
+            'token' => $newToken,
+            'expires_in' => auth()->factory()->getTTL() * 60,
+        ];
     }
 }

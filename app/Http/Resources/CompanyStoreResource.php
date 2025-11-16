@@ -20,6 +20,7 @@ class CompanyStoreResource extends JsonResource
             'phone' => $this->phone,
             'description' => $this->description,
             'logo' => $this->logo ? Storage::url($this->logo) : null,
+            'manager_id' => $this->manager_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

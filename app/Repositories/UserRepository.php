@@ -7,7 +7,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserRepository
 {
-    public function register(array $data): User
+    public function create(array $data): User
     {
         return User::query()->create($data);
     }
@@ -22,7 +22,7 @@ class UserRepository
         return User::query()->find($id);
     }
 
-    public function delete(User $user): bool
+    public function delete(User $user): ?bool
     {
         return $user->delete();
     }

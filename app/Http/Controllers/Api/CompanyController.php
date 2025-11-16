@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\CompanyRequest;
+use App\Http\Requests\StoreCompanyRequest;
+use App\Http\Requests\UpdateCompanyRequest;
 use App\Http\Resources\CompanyResource;
 use App\Http\Resources\CompanyStoreResource;
 use App\Models\Company;
@@ -12,42 +13,48 @@ use Illuminate\Http\JsonResponse;
 
 class CompanyController extends Controller
 {
-
     public function __construct(protected CompanyService $companyService)
     {
     }
 
     public function showById(Company $company): CompanyResource
     {
-        return $this->companyService->getCompanyById($company);
+        $data = $this->companyService->getCompanyById($company);
+
+        return new CompanyResource($data['company']);
     }
 
     public function showByName(string $company): CompanyResource
     {
-        return $this->companyService->getCompanyByName($company);
+        $data = $this->companyService->getCompanyByName($company);
+
+        return new CompanyResource($data['company']);
     }
 
-    public function update(Company $company, CompanyRequest $request): JsonResponse
+    public function store(StoreCompanyRequest $request): JsonResponse
     {
-        $company = $this->companyService->updateCompany($company, $request->validated());
-        return response()->json([
-            'message' => 'Company updated successfully',
-            'company' => new CompanyStoreResource($company),
-        ]);
-    }
+        $data = $this->companyService->create($request->validated());
 
-    public function store(CompanyRequest $request): JsonResponse
-    {
-        $company = $this->companyService->createCompany($request->validated());
         return response()->json([
             'message' => 'Company created successfully',
-            'company' => new CompanyStoreResource($company),
+            'company' => new CompanyStoreResource($data['company']),
         ], 201);
+    }
+
+    public function update(UpdateCompanyRequest $request, Company $company): JsonResponse
+    {
+        $data = $this->companyService->update($company, $request->validated());
+
+        return response()->json([
+            'message' => 'Company updated successfully',
+            'company' => new CompanyStoreResource($data['company']),
+        ]);
     }
 
     public function destroy(Company $company): JsonResponse
     {
-        $this->companyService->deleteCompany($company);
+        $this->companyService->delete($company);
+
         return response()->json([
             'message' => 'Company deleted successfully',
         ], 204);
