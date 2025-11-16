@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UserLogin extends FormRequest
+class UpdateUserWorkScheduleRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,8 +14,7 @@ class UserLogin extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|string|email',
-            'password' => 'required|string',
+            'work_schedule_id' => 'required|integer|exists:work_schedules,id',
         ];
     }
 }

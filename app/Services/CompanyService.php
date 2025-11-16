@@ -2,37 +2,36 @@
 
 namespace App\Services;
 
-use App\Http\Resources\CompanyResource;
 use App\Models\Company;
 use App\Repositories\CompanyRepository;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyService
 {
-
-    public function __construct(protected CompanyRepository $companyRepository)
+    public function __construct(protected CompanyRepository $repository)
     {
     }
 
-    public function createCompany(array $data): Company
+    public function create(array $data): array
     {
         if (isset($data['logo']) && $data['logo']) {
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
-        return $this->companyRepository->save($data);
+
+        return ['company' => $this->repository->create($data)];
     }
 
-    public function getCompanyById(Company $company): CompanyResource
+    public function getCompanyById(Company $company): array
     {
-        return new CompanyResource($company);
+        return ['company' => $this->repository->findById($company)];
     }
 
-    public function getCompanyByName(string $company): CompanyResource
+    public function getCompanyByName(string $company): array
     {
-        return new CompanyResource($this->companyRepository->findByName($company));
+        return ['company' => $this->repository->findByName($company)];
     }
 
-    public function updateCompany(Company $company, array $data): Company
+    public function update(Company $company, array $data): array
     {
         if (isset($data['logo']) && $data['logo']) {
             if ($company->logo) {
@@ -40,11 +39,13 @@ class CompanyService
             }
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
-        return $this->companyRepository->update($company, $data);
+        $updatedCompany = $this->repository->update($company, $data);
+
+        return ['company' => $updatedCompany];
     }
 
-    public function deleteCompany(Company $company): bool
+    public function delete(Company $company): ?bool
     {
-        return $this->companyRepository->delete($company);
+        return $this->repository->delete($company);
     }
 }

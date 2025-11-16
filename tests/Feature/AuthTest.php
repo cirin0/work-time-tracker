@@ -78,20 +78,31 @@ class AuthTest extends TestCase
 
         $response->assertStatus(401)
             ->assertJson([
-                'error' => 'Invalid credential'
+                'error' => 'Invalid credentials'
             ]);
     }
 
     public function test_authenticated_user_can_logout()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email' => 'logout@example.com',
+            'password' => bcrypt('password'),
+        ]);
 
-        $response = $this->actingAs($user, 'api')
-            ->postJson('/api/auth/logout');
+        $loginResponse = $this->postJson('/api/auth/login', [
+            'email' => 'logout@example.com',
+            'password' => 'password',
+        ]);
+
+        $token = $loginResponse->json('access_token');
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->postJson('/api/auth/logout');
 
         $response->assertStatus(200)
             ->assertJson([
-                'message' => 'User logged out successfully'
+                'message' => 'Logged out successfully'
             ]);
     }
 

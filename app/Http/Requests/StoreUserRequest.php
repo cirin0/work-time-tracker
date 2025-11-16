@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UserRequest extends FormRequest
+class StoreUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -24,7 +24,7 @@ class UserRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'role' => $this->role ?? 'employee', // Default role if not provided
+            'role' => $this->role ?? 'employee',
         ]);
     }
 }

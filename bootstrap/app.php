@@ -21,6 +21,19 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => App\Http\Middleware\RoleMiddleware::class,
         ]);
     })
+    ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions) {
+        $exceptions->render(function (\PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException $e, $request) {
+            return response()->json(['error' => 'Token has expired'], 401);
+        });
+
+        $exceptions->render(function (\PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException $e, $request) {
+            return response()->json(['error' => 'Token is invalid'], 401);
+        });
+
+        $exceptions->render(function (Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException $e, $request) {
+            return response()->json(['error' => $e->getMessage()], 401);
+        });
+    })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {

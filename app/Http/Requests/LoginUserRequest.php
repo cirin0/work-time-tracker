@@ -4,8 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
-class TimeEntryRequest extends FormRequest
+class LoginUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,7 +14,8 @@ class TimeEntryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'comment' => 'nullable|string|max:255',
+            'email' => 'required|string|email',
+            'password' => 'required|string',
         ];
     }
 }
