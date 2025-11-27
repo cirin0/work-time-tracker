@@ -21,8 +21,8 @@ class CompanyStoreResource extends JsonResource
             'description' => $this->description,
             'logo' => $this->logo ? Storage::url($this->logo) : null,
             'manager_id' => $this->manager_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => $this->created_at->format('d-m-Y H:i:s'),
+            'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];
     }
 }
