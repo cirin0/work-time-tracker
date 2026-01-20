@@ -17,7 +17,7 @@ class CompanyFactory extends Factory
             'phone' => $this->faker->phoneNumber,
             'logo' => null,
             'description' => $this->faker->paragraph,
-            'address' => $this->faker->address,
+            'address' => $this->faker->streetAddress,
             'manager_id' => null,
         ];
     }
