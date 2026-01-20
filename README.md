@@ -1,31 +1,84 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
 # Work Time Tracker
 
-A Laravel-based application for tracking work time.
+RESTful API for work time tracking built with Laravel 12, JWT authentication, and WebSocket support.
 
-## Backend Setup Instructions
+## Architecture
 
-### Prerequisites
+The project uses the Repository-Service pattern:
+- **Controllers** - Handle HTTP requests
+- **Services** - Business logic
+- **Repositories** - Data access layer
+- **Resources** - Format API responses
+- **Form Requests** - Request validation
 
-- PHP 8.1 or higher
+## Key Features
+
+### Authentication & Authorization
+- JWT authentication (php-open-source-saver/jwt-auth)
+- Role-based system: Employee, Manager, Admin
+- Middleware for role-based access control
+
+### Company Management
+- CRUD operations for companies
+- Employee assignment to companies
+- Employee management (managers only)
+
+### Time Tracking
+- Clock-in/Clock-out functionality
+- Time entry history
+- Work time reports and statistics
+- Work schedule integration
+
+### Work Schedules
+- Create and manage schedules
+- Daily schedules (DailySchedule)
+- Assign schedules to users
+
+### Leave Requests
+- Create leave requests
+- Approve/Reject functionality for managers
+- Request history
+
+### Real-time Messaging
+- WebSocket chat via Laravel Reverb
+- Private messages between users
+- Rate limiting (60 messages/minute)
+
+### Documentation & Monitoring
+- Automatic OpenAPI documentation (Scramble)
+- Laravel Telescope for debugging (development only)
+- Postman collection (laravel-postman)
+
+## Tech Stack
+
+### Core
+- **PHP**: ^8.2
+- **Laravel Framework**: ^12.47.0
+- **PostgreSQL**: Primary database
+
+### Packages
+- **JWT Auth**: ^2.8.3 php-open-source-saver/jwt-auth 
+- **Reverb**: ^1.7.0 (WebSocket server)
+- **Scramble**: ^0.12.36 (API documentation)
+- **Telescope**: ^5.16.1 (development)
+- **Pest**: ^3.8.4 (testing)
+
+## Installation
+
+### Requirements
+
+- PHP 8.2 or higher
 - Composer
-- PostgreSQL
+- PostgreSQL 16+
 - Git
 
 ### Installation Steps
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd work-time-tracker
+   git clone https://github.com/cirin0/work-time-tracker.git && cd work-time-tracker
    ```
 
 2. **Install dependencies**
@@ -40,102 +93,181 @@ A Laravel-based application for tracking work time.
    ```
 
 4. **Configure the database**
-   - Create a PostgreSQL database named `work-time-tracker`
-   - Update the database credentials in the `.env` file if needed:
-     ```
+   - Create PostgreSQL database `work-time-tracker` or your preferred name
+   - Update `.env` file:
+     ```env
      DB_CONNECTION=pgsql
      DB_HOST=127.0.0.1
      DB_PORT=5432
      DB_DATABASE=work-time-tracker
      DB_USERNAME=postgres
-     DB_PASSWORD=password
+     DB_PASSWORD=postgres
      ```
 
-5. **Run migrations and seeders**
+5. **Generate JWT secret**
+   ```bash
+   php artisan jwt:secret
+   ```
+
+6. **Configure Reverb (WebSocket)**
+   ```bash
+   php artisan reverb:install
+   ```
+
+7. **Run migrations and seed data**
    ```bash
    php artisan migrate
    php artisan db:seed
    ```
 
-6. **Generate JWT secret**
-   ```bash
-   php artisan jwt:secret
-   ```
-
-7. **Start the development server**
+8. **Start the server**
    ```bash
    php artisan serve
    ```
-   The application will be available at http://localhost:8000
+   For WebSocket support, run Reverb in a separate terminal:
+   ```bash
+   php artisan reverb:start
+   ```
+   
+   Or run both together:
+   ```bash
+   composer run dev
+   ```
+   
+   API will be available at: http://localhost:8000/api
 
-### Additional Commands
+9. **Run tests**
+   - Create testing database `work-time-tracker_testing`
+	- Update `phpunit.xml` with testing database name
+   ```bash
+   php artisan test
+   ```
 
-- **Run tests**
-  ```bash
-  php artisan test
-  ```
+## Useful Links
 
-- **Clear cache**
-  ```bash
-  php artisan cache:clear
-  php artisan config:clear
-  php artisan route:clear
-  ```
+- **API Documentation**: http://localhost:8000/docs/api
+- **Telescope (dev)**: http://localhost:8000/telescope
 
-- **Queue worker (if needed)**
-  ```bash
-  php artisan queue:work
-  ```
+## API Endpoints
 
-## About Laravel
+### Authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - Login
+- `POST /api/auth/logout` - Logout
+- `POST /api/auth/refresh` - Refresh token
+- `GET /api/me` - Current user
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Users
+- `GET /api/users` - List users
+- `GET /api/users/{user}` - User details
+- `PUT /api/users/{user}` - Update profile
+- `POST /api/users/{user}/avatar` - Upload avatar
+- `POST /api/users/{user}/role` - Change role (Admin)
+- `DELETE /api/users/{user}` - Delete user
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Companies
+- `GET /api/companies/{company}` - Company details
+- `GET /api/companies/name/{company}` - Search by name
+- `POST /api/companies` - Create company
+- `PUT /api/companies/{company}` - Update
+- `DELETE /api/companies/{company}` - Delete
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Time Tracking
+- `POST /api/clock-in` - Clock in
+- `POST /api/clock-out` - Clock out
+- `GET /api/time-entries` - Entry history
+- `GET /api/me/time-summary` - Time summary
 
-## Learning Laravel
+### Leave Requests
+- `GET /api/leave-requests` - My requests
+- `POST /api/leave-requests` - Create request
+- `GET /api/manager/leave-requests` - Subordinates' requests (Manager)
+- `POST /api/manager/leave-requests/{id}/approve` - Approve (Manager)
+- `POST /api/manager/leave-requests/{id}/reject` - Reject (Manager)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Work Schedules
+- `GET /api/work-schedules` - List schedules
+- `POST /api/work-schedules` - Create schedule
+- `GET /api/work-schedules/{id}` - Details
+- `PUT /api/work-schedules/{id}` - Update
+- `DELETE /api/work-schedules/{id}` - Delete
+- `GET /api/users/{user}/work-schedule` - User schedule
+- `PUT /api/users/{user}/work-schedule` - Set schedule
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Messages
+- `GET /api/messages/{receiverId}` - Chat history
+- `POST /api/messages` - Send message (rate limit: 60/min)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Manager Endpoints
+- `POST /api/manager/companies/{company}/add-employee` - Add employee
+- `POST /api/manager/companies/{company}/remove-employee` - Remove employee
 
-## Laravel Sponsors
+## Project Structure
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+app/
+├── Classes/           # Helper classes
+├── Enums/            # UserRole enum
+├── Events/           # MessageSent event
+├── Http/
+│   ├── Controllers/
+│   │   └── Api/     # API controllers
+│   │       ├── Manager/  # Manager controllers
+│   │       ├── AuthController
+│   │       ├── CompanyController
+│   │       ├── LeaveRequestController
+│   │       ├── MessageController
+│   │       ├── TimeEntryController
+│   │       ├── UserController
+│   │       └── WorkScheduleController
+│   ├── Middleware/   # Custom middleware
+│   ├── Requests/     # Form Request validation
+│   └── Resources/    # API Resources
+├── Models/           # Eloquent models
+├── Repositories/     # Data access layer
+├── Services/         # Business logic layer
+└── Providers/        # Service Providers
 
-### Premium Partners
+tests/
+├── Feature/          # Feature tests
+│   ├── AuthTest.php
+│   ├── ChatTest.php
+│   ├── CompanyTest.php
+│   ├── LeaveRequestTest.php
+│   ├── TimeEntryTest.php
+│   ├── UserManagementTest.php
+│   ├── UserTest.php
+│   └── WorkScheduleTest.php
+└── Unit/             # Unit tests
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Data Models
 
-## Contributing
+- **User** - Users with roles (employee/manager/admin)
+- **Company** - Companies
+- **TimeEntry** - Work time entries
+- **WorkSchedule** - Work schedules
+- **DailySchedule** - Daily schedules within work schedules
+- **LeaveRequest** - Leave requests
+- **Message** - Chat messages
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Roles & Permissions
 
-## Code of Conduct
+### Employee (default)
+- Manage own profile
+- Clock-in/Clock-out
+- View own time and schedules
+- Create leave requests
+- Chat with other users
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Manager
+- All Employee permissions
+- Manage company employees
+- Approve/Reject leave requests
+- View subordinates' time
 
-## Security Vulnerabilities
+### Admin
+- All Manager permissions
+- Change user roles
+- Full access to all data
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
