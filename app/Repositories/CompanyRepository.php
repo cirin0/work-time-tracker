@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Company;
+use App\Models\User;
 
 class CompanyRepository
 {
@@ -22,6 +23,21 @@ class CompanyRepository
         return Company::query()->where('name', $company)->firstOrFail();
     }
 
+    public function delete(Company $company): ?bool
+    {
+        return $company->delete();
+    }
+
+    public function addEmployee(User $user, int $companyId, int $managerId): User
+    {
+        $user->update([
+            'company_id' => $companyId,
+            'manager_id' => $managerId,
+        ]);
+
+        return $user->fresh();
+    }
+
     public function update(Company $company, array $data): Company
     {
         $company->update($data);
@@ -29,8 +45,13 @@ class CompanyRepository
         return $company;
     }
 
-    public function delete(Company $company): ?bool
+    public function removeEmployee(User $user): User
     {
-        return $company->delete();
+        $user->update([
+            'company_id' => null,
+            'manager_id' => null,
+        ]);
+
+        return $user->fresh();
     }
 }

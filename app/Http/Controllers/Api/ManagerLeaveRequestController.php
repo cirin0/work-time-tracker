@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Manager;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LeaveRequest;
@@ -8,16 +8,14 @@ use App\Services\LeaveRequestService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class LeaveRequestController extends Controller
+class ManagerLeaveRequestController extends Controller
 {
 
     public function __construct(protected LeaveRequestService $leaveRequestService)
     {
     }
 
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
         $requests = $this->leaveRequestService->getPendingForManager(Auth::user());
