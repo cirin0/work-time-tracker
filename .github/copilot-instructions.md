@@ -8,19 +8,33 @@ should be followed closely to enhance the user's satisfaction building Laravel a
 
 ## Foundational Context
 
-This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an
-expert with them all. Ensure you abide by these specific packages & versions.
+This application is a **RESTful API backend** built with Laravel 12. There is NO frontend - this is a pure API
+application with comprehensive API documentation via Scramble.
 
-- php - 8.4.1
-- laravel/framework (LARAVEL) - v12
-- laravel/prompts (PROMPTS) - v0
-- laravel/reverb (REVERB) - v1
-- laravel/sanctum (SANCTUM) - v4
-- laravel/mcp (MCP) - v0
-- laravel/pint (PINT) - v1
-- laravel/sail (SAIL) - v1
-- pestphp/pest (PEST) - v3
+### Main Technologies & Versions
+
+- php - ^8.2 (development: 8.4.1)
+- laravel/framework (LARAVEL) - ^12.47.0
+- postgresql - Primary database
+- php-open-source-saver/jwt-auth - ^2.8.3 (JWT authentication)
+- laravel/reverb (REVERB) - ^1.7.0 (WebSocket server)
+- laravel/sanctum (SANCTUM) - ^4.2.3 (backup auth option)
+- dedoc/scramble - ^0.12.36 (OpenAPI documentation)
+- laravel/telescope - ^5.16.1 (development monitoring)
+- laravel/pint (PINT) - ^1.27.0
+- laravel/sail (SAIL) - ^1.52
+- pestphp/pest (PEST) - ^3.8.4
 - phpunit/phpunit (PHPUNIT) - v11
+- yasin_tgh/laravel-postman - ^1.4.5 (Postman collection generation)
+
+### Application Type & Architecture
+
+- **Pure API Backend** - No views, no Blade, no Inertia, no frontend assets
+- **Repository-Service Pattern** - Controllers → Services → Repositories → Models
+- **JWT Authentication** - Token-based auth (php-open-source-saver/jwt-auth)
+- **Role-Based Access Control** - Employee, Manager, Admin roles
+- **WebSocket Support** - Real-time messaging via Laravel Reverb
+- **Comprehensive Testing** - Pest-based feature and unit tests
 
 ## Conventions
 
@@ -36,13 +50,72 @@ expert with them all. Ensure you abide by these specific packages & versions.
 
 ## Application Structure & Architecture
 
-- Stick to existing directory structure - don't create new base folders without approval.
-- Do not change the application's dependencies without approval.
+### Design Pattern: Repository-Service Pattern
 
-## Frontend Bundling
+- **Controllers** (app/Http/Controllers/Api/) - Handle HTTP requests, return JSON responses
+- **Services** (app/Services/) - Business logic layer
+- **Repositories** (app/Repositories/) - Data access layer, Eloquent queries
+- **Resources** (app/Http/Resources/) - Transform models to JSON API responses
+- **Form Requests** (app/Http/Requests/) - Validation rules and authorization
 
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`,
-  `npm run dev`, or `composer run dev`. Ask them.
+### Key Directories
+
+```
+app/
+├── Classes/              # Helper classes (e.g., ApiResponseClass)
+├── Enums/               # UserRole enum
+├── Events/              # Laravel events (MessageSent)
+├── Http/
+│   ├── Controllers/Api/ # All API controllers
+│   │   └── Manager/    # Manager-specific controllers
+│   ├── Middleware/     # Custom middleware (role-based access)
+│   ├── Requests/       # Form Request validation classes
+│   └── Resources/      # API Resource transformers
+├── Models/             # Eloquent models
+├── Repositories/       # Repository pattern implementation
+├── Services/          # Service layer with business logic
+└── Providers/         # Service Providers (including RepositoryServiceProvider)
+```
+
+### Models & Relationships
+
+1. **User** - hasMany TimeEntry, hasOne WorkSchedule, belongsTo Company, role enum
+2. **Company** - hasMany Users
+3. **TimeEntry** - belongsTo User, tracks clock-in/clock-out
+4. **WorkSchedule** - belongsTo User, hasMany DailySchedule
+5. **DailySchedule** - belongsTo WorkSchedule
+6. **LeaveRequest** - belongsTo User, approval workflow
+7. **Message** - polymorphic for real-time chat
+
+### Authentication & Authorization
+
+- **JWT Auth** via php-open-source-saver/jwt-auth (primary)
+- **Sanctum** available as backup
+- **UserRole Enum**: Employee, Manager, Admin
+- **Middleware**: `auth:api`, custom `role:manager`, `role:admin`
+- Route groups organized by auth requirements
+
+### API Response Format
+
+- Use `ApiResponseClass` for consistent JSON responses
+- Eloquent API Resources for data transformation
+- Standard HTTP status codes
+- Error handling with proper JSON error responses
+
+### Rules
+
+- Stick to existing directory structure - don't create new base folders without approval
+- Do not change the application's dependencies without approval
+- Always follow Repository-Service pattern when adding new features
+- Controllers should be thin - delegate logic to Services
+- Services use Repositories for data access - never query directly from Services
+
+## API-Only Application
+
+- This is a **backend API only** - there are NO frontend assets, views, or UI components.
+- Do NOT suggest npm commands, Vite, or frontend-related solutions.
+- API documentation is auto-generated at `/docs/api` via Scramble.
+- Test API endpoints using Postman collections or the Scramble UI.
 
 ## Replies
 
@@ -112,7 +185,7 @@ expert with them all. Ensure you abide by these specific packages & versions.
 ### Constructors
 
 - Use PHP 8 constructor property promotion in `__construct()`.
-    - <code-snippet>public function __construct(public GitHub $github) { }</code-snippet>
+    - <code-snippet>public function \_\_construct(public GitHub $github) { }</code-snippet>
 - Do not allow empty `__construct()` methods with zero parameters.
 
 ### Type Declarations
@@ -202,10 +275,11 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - When creating tests, make use of `php artisan make:test [options] <name>` to create a feature test, and pass `--unit`
   to create a unit test. Most tests should be feature tests.
 
-### Vite Error
+### No Frontend / Vite
 
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run
-  `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
+- This application has NO frontend assets or Vite configuration
+- Do NOT suggest any npm, Vite, or frontend build commands
+- API documentation is handled by Scramble at `/docs/api`
 
 === laravel/v12 rules ===
 
@@ -282,9 +356,9 @@ protected function isAccessible(User $user, ?string $path = null): bool
   it('returns all', function () {
   $response = $this->postJson('/api/docs', []);
 
-  $response->assertSuccessful();
-  });
-  </code-snippet>
+    $response->assertSuccessful();
+    });
+    </code-snippet>
 
 ### Mocking
 
