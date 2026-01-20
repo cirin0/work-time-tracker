@@ -5,29 +5,21 @@ namespace App\Services;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Repositories\LeaveRequestRepository;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LeaveRequestService
 {
-
     public function __construct(protected LeaveRequestRepository $leaveRequestRepository)
     {
     }
 
-    /**
-     * @param User $manager
-     * @return mixed
-     */
-    public function getPendingForManager(User $manager)
+    public function getPendingForManager(User $manager): Collection
     {
         return $this->leaveRequestRepository->getPendingForManager($manager);
     }
 
-    /**
-     * @param LeaveRequest $leaveRequest
-     * @return LeaveRequest
-     */
     public function approve(LeaveRequest $leaveRequest): LeaveRequest
     {
         if ($leaveRequest->user->manager_id !== Auth::id()) {
@@ -42,11 +34,6 @@ class LeaveRequestService
         return $leaveRequest;
     }
 
-    /**
-     * @param LeaveRequest $leaveRequest
-     * @param string $managerComments
-     * @return LeaveRequest
-     */
     public function reject(LeaveRequest $leaveRequest, string $managerComments): LeaveRequest
     {
         if ($leaveRequest->user->manager_id !== Auth::id()) {

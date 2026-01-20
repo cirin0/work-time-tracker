@@ -19,6 +19,11 @@ class ManagerCompanyController extends Controller
 
     public function addEmployeeToCompany(AddEmployeeToCompanyRequest $request, Company $company): JsonResponse
     {
+        $manager = Auth::user();
+        if ($manager->id !== $company->manager_id) {
+            return response()->json(['error' => 'You are not authorized to add employees to this company.'], 403);
+        }
+
         $result = $this->companyService->addEmployeeToCompany(
             $company,
             $request->validated('employee_id'),
@@ -33,6 +38,11 @@ class ManagerCompanyController extends Controller
 
     public function deleteEmployeeFromCompany(RemoveEmployeeFromCompanyRequest $request, Company $company): JsonResponse
     {
+        $manager = Auth::user();
+        if ($manager->id !== $company->manager_id) {
+            return response()->json(['error' => 'You are not authorized to remove employees from this company.'], 403);
+        }
+
         $result = $this->companyService->removeEmployeeFromCompany(
             $company,
             $request->validated('employee_id')
@@ -52,7 +62,6 @@ class ManagerCompanyController extends Controller
         }
 
         $result = $this->companyService->removeEmployeeFromCompany($company, $employeeId);
-
 
         return response()->json([
             'message' => 'Employee removed from company successfully.',

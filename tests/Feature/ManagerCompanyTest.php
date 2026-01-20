@@ -1,189 +1,205 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+class ManagerCompanyTest extends TestCase
+{
+    use RefreshDatabase;
 
-it('allows manager to add employee to their company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create(['role' => 'employee', 'company_id' => null, 'manager_id' => null]);
+    public function test_manager_can_add_employee_to_their_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create(['role' => 'employee', 'company_id' => null, 'manager_id' => null]);
 
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/add-employee", [
-            'employee_id' => $employee->id,
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+                'employee_id' => $employee->id,
+            ]);
+
+        $response->assertSuccessful()
+            ->assertJsonFragment(['message' => 'Employee added to company successfully.']);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $employee->id,
+            'company_id' => $company->id,
+            'manager_id' => $manager->id,
+        ]);
+    }
+
+    public function test_non_manager_cannot_add_employee_to_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $otherManager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create(['role' => 'employee', 'company_id' => null, 'manager_id' => null]);
+
+        $response = $this->actingAs($otherManager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+                'employee_id' => $employee->id,
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_cannot_add_employee_who_already_belongs_to_a_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $otherCompany = Company::factory()->create();
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => $otherCompany->id,
+            'manager_id' => null,
         ]);
 
-    $response->assertSuccessful()
-        ->assertJsonFragment(['message' => 'Employee added to company successfully.']);
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+                'employee_id' => $employee->id,
+            ]);
 
-    $this->assertDatabaseHas('users', [
-        'id' => $employee->id,
-        'company_id' => $company->id,
-        'manager_id' => $manager->id,
-    ]);
-});
+        $response->assertStatus(409)
+            ->assertJsonFragment(['message' => 'This user already belongs to a company.']);
+    }
 
-it('denies non-manager from adding employee to company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $otherManager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create(['role' => 'employee', 'company_id' => null, 'manager_id' => null]);
-
-    $response = $this->actingAs($otherManager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/add-employee", [
-            'employee_id' => $employee->id,
+    public function test_cannot_add_employee_who_already_has_a_manager()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $otherManager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => null,
+            'manager_id' => $otherManager->id,
         ]);
 
-    $response->assertForbidden();
-});
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+                'employee_id' => $employee->id,
+            ]);
 
-it('returns 409 when adding employee who already belongs to a company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $otherCompany = Company::factory()->create();
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => $otherCompany->id,
-        'manager_id' => null,
-    ]);
+        $response->assertStatus(409)
+            ->assertJsonFragment(['message' => 'This user is already assigned to a manager.']);
+    }
 
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/add-employee", [
-            'employee_id' => $employee->id,
+    public function test_add_employee_requires_employee_id()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/add-employee", []);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors('employee_id');
+    }
+
+    public function test_manager_can_remove_employee_from_their_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => $company->id,
+            'manager_id' => $manager->id,
         ]);
 
-    $response->assertStatus(409)
-        ->assertJsonFragment(['message' => 'This user already belongs to a company.']);
-});
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
+                'employee_id' => $employee->id,
+            ]);
 
-it('returns 409 when adding employee who already has a manager', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $otherManager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => null,
-        'manager_id' => $otherManager->id,
-    ]);
+        $response->assertSuccessful()
+            ->assertJsonFragment(['message' => 'Employee removed from company successfully.']);
 
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/add-employee", [
-            'employee_id' => $employee->id,
+        $this->assertDatabaseHas('users', [
+            'id' => $employee->id,
+            'company_id' => null,
+            'manager_id' => null,
+        ]);
+    }
+
+    public function test_non_manager_cannot_remove_employee_from_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $otherManager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => $company->id,
+            'manager_id' => $manager->id,
         ]);
 
-    $response->assertStatus(409)
-        ->assertJsonFragment(['message' => 'This user is already assigned to a manager.']);
-});
+        $response = $this->actingAs($otherManager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
+                'employee_id' => $employee->id,
+            ]);
 
-it('returns validation error when employee_id is missing', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $response->assertForbidden();
+    }
 
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/add-employee", []);
-
-    $response->assertStatus(422)
-        ->assertJsonValidationErrors('employee_id');
-});
-
-it('allows manager to remove employee from their company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => $company->id,
-        'manager_id' => $manager->id,
-    ]);
-
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
-            'employee_id' => $employee->id,
+    public function test_cannot_remove_employee_who_does_not_belong_to_the_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $otherCompany = Company::factory()->create();
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => $otherCompany->id,
+            'manager_id' => null,
         ]);
 
-    $response->assertSuccessful()
-        ->assertJsonFragment(['message' => 'Employee removed from company successfully.']);
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
+                'employee_id' => $employee->id,
+            ]);
 
-    $this->assertDatabaseHas('users', [
-        'id' => $employee->id,
-        'company_id' => null,
-        'manager_id' => null,
-    ]);
-});
+        $response->assertStatus(409)
+            ->assertJsonFragment(['message' => 'This user does not belong to this company.']);
+    }
 
-it('denies non-manager from removing employee from company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $otherManager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => $company->id,
-        'manager_id' => $manager->id,
-    ]);
-
-    $response = $this->actingAs($otherManager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
-            'employee_id' => $employee->id,
+    public function test_manager_can_remove_employee_by_id_from_their_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => $company->id,
+            'manager_id' => $manager->id,
         ]);
 
-    $response->assertForbidden();
-});
+        $response = $this->actingAs($manager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/remove-employee/{$employee->id}");
 
-it('returns 409 when removing employee who does not belong to the company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $otherCompany = Company::factory()->create();
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => $otherCompany->id,
-        'manager_id' => null,
-    ]);
+        $response->assertSuccessful()
+            ->assertJsonFragment(['message' => 'Employee removed from company successfully.']);
 
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
-            'employee_id' => $employee->id,
+        $this->assertDatabaseHas('users', [
+            'id' => $employee->id,
+            'company_id' => null,
+            'manager_id' => null,
+        ]);
+    }
+
+    public function test_non_manager_cannot_remove_employee_by_id_from_company()
+    {
+        $manager = User::factory()->create(['role' => 'manager']);
+        $otherManager = User::factory()->create(['role' => 'manager']);
+        $company = Company::factory()->create(['manager_id' => $manager->id]);
+        $employee = User::factory()->create([
+            'role' => 'employee',
+            'company_id' => $company->id,
+            'manager_id' => $manager->id,
         ]);
 
-    $response->assertStatus(409)
-        ->assertJsonFragment(['message' => 'This user does not belong to this company.']);
-});
+        $response = $this->actingAs($otherManager, 'api')
+            ->postJson("/api/manager/companies/{$company->id}/remove-employee/{$employee->id}");
 
-it('allows manager to remove employee by id from their company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => $company->id,
-        'manager_id' => $manager->id,
-    ]);
-
-    $response = $this->actingAs($manager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/remove-employee/{$employee->id}");
-
-    $response->assertSuccessful()
-        ->assertJsonFragment(['message' => 'Employee removed from company successfully.']);
-
-    $this->assertDatabaseHas('users', [
-        'id' => $employee->id,
-        'company_id' => null,
-        'manager_id' => null,
-    ]);
-});
-
-it('denies non-manager from removing employee by id from company', function () {
-    $manager = User::factory()->create(['role' => 'manager']);
-    $otherManager = User::factory()->create(['role' => 'manager']);
-    $company = Company::factory()->create(['manager_id' => $manager->id]);
-    $employee = User::factory()->create([
-        'role' => 'employee',
-        'company_id' => $company->id,
-        'manager_id' => $manager->id,
-    ]);
-
-    $response = $this->actingAs($otherManager, 'api')
-        ->postJson("/api/manager/companies/{$company->id}/remove-employee/{$employee->id}");
-
-    $response->assertForbidden();
-});
+        $response->assertForbidden();
+    }
+}
