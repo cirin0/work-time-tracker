@@ -2,59 +2,45 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\LeaveRequestStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLeaveRequestRequest;
 use App\Http\Resources\LeaveRequestResource;
-use Illuminate\Http\Request;
+use App\Models\LeaveRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $requests = Auth::user()->leaveRequests()->latest()->paginate();
+
         return LeaveRequestResource::collection($requests);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreLeaveRequestRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'type' => 'required|in:vacation,sick,personal',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'reason' => 'required|string|max:1000',
+        $leaveRequest = Auth::user()->leaveRequests()->create([
+            ...$request->validated(),
+            'status' => LeaveRequestStatus::PENDING,
         ]);
 
-        $leaveRequest = Auth::user()->leaveRequests()->create($validated);
-        return response()->json($leaveRequest, 201);
+        return response()->json([
+            'message' => 'Leave request created successfully.',
+            'data' => new LeaveRequestResource($leaveRequest),
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(LeaveRequest $leaveRequest): JsonResponse
     {
-        //
-    }
+        if ($leaveRequest->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json([
+            'data' => new LeaveRequestResource($leaveRequest),
+        ]);
     }
 }

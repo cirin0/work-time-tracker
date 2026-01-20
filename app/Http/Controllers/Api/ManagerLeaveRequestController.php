@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RejectLeaveRequestRequest;
+use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Services\LeaveRequestService;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class ManagerLeaveRequestController extends Controller
@@ -15,34 +18,33 @@ class ManagerLeaveRequestController extends Controller
     {
     }
 
-
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
         $requests = $this->leaveRequestService->getPendingForManager(Auth::user());
-        return response()->json($requests);
+
+        return LeaveRequestResource::collection($requests);
     }
 
-    public function approve(LeaveRequest $leaveRequest)
+    public function approve(LeaveRequest $leaveRequest): JsonResponse
     {
         $leaveRequest = $this->leaveRequestService->approve($leaveRequest);
 
         return response()->json([
             'message' => 'Leave request approved successfully.',
-            'leave_request' => $leaveRequest,
+            'data' => new LeaveRequestResource($leaveRequest),
         ]);
     }
 
-    public function reject(Request $request, LeaveRequest $leaveRequest)
+    public function reject(RejectLeaveRequestRequest $request, LeaveRequest $leaveRequest): JsonResponse
     {
-        $validated = $request->validate([
-            'manager_comments' => 'required|string|max:1000'
-        ]);
-
-        $leaveRequest = $this->leaveRequestService->reject($leaveRequest, $validated['manager_comments']);
+        $leaveRequest = $this->leaveRequestService->reject(
+            $leaveRequest,
+            $request->validated('manager_comments')
+        );
 
         return response()->json([
             'message' => 'Leave request rejected successfully.',
-            'leave_request' => $leaveRequest,
+            'data' => new LeaveRequestResource($leaveRequest),
         ]);
     }
 }

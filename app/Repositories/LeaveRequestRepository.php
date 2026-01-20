@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\LeaveRequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -14,7 +15,7 @@ class LeaveRequestRepository
 
         return LeaveRequest::query()
             ->whereIn('user_id', $employeeIds)
-            ->where('status', 'pending')
+            ->where('status', LeaveRequestStatus::PENDING)
             ->with('user:id,name,email')
             ->latest()
             ->get();

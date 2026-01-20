@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeaveRequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Repositories\LeaveRequestRepository;
@@ -27,7 +28,7 @@ class LeaveRequestService
         }
 
         $leaveRequest->update([
-            'status' => 'approved',
+            'status' => LeaveRequestStatus::APPROVED,
             'processed_by_manager_id' => Auth::id(),
         ]);
 
@@ -41,7 +42,7 @@ class LeaveRequestService
         }
 
         $leaveRequest->update([
-            'status' => 'rejected',
+            'status' => LeaveRequestStatus::REJECTED,
             'processed_by_manager_id' => Auth::id(),
             'manager_comments' => $managerComments,
         ]);
