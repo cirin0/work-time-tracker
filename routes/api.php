@@ -43,8 +43,10 @@ Route::prefix('/users')->group(function () {
     Route::get('/{user}', [UserController::class, 'show']);
 });
 
+// TODO: fix data responses to be consistent
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
+    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'showById']);
     Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
 
     Route::prefix('manager')->middleware('role:manager')->group(function () {
