@@ -3,51 +3,56 @@
 namespace App\Repositories;
 
 use App\Models\TimeEntry;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
 class TimeEntryRepository
 {
-    public function getActiveEntryForUser(int $userId)
+    public function getActiveEntryForUser(User $user): ?TimeEntry
     {
-        return TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
             ->whereNull('stop_time')
             ->first();
     }
 
-    public function create(array $data)
+    public function create(User $user, array $data): TimeEntry
     {
-        return TimeEntry::query()->create($data);
+        return TimeEntry::query()->create(array_merge($data, [
+            'user_id' => $user->id,
+        ]));
     }
 
-    public function update(int $id, array $data)
+    public function update(TimeEntry $timeEntry, array $data): TimeEntry
     {
-        $timeEntry = TimeEntry::query()->findOrFail($id);
         $timeEntry->update($data);
-        return $timeEntry;
+
+        return $timeEntry->fresh();
     }
 
-    public function delete(int $id): ?bool
+    public function delete(TimeEntry $timeEntry): ?bool
     {
-        $timeEntry = TimeEntry::query()->findOrFail($id);
         return $timeEntry->delete();
     }
 
-    public function getById(int $id)
+    public function getAllForUser(User $user): Collection
     {
-        return TimeEntry::query()->findOrFail($id);
-    }
-
-    public function getAllForUser(int $userId): Collection
-    {
-        return TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
             ->orderBy('start_time', 'desc')
             ->get();
     }
 
-    public function getSummaryForUser(int $userId): Collection
+    public function getSummaryForUser(User $user): Collection
     {
-        return TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
             ->whereNotNull('stop_time')
             ->get();
+    }
+
+    public function getById(int $id): ?TimeEntry
+    {
+        return TimeEntry::query()->find($id);
     }
 }

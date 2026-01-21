@@ -43,8 +43,10 @@ Route::prefix('/users')->group(function () {
     Route::get('/{user}', [UserController::class, 'show']);
 });
 
+// TODO: fix data responses to be consistent
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
+    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'showById']);
     Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
 
     Route::prefix('manager')->middleware('role:manager')->group(function () {
@@ -70,10 +72,13 @@ Route::middleware('auth:api')->prefix('companies')->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
-    Route::post('/clock-in', [TimeEntryController::class, 'start']);
-    Route::post('/clock-out', [TimeEntryController::class, 'stop']);
     Route::get('/time-entries', [TimeEntryController::class, 'index']);
-    Route::get('/me/time-summary', [TimeEntryController::class, 'summary']);
+    Route::get('/time-entries/active', [TimeEntryController::class, 'active']);
+    Route::get('/time-entries/summary/me', [TimeEntryController::class, 'summary']);
+    Route::post('/time-entries', [TimeEntryController::class, 'store']);
+    Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
+    Route::put('/time-entries/{timeEntry}', [TimeEntryController::class, 'update']);
+    Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
 });
 
 Route::middleware(['auth:api'])->group(function () {

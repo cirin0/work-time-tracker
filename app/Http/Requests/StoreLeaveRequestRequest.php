@@ -27,7 +27,7 @@ class StoreLeaveRequestRequest extends FormRequest
     {
         return [
             'type.required' => 'The leave type is required.',
-            'type.enum' => 'The leave type must be one of: sick, vacation, or unpaid.',
+            'type.enum' => 'The leave type must be one of: sick, vacation, personal or unpaid.',
             'start_date.required' => 'The start date is required.',
             'start_date.date' => 'The start date must be a valid date.',
             'start_date.after_or_equal' => 'The start date must be today or a future date.',

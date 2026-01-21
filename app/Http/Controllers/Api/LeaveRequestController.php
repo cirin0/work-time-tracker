@@ -2,45 +2,45 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\LeaveRequestStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLeaveRequestRequest;
 use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
+use App\Services\LeaveRequestService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
+    public function __construct(protected LeaveRequestService $leaveRequestService)
+    {
+    }
+
     public function index(): AnonymousResourceCollection
     {
-        $requests = Auth::user()->leaveRequests()->latest()->paginate();
+        $result = $this->leaveRequestService->getUserLeaveRequests(Auth::user());
 
-        return LeaveRequestResource::collection($requests);
+        return LeaveRequestResource::collection($result['requests']);
     }
 
     public function store(StoreLeaveRequestRequest $request): JsonResponse
     {
-        $leaveRequest = Auth::user()->leaveRequests()->create([
-            ...$request->validated(),
-            'status' => LeaveRequestStatus::PENDING,
-        ]);
+        $result = $this->leaveRequestService->createLeaveRequest(
+            Auth::user(),
+            $request->validated()
+        );
 
         return response()->json([
             'message' => 'Leave request created successfully.',
-            'data' => new LeaveRequestResource($leaveRequest),
+            'data' => new LeaveRequestResource($result['leave_request']),
         ], 201);
     }
 
-    public function show(LeaveRequest $leaveRequest): JsonResponse
+    public function showById(LeaveRequest $leaveRequest): LeaveRequestResource
     {
-        if ($leaveRequest->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized');
-        }
+        $result = $this->leaveRequestService->getLeaveRequestById($leaveRequest);
 
-        return response()->json([
-            'data' => new LeaveRequestResource($leaveRequest),
-        ]);
+        return new LeaveRequestResource($result['leave_request']);
     }
 }
