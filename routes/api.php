@@ -72,10 +72,13 @@ Route::middleware('auth:api')->prefix('companies')->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
-    Route::post('/clock-in', [TimeEntryController::class, 'start']);
-    Route::post('/clock-out', [TimeEntryController::class, 'stop']);
     Route::get('/time-entries', [TimeEntryController::class, 'index']);
-    Route::get('/me/time-summary', [TimeEntryController::class, 'summary']);
+    Route::get('/time-entries/active', [TimeEntryController::class, 'active']);
+    Route::get('/time-entries/summary/me', [TimeEntryController::class, 'summary']);
+    Route::post('/time-entries', [TimeEntryController::class, 'store']);
+    Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
+    Route::put('/time-entries/{timeEntry}', [TimeEntryController::class, 'update']);
+    Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
 });
 
 Route::middleware(['auth:api'])->group(function () {

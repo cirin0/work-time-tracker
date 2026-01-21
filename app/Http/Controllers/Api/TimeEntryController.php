@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\TimeEntryRequest;
+use App\Http\Requests\StopTimeEntryRequest;
+use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Resources\TimeEntryResource;
-use App\Http\Resources\TimeEntryStartResource;
-use App\Http\Resources\TimeEntryStopResource;
 use App\Http\Resources\TimeEntrySummaryResource;
+use App\Models\TimeEntry;
 use App\Services\TimeEntryService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
-use OpenApi\Attributes as OA;
-
 
 class TimeEntryController extends Controller
 {
@@ -19,170 +19,70 @@ class TimeEntryController extends Controller
     {
     }
 
-    #[OA\Post(
-        path: '/api/clock-in',
-        operationId: 'startTimeEntry',
-        description: 'Start a new time entry for the authenticated user.',
-        summary: 'Start a time entry',
-        requestBody: new OA\RequestBody(
-            content: new OA\MediaType(
-                mediaType: 'application/json',
-                schema: new OA\Schema(
-                    ref: '#/components/schemas/TimeEntryRequest'
-                )
-            )
-        ),
-        tags: ['Time Entries'],
-        responses: [
-            new OA\Response(
-                response: '201',
-                description: 'Time entry started successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        ref: '#/components/schemas/TimeEntryStartResource'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '400',
-                description: 'Bad Request'
-            )
-        ]
-    )]
-    public function start(TimeEntryRequest $request)
+    public function active(): TimeEntryResource|JsonResponse
     {
-        $comment = $request->input('comment');
+        $data = $this->timeEntryService->getActiveTimeEntry(Auth::user());
 
-        try {
-            $timeEntry = $this->timeEntryService->startTimeEntry($comment);
-            return response()->json([
-                'message' => 'Time entry started successfully',
-                'data' => new TimeEntryStartResource($timeEntry)
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        return new TimeEntryResource($data['time_entry']);
     }
 
-    #[OA\Post(
-        path: '/api/clock-out',
-        operationId: 'stopTimeEntry',
-        description: 'Stop the currently active time entry for the authenticated user.',
-        summary: 'Stop a time entry',
-        requestBody: new OA\RequestBody(
-            content: new OA\MediaType(
-                mediaType: 'application/json',
-                schema: new OA\Schema(
-                    ref: '#/components/schemas/TimeEntryRequest'
-                )
-            )
-        ),
-        tags: ['Time Entries'],
-        responses: [
-            new OA\Response(
-                response: '200',
-                description: 'Time entry stopped successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        ref: '#/components/schemas/TimeEntryStopResource'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '400',
-                description: 'Bad Request'
-            )
-        ]
-    )]
-    public function stop(TimeEntryRequest $request)
+    public function summary(): JsonResponse
     {
-        $comment = $request->input('comment');
+        $data = $this->timeEntryService->getTimeSummary(Auth::user());
 
-        try {
-            $timeEntry = $this->timeEntryService->stopTimeEntry($comment);
-            return response()->json([
-                'message' => 'Time entry stopped successfully',
-                'data' => new TimeEntryStopResource($timeEntry)
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
-    }
-
-    #[OA\Get(
-        path: 'api/time-entries',
-        operationId: 'getTimeEntries',
-        description: 'Retrieve all time entries for the authenticated user.',
-        summary: 'Get time entries',
-        tags: ['Time Entries'],
-        responses: [
-            new OA\Response(
-                response: '200',
-                description: 'List of time entries retrieved successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        type: 'array',
-                        items: new OA\Items(ref: '#/components/schemas/TimeEntryStopResource')
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '401',
-                description: 'Unauthorized'
-            )
-        ]
-    )]
-    public function index()
-    {
-        $timeEntries = $this->timeEntryService->getTimeEntries();
-
-        return TimeEntryResource::collection($timeEntries);
-    }
-
-    #[OA\Get(
-        path: 'api/me/time-summary',
-        operationId: 'getTimeSummary',
-        description: 'Retrieve a summary of time entries for the authenticated user.',
-        summary: 'Get time summary',
-        tags: ['Time Entries'],
-        responses: [
-            new OA\Response(
-                response: '200',
-                description: 'Time summary retrieved successfully',
-                content: new OA\MediaType(
-                    mediaType: 'application/json',
-                    schema: new OA\Schema(
-                        ref: '#/components/schemas/TimeEntrySummaryResource'
-                    )
-                )
-            ),
-            new OA\Response(
-                response: '401',
-                description: 'Unauthorized'
-            )
-        ]
-    )]
-    public function summary()
-    {
-        $summary = $this->timeEntryService->getTimeSummary();
         return response()->json([
-            'message' => 'Time summary retrieved successfully',
-            'data' => new TimeEntrySummaryResource($summary)
+            'message' => 'Time summary retrieved successfully.',
+            'data' => new TimeEntrySummaryResource($data),
         ]);
     }
 
-    public function destroy(string $id)
+    public function index(): AnonymousResourceCollection
     {
-        try {
-            $this->timeEntryService->deleteTimeEntry((int)$id);
-            return response()->json([
-                'message' => 'Time entry deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
+        $data = $this->timeEntryService->getUserTimeEntries(Auth::user());
+
+        return TimeEntryResource::collection($data['time_entries']);
+    }
+
+    public function show(TimeEntry $timeEntry): TimeEntryResource
+    {
+        $data = $this->timeEntryService->getTimeEntryById(Auth::user(), $timeEntry);
+
+        return new TimeEntryResource($data['time_entry']);
+    }
+
+    public function store(StoreTimeEntryRequest $request): JsonResponse
+    {
+        $data = $this->timeEntryService->startTimeEntry(
+            Auth::user(),
+            $request->validated()
+        );
+
+        return response()->json([
+            'message' => 'Time entry started successfully.',
+            'data' => new TimeEntryResource($data['time_entry']),
+        ], 201);
+    }
+
+    public function update(StopTimeEntryRequest $request, TimeEntry $timeEntry): JsonResponse
+    {
+        $data = $this->timeEntryService->stopTimeEntry(
+            Auth::user(),
+            $timeEntry,
+            $request->validated()
+        );
+
+        return response()->json([
+            'message' => 'Time entry stopped successfully.',
+            'data' => new TimeEntryResource($data['time_entry']),
+        ]);
+    }
+
+    public function destroy(TimeEntry $timeEntry): JsonResponse
+    {
+        $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
+
+        return response()->json([
+            'message' => 'Time entry deleted successfully.',
+        ], 204);
     }
 }
