@@ -67,6 +67,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::middleware('auth:api')->prefix('companies')->group(function () {
+    // TODO: for testing, in future only one company
     Route::get('/', [CompanyController::class, 'index']);
     Route::get('/{company}', [CompanyController::class, 'showById']);
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
