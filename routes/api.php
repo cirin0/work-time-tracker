@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\ManagerCompanyController;
 use App\Http\Controllers\Api\ManagerLeaveRequestController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TimeEntryController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkScheduleController;
@@ -23,16 +24,20 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:60,1');
 });
 
-Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
+Route::middleware('auth:api')->group(function () {
+    Route::get('/me', [ProfileController::class, 'me']);
+    Route::patch('/me', [ProfileController::class, 'updateProfile']);
+    Route::post('/me/avatar', [ProfileController::class, 'updateAvatar']);
+});
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::middleware('role:admin')->group(function () {
-        Route::post('{user}/role', [UserController::class, 'updateRole']);
         // uncomment for admin to view all users
         //   Route::get('/', [UserController::class, 'index']);
         //   Route::get('/{user}', [UserController::class, 'show']);
+        Route::patch('/{user}', [UserController::class, 'update']);
+        Route::post('{user}/role', [UserController::class, 'updateRole']);
     });
-    Route::put('/{user}', [UserController::class, 'update']);
     Route::post('/{user}/avatar', [UserController::class, 'uploadAvatar']);
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
