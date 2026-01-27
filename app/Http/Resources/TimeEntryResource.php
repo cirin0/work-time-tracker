@@ -17,7 +17,8 @@ class TimeEntryResource extends JsonResource
             'start_time' => $this->start_time?->format('Y-m-d H:i:s'),
             'stop_time' => $this->stop_time?->format('Y-m-d H:i:s'),
             'duration' => $this->duration,
-            'comment' => $this->comment,
+            'start_comment' => $this->start_comment,
+            'stop_comment' => $this->stop_comment,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];

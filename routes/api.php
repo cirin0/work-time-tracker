@@ -82,8 +82,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/time-entries/active', [TimeEntryController::class, 'active']);
     Route::get('/time-entries/summary/me', [TimeEntryController::class, 'summary']);
     Route::post('/time-entries', [TimeEntryController::class, 'store']);
+    Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive']);
     Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
-    Route::put('/time-entries/{timeEntry}', [TimeEntryController::class, 'update']);
     Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
 });
 

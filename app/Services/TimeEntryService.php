@@ -6,7 +6,6 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Repositories\TimeEntryRepository;
 use Carbon\Carbon;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class TimeEntryService
 {
@@ -19,28 +18,32 @@ class TimeEntryService
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if ($activeEntry) {
-            abort(400, 'An active time entry already exists. Please stop it before starting a new one.');
+            return [
+                'error' => true,
+                'message' => 'An active time entry already exists. Please stop it before starting a new one.',
+            ];
         }
 
         $timeEntry = $this->timeEntryRepository->create($user, [
             'start_time' => now(),
-            'comment' => $data['comment'] ?? null,
+            'start_comment' => $data['start_comment'] ?? null,
         ]);
 
         return ['time_entry' => $timeEntry];
     }
 
-    public function stopTimeEntry(User $user, TimeEntry $timeEntry, array $data): array
+    public function stopActiveTimeEntry(User $user, array $data): array
     {
-        if ($timeEntry->user_id !== $user->id) {
-            throw new AccessDeniedHttpException('You do not have permission to stop this time entry.');
+        $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
+
+        if (!$activeEntry) {
+            return [
+                'error' => true,
+                'message' => 'No active time entry found.',
+            ];
         }
 
-        if ($timeEntry->stop_time !== null) {
-            abort(400, 'The time entry is already stopped.');
-        }
-
-        $startTime = $timeEntry->start_time;
+        $startTime = $activeEntry->start_time;
         $stopTime = now();
         $duration = abs((int)$stopTime->diffInSeconds($startTime));
 
@@ -49,11 +52,11 @@ class TimeEntryService
             'duration' => $duration,
         ];
 
-        if (isset($data['comment'])) {
-            $updateData['comment'] = $data['comment'];
+        if (isset($data['stop_comment'])) {
+            $updateData['stop_comment'] = $data['stop_comment'];
         }
 
-        $updatedTimeEntry = $this->timeEntryRepository->update($timeEntry, $updateData);
+        $updatedTimeEntry = $this->timeEntryRepository->update($activeEntry, $updateData);
 
         return ['time_entry' => $updatedTimeEntry];
     }
@@ -69,10 +72,6 @@ class TimeEntryService
     {
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
-        if (!$activeEntry) {
-            abort(404, 'No active time entry found for the user.');
-        }
-
         return ['time_entry' => $activeEntry];
     }
 
@@ -84,8 +83,12 @@ class TimeEntryService
     public function getTimeEntryById(User $user, TimeEntry $timeEntry): array
     {
         if ($timeEntry->user_id !== $user->id) {
-            throw new AccessDeniedHttpException('You do not have permission to view this time entry.');
+            return [
+                'error' => true,
+                'message' => 'You do not have permission to view this time entry.',
+            ];
         }
+
         $timeEntry = $this->timeEntryRepository->getById($timeEntry->id);
 
         return ['time_entry' => $timeEntry];
@@ -127,12 +130,20 @@ class TimeEntryService
         ];
     }
 
-    public function deleteTimeEntry(User $user, TimeEntry $timeEntry): ?bool
+    public function deleteTimeEntry(User $user, TimeEntry $timeEntry): array
     {
         if ($timeEntry->user_id !== $user->id) {
-            throw new AccessDeniedHttpException('You do not have permission to delete this time entry.');
+            return [
+                'error' => true,
+                'message' => 'You do not have permission to delete this time entry.',
+            ];
         }
 
-        return $this->timeEntryRepository->delete($timeEntry);
+        $deleted = $this->timeEntryRepository->delete($timeEntry);
+
+        return [
+            'deleted' => $deleted,
+            'message' => $deleted ? 'Time entry deleted successfully.' : 'Failed to delete time entry.',
+        ];
     }
 }

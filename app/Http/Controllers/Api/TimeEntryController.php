@@ -19,11 +19,22 @@ class TimeEntryController extends Controller
     {
     }
 
-    public function active(): TimeEntryResource|JsonResponse
+    public function active(): JsonResponse
     {
         $data = $this->timeEntryService->getActiveTimeEntry(Auth::user());
+        $activeEntry = $data['time_entry'];
 
-        return new TimeEntryResource($data['time_entry']);
+        if (!$activeEntry) {
+            return response()->json([
+                'message' => 'No active time entry found.',
+                'data' => null,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Active time entry retrieved successfully.',
+            'data' => new TimeEntryResource($activeEntry),
+        ]);
     }
 
     public function summary(): JsonResponse
@@ -43,11 +54,20 @@ class TimeEntryController extends Controller
         return TimeEntryResource::collection($data['time_entries']);
     }
 
-    public function show(TimeEntry $timeEntry): TimeEntryResource
+    public function show(TimeEntry $timeEntry): JsonResponse
     {
         $data = $this->timeEntryService->getTimeEntryById(Auth::user(), $timeEntry);
 
-        return new TimeEntryResource($data['time_entry']);
+        if (isset($data['error'])) {
+            return response()->json([
+                'message' => $data['message'],
+            ], 403);
+        }
+
+        return response()->json([
+            'message' => 'Time entry retrieved successfully.',
+            'data' => new TimeEntryResource($data['time_entry']),
+        ]);
     }
 
     public function store(StoreTimeEntryRequest $request): JsonResponse
@@ -57,19 +77,30 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
+        if (isset($data['error'])) {
+            return response()->json([
+                'message' => $data['message'],
+            ], 400);
+        }
+
         return response()->json([
             'message' => 'Time entry started successfully.',
             'data' => new TimeEntryResource($data['time_entry']),
         ], 201);
     }
 
-    public function update(StopTimeEntryRequest $request, TimeEntry $timeEntry): JsonResponse
+    public function stopActive(StopTimeEntryRequest $request): JsonResponse
     {
-        $data = $this->timeEntryService->stopTimeEntry(
+        $data = $this->timeEntryService->stopActiveTimeEntry(
             Auth::user(),
-            $timeEntry,
             $request->validated()
         );
+
+        if (isset($data['error'])) {
+            return response()->json([
+                'message' => $data['message'],
+            ], 400);
+        }
 
         return response()->json([
             'message' => 'Time entry stopped successfully.',
@@ -79,10 +110,16 @@ class TimeEntryController extends Controller
 
     public function destroy(TimeEntry $timeEntry): JsonResponse
     {
-        $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
+        $data = $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
+
+        if (isset($data['error'])) {
+            return response()->json([
+                'message' => $data['message'],
+            ], 403);
+        }
 
         return response()->json([
-            'message' => 'Time entry deleted successfully.',
+            'message' => $data['message'],
         ], 204);
     }
 }
