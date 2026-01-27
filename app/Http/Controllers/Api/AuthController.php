@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Resources\AuthResource;
-use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 
@@ -38,10 +37,6 @@ class AuthController extends Controller
 
     }
 
-    public function me(): UserResource
-    {
-        return new UserResource(auth()->user());
-    }
 
     public function refresh(): JsonResponse
     {

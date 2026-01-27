@@ -63,6 +63,13 @@ class UserService
         return ['user' => $user];
     }
 
+    public function updateProfile(User $user, array $data): array
+    {
+        $user->update($data);
+
+        return ['user' => $user];
+    }
+
     public function getWorkSchedule(User $user): array
     {
         $workSchedule = $user->workSchedule?->load('dailySchedules');
