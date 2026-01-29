@@ -28,18 +28,19 @@ class AuthService
         return [
             'user' => auth()->user(),
             'token' => $token,
-            'expires_in' => auth()->factory()->getTTL() * 60,
+            'expires_in' => config('jwt.ttl', 60) * 60,
         ];
     }
 
     public function logout(): void
     {
         $token = JWTAuth::getToken();
+
         if (!$token) {
             throw new UnauthorizedHttpException('', 'Token not provided');
         }
 
-        JWTAuth::invalidate($token);
+        JWTAuth::setToken($token)->invalidate();
     }
 
     public function refresh(): array
@@ -50,14 +51,14 @@ class AuthService
             throw new UnauthorizedHttpException('', 'Token not provided');
         }
 
-        $newToken = JWTAuth::refresh($token);
+        $newToken = JWTAuth::setToken($token)->refresh();
 
         $user = JWTAuth::setToken($newToken)->toUser();
 
         return [
             'user' => $user,
             'token' => $newToken,
-            'expires_in' => auth()->factory()->getTTL() * 60,
+            'expires_in' => config('jwt.ttl', 60) * 60,
         ];
     }
 }
