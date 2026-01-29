@@ -24,7 +24,7 @@ class WorkScheduleRepository
 
     public function delete($id): bool
     {
-        return WorkSchedule::destroy($id);
+        return WorkSchedule::destroy($id) > 0;
     }
 
     public function getAllWorkSchedules($companyId): Collection
