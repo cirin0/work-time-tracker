@@ -29,7 +29,9 @@ class LeaveRequestRepository
 
     public function create(User $user, array $data): LeaveRequest
     {
-        return $user->leaveRequests()->create($data);
+        return LeaveRequest::query()->create(array_merge($data, [
+            'user_id' => $user->id,
+        ]));
     }
 
     public function findById(LeaveRequest $leaveRequest): ?LeaveRequest
