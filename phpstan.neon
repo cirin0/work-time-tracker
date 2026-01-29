@@ -1,0 +1,21 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    level: 5
+
+    tmpDir: build/phpstan
+
+    parallel:
+        maximumNumberOfProcesses: 1
+        processTimeout: 300.0
+
+    ignoreErrors:
+        # Laravel API Resources accessing properties - this is standard Laravel behavior
+        - '#Access to an undefined property App\\Http\\Resources\\.*::\$.*#'
+        # PHPDoc type comparisons - these are intentional strict checks
+        - '#Strict comparison using === between string and App\\Enums\\UserRole::.*#'
