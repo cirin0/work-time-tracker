@@ -10,7 +10,10 @@ class TimeEntryRepository
 {
     public function getActiveEntryForUser(User $user): ?TimeEntry
     {
-        return $user->timeEntries()->whereNull('stop_time')->first();
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->whereNull('stop_time')
+            ->first();
     }
 
     public function create(User $user, array $data): TimeEntry

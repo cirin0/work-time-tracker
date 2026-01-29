@@ -19,9 +19,7 @@ class TimeEntryTest extends TestCase
         $response->assertCreated();
         $this->assertDatabaseHas('time_entries', ['user_id' => $user->id, 'stop_time' => null]);
 
-        $timeEntry = TimeEntry::where('user_id', $user->id)->first();
-
-        $response = $this->actingAs($user, 'api')->putJson("/api/time-entries/{$timeEntry->id}");
+        $response = $this->actingAs($user, 'api')->patchJson('/api/time-entries/active/stop');
         $response->assertOk();
         $this->assertDatabaseMissing('time_entries', ['user_id' => $user->id, 'stop_time' => null]);
     }
@@ -37,9 +35,9 @@ class TimeEntryTest extends TestCase
     public function test_user_cannot_stop_time_entry_that_is_already_stopped(): void
     {
         $user = User::factory()->create();
-        $timeEntry = TimeEntry::factory()->create(['user_id' => $user->id, 'stop_time' => now()]);
+        TimeEntry::factory()->create(['user_id' => $user->id, 'stop_time' => now()]);
 
-        $this->actingAs($user, 'api')->putJson("/api/time-entries/{$timeEntry->id}")->assertStatus(400);
+        $this->actingAs($user, 'api')->patchJson('/api/time-entries/active/stop')->assertStatus(400);
     }
 
     public function test_user_can_view_their_time_entries(): void
@@ -62,8 +60,8 @@ class TimeEntryTest extends TestCase
 
         $this->actingAs($user, 'api')->getJson('/api/time-entries/active')
             ->assertOk()
-            ->assertJsonFragment(['id' => $activeEntry->id])
-            ->assertJsonFragment(['stop_time' => null]);
+            ->assertJsonPath('data.id', $activeEntry->id)
+            ->assertJsonPath('data.stop_time', null);
     }
 
     public function test_user_gets_null_when_no_active_time_entry(): void
@@ -71,9 +69,11 @@ class TimeEntryTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user, 'api')->getJson('/api/time-entries/active')
-            ->assertNotFound()
-            ->assertJson(['message' => 'No active time entry found for the user.'])
-            ->assertStatus(404);
+            ->assertOk()
+            ->assertJson([
+                'message' => 'No active time entry found.',
+                'data' => null,
+            ]);
     }
 
     public function test_user_can_view_single_time_entry(): void
@@ -83,7 +83,7 @@ class TimeEntryTest extends TestCase
 
         $this->actingAs($user, 'api')->getJson("/api/time-entries/{$timeEntry->id}")
             ->assertOk()
-            ->assertJsonFragment(['id' => $timeEntry->id]);
+            ->assertJsonPath('data.id', $timeEntry->id);
     }
 
     public function test_user_cannot_view_other_users_time_entry(): void
