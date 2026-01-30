@@ -15,7 +15,8 @@
         "laravel/reverb": "^1.7.0",
         "laravel/sanctum": "^4.2.4",
         "laravel/tinker": "^2.11.0",
-        "php-open-source-saver/jwt-auth": "^2.8.3"
+        "php-open-source-saver/jwt-auth": "^2.8.3",
+        "spatie/laravel-data": "^4.19"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24.1",
@@ -29,6 +30,7 @@
         "nunomaduro/collision": "^8.8.3",
         "pestphp/pest": "^3.8.4",
         "pestphp/pest-plugin-laravel": "^3.2",
+        "spatie/laravel-typescript-transformer": "^2.5",
         "yasin_tgh/laravel-postman": "^1.4.5"
     },
     "autoload": {
