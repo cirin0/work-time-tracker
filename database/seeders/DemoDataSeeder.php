@@ -115,7 +115,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->subDays(1)->setTime(9, 0),
             'stop_time' => Carbon::now()->subDays(1)->setTime(17, 30),
             'duration' => 510, // 8.5 hours in minutes
-            'comment' => 'Admin completed full day work',
+            'start_comment' => 'Admin completed full day work',
+            'stop_comment' => 'Admin stopped working for the day',
         ]);
 
         // Manager - completed and active time entry
@@ -124,7 +125,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->subDays(2)->setTime(8, 30),
             'stop_time' => Carbon::now()->subDays(2)->setTime(16, 45),
             'duration' => 495, // ~8.25 hours in minutes
-            'comment' => 'Manager completed work with meetings',
+            'start_comment' => 'Manager completed work with meetings',
+            'stop_comment' => 'Manager stopped working for the day',
         ]);
 
         TimeEntry::create([
@@ -132,7 +134,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->setTime(9, 15),
             'stop_time' => null,
             'duration' => 0,
-            'comment' => 'Manager currently working',
+            'start_comment' => 'Manager currently working',
+            'stop_comment' => null,
         ]);
 
         // Employee - completed and active time entries
@@ -141,7 +144,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->subDays(3)->setTime(9, 0),
             'stop_time' => Carbon::now()->subDays(3)->setTime(18, 0),
             'duration' => 540, // 9 hours in minutes
-            'comment' => 'Employee worked on project tasks',
+            'start_comment' => 'Employee worked on project tasks',
+            'stop_comment' => 'Employee stopped working for the day',
         ]);
 
         TimeEntry::create([
@@ -149,7 +153,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->setTime(8, 45),
             'stop_time' => null,
             'duration' => 0,
-            'comment' => 'Employee currently clocked in',
+            'start_comment' => 'Employee currently clocked in',
+            'stop_comment' => null,
         ]);
 
         // Create Leave Requests with different statuses
