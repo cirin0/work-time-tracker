@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\UserResource;
@@ -39,6 +40,20 @@ class ProfileController extends Controller
         return response()->json([
             'message' => 'Avatar updated successfully',
             'user' => new UserResource($data['user']),
+        ]);
+    }
+
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->changePassword($user, $request->validated());
+
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 403);
+        }
+
+        return response()->json([
+            'message' => 'Password changed successfully',
         ]);
     }
 }

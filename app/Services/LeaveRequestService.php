@@ -7,7 +7,6 @@ use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Repositories\LeaveRequestRepository;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class LeaveRequestService
 {
@@ -24,7 +23,7 @@ class LeaveRequestService
 
     public function getUserLeaveRequests(User $user): array
     {
-        $requests = $this->leaveRequestRepository->getUserLeaveRequests($user);
+        $requests = $this->leaveRequestRepository->getAllForUser($user);
 
         return ['requests' => $requests];
     }
@@ -32,8 +31,9 @@ class LeaveRequestService
     public function createLeaveRequest(User $user, array $data): array
     {
         $data['status'] = LeaveRequestStatus::PENDING;
+        $data['user_id'] = $user->id;
 
-        $leaveRequest = $this->leaveRequestRepository->create($user, $data);
+        $leaveRequest = $this->leaveRequestRepository->create($data);
 
         return ['leave_request' => $leaveRequest];
     }
@@ -43,15 +43,16 @@ class LeaveRequestService
         $user = Auth::user();
 
         if ($leaveRequest->user_id !== $user->id && $user->manager_id !== $leaveRequest->user->id) {
-            throw new UnauthorizedHttpException('', 'You are not authorized to view this leave request.');
+            return ['message' => 'You are not authorized to view this leave request.'];
         }
+
         return ['leave_request' => $leaveRequest];
     }
 
     public function approve(LeaveRequest $leaveRequest): array
     {
         if ($leaveRequest->user->manager_id !== Auth::id()) {
-            throw new UnauthorizedHttpException('', 'You are not authorized to approve this leave request.');
+            return ['message' => 'You are not authorized to approve this leave request.'];
         }
 
         $leaveRequest->update([
@@ -65,7 +66,7 @@ class LeaveRequestService
     public function reject(LeaveRequest $leaveRequest, string $managerComments): array
     {
         if ($leaveRequest->user->manager_id !== Auth::id()) {
-            throw new UnauthorizedHttpException('', 'You are not authorized to reject this leave request.');
+            return ['message' => 'You are not authorized to reject this leave request.'];
         }
 
         $leaveRequest->update([

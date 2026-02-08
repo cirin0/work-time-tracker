@@ -3,13 +3,19 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserRepository
 {
-    public function create(array $data): User
+    public function find(int $id): ?User
     {
-        return User::query()->create($data);
+        return User::query()->find($id);
+    }
+
+    public function getAll(): Collection
+    {
+        return User::query()->get();
     }
 
     public function getPaginated(int $perPage = 10): LengthAwarePaginator
@@ -17,9 +23,14 @@ class UserRepository
         return User::query()->paginate($perPage);
     }
 
-    public function find(int $id): ?User
+    public function create(array $data): User
     {
-        return User::query()->find($id);
+        return User::query()->create($data);
+    }
+
+    public function update(User $user, array $data): bool
+    {
+        return $user->update($data);
     }
 
     public function delete(User $user): ?bool

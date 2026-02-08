@@ -38,7 +38,7 @@ class MessageController extends Controller
 
         $user = Auth::user();
 
-        if ((int)$data['receiver_id'] === (int)$user->id) {
+        if ((int) $data['receiver_id'] === (int) $user->id) {
             return response()->json([
                 'message' => 'You cannot send a message to yourself.',
             ], 422);

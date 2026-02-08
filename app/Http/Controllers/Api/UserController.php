@@ -23,13 +23,13 @@ class UserController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-//        Gate::authorize('view-all-users');
-        return UserResource::collection($this->userService->getAllPaginated());
+        $data = $this->userService->getAllPaginated();
+
+        return UserResource::collection($data['users']);
     }
 
     public function show(User $user): UserResource
     {
-        Gate::any('manage-profile', $user);
         $data = $this->userService->getById($user);
 
         return new UserResource($data['user']);
@@ -49,7 +49,7 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-//        Gate::authorize('manage-profile', $user);
+        Gate::authorize('manage-profile', $user);
         $data = $this->userService->update($user, $request->validated());
 
         return response()->json([
@@ -84,7 +84,7 @@ class UserController extends Controller
         Gate::authorize('manage-profile', $user);
         $data = $this->userService->getWorkSchedule($user);
 
-        if (!$data['work_schedule']) {
+        if (! $data['work_schedule']) {
             return response()->json([
                 'message' => 'User has no work schedule assigned',
                 'user' => new UserResource($data['user']),

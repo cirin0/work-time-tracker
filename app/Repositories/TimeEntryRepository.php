@@ -8,31 +8,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 class TimeEntryRepository
 {
+    public function find(int $id): ?TimeEntry
+    {
+        return TimeEntry::query()->find($id);
+    }
+
     public function getActiveEntryForUser(User $user): ?TimeEntry
     {
         return TimeEntry::query()
             ->where('user_id', $user->id)
             ->whereNull('stop_time')
             ->first();
-    }
-
-    public function create(User $user, array $data): TimeEntry
-    {
-        return TimeEntry::query()->create(array_merge($data, [
-            'user_id' => $user->id,
-        ]));
-    }
-
-    public function update(TimeEntry $timeEntry, array $data): TimeEntry
-    {
-        $timeEntry->update($data);
-
-        return $timeEntry->fresh();
-    }
-
-    public function delete(TimeEntry $timeEntry): ?bool
-    {
-        return $timeEntry->delete();
     }
 
     public function getAllForUser(User $user): Collection
@@ -43,7 +29,7 @@ class TimeEntryRepository
             ->get();
     }
 
-    public function getSummaryForUser(User $user): Collection
+    public function getCompletedForUser(User $user): Collection
     {
         return TimeEntry::query()
             ->where('user_id', $user->id)
@@ -51,8 +37,18 @@ class TimeEntryRepository
             ->get();
     }
 
-    public function getById(int $id): ?TimeEntry
+    public function create(array $data): TimeEntry
     {
-        return TimeEntry::query()->find($id);
+        return TimeEntry::query()->create($data);
+    }
+
+    public function update(TimeEntry $timeEntry, array $data): bool
+    {
+        return $timeEntry->update($data);
+    }
+
+    public function delete(TimeEntry $timeEntry): ?bool
+    {
+        return $timeEntry->delete();
     }
 }

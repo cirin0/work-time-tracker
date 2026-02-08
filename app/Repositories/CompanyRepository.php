@@ -3,55 +3,39 @@
 namespace App\Repositories;
 
 use App\Models\Company;
-use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 
 class CompanyRepository
 {
+    public function find(int $id): ?Company
+    {
+        return Company::query()->find($id);
+    }
+
+    public function findByName(string $name): ?Company
+    {
+        return Company::query()
+            ->where('name', $name)
+            ->first();
+    }
+
+    public function getAll(): Collection
+    {
+        return Company::query()->get();
+    }
+
     public function create(array $data): Company
     {
         return Company::query()->create($data);
     }
 
-    public function findById(Company $company): ?Company
+    public function update(Company $company, array $data): bool
     {
-        return Company::query()->findOrFail($company->id);
-    }
-
-    public function findByName(string $company): ?Company
-    {
-        //        $company->load('manager', 'employees');
-        return Company::query()->where('name', $company)->firstOrFail();
+        return $company->update($data);
     }
 
     public function delete(Company $company): ?bool
     {
         return $company->delete();
-    }
-
-    public function addEmployee(User $user, int $companyId, int $managerId): User
-    {
-        $user->update([
-            'company_id' => $companyId,
-            'manager_id' => $managerId,
-        ]);
-
-        return $user->fresh();
-    }
-
-    public function update(Company $company, array $data): Company
-    {
-        $company->update($data);
-
-        return $company;
-    }
-
-    public function removeEmployee(User $user): User
-    {
-        $user->update([
-            'company_id' => null,
-            'manager_id' => null,
-        ]);
-
-        return $user->fresh();
     }
 }
