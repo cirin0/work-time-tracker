@@ -13,15 +13,13 @@ use Illuminate\Support\Facades\Auth;
 
 class ManagerCompanyController extends Controller
 {
-    public function __construct(protected CompanyService $companyService)
-    {
-    }
+    public function __construct(protected CompanyService $companyService) {}
 
     public function addEmployeeToCompany(AddEmployeeToCompanyRequest $request, Company $company): JsonResponse
     {
         $manager = Auth::user();
         if ($manager->id !== $company->manager_id) {
-            return response()->json(['error' => 'You are not authorized to add employees to this company.'], 403);
+            return response()->json(['message' => 'You are not authorized to add employees to this company.'], 403);
         }
 
         $result = $this->companyService->addEmployeeToCompany(
@@ -29,6 +27,10 @@ class ManagerCompanyController extends Controller
             $request->validated('employee_id'),
             Auth::id()
         );
+
+        if (isset($result['message'])) {
+            return response()->json(['message' => $result['message']], 409);
+        }
 
         return response()->json([
             'message' => 'Employee added to company successfully.',
@@ -40,13 +42,17 @@ class ManagerCompanyController extends Controller
     {
         $manager = Auth::user();
         if ($manager->id !== $company->manager_id) {
-            return response()->json(['error' => 'You are not authorized to remove employees from this company.'], 403);
+            return response()->json(['message' => 'You are not authorized to remove employees from this company.'], 403);
         }
 
         $result = $this->companyService->removeEmployeeFromCompany(
             $company,
             $request->validated('employee_id')
         );
+
+        if (isset($result['message'])) {
+            return response()->json(['message' => $result['message']], 409);
+        }
 
         return response()->json([
             'message' => 'Employee removed from company successfully.',
@@ -58,10 +64,14 @@ class ManagerCompanyController extends Controller
     {
         $manager = Auth::user();
         if ($manager->id !== $company->manager_id) {
-            return response()->json(['error' => 'You are not authorized to remove employees from this company.'], 403);
+            return response()->json(['message' => 'You are not authorized to remove employees from this company.'], 403);
         }
 
         $result = $this->companyService->removeEmployeeFromCompany($company, $employeeId);
+
+        if (isset($result['message'])) {
+            return response()->json(['message' => $result['message']], 409);
+        }
 
         return response()->json([
             'message' => 'Employee removed from company successfully.',

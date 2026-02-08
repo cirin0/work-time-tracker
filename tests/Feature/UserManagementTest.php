@@ -30,8 +30,8 @@ class UserManagementTest extends TestCase
                         'name',
                         'email',
                         'role',
-                    ]
-                ]
+                    ],
+                ],
             ]);
     }
 
@@ -83,7 +83,7 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user, 'api')
-            ->putJson("/api/users/{$user->id}", [
+            ->patchJson('/api/me', [
                 'name' => 'Updated Name',
                 'email' => 'updated@example.com',
             ]);
@@ -95,6 +95,45 @@ class UserManagementTest extends TestCase
             'name' => 'Updated Name',
             'email' => 'updated@example.com',
         ]);
+    }
+
+    public function test_admin_can_update_another_user()
+    {
+        $admin = User::factory()->create([
+            'role' => UserRole::ADMIN,
+        ]);
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($admin, 'api')
+            ->patchJson("/api/users/{$user->id}", [
+                'name' => 'Admin Updated Name',
+                'email' => 'admin-updated@example.com',
+            ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'name' => 'Admin Updated Name',
+            'email' => 'admin-updated@example.com',
+        ]);
+    }
+
+    public function test_non_admin_cannot_update_another_user()
+    {
+        $user = User::factory()->create([
+            'role' => UserRole::EMPLOYEE,
+        ]);
+
+        $anotherUser = User::factory()->create();
+
+        $response = $this->actingAs($user, 'api')
+            ->patchJson("/api/users/{$anotherUser->id}", [
+                'name' => 'Hacked Name',
+            ]);
+
+        $response->assertStatus(403);
     }
 
     public function test_user_can_delete_their_account()

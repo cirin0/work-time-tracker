@@ -5,11 +5,16 @@ namespace App\Repositories;
 use App\Enums\LeaveRequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\User;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class LeaveRequestRepository
 {
+    public function find(int $id): ?LeaveRequest
+    {
+        return LeaveRequest::query()->find($id);
+    }
+
     public function getPendingForManager(User $manager): Collection
     {
         $employeeIds = $manager->employees()->pluck('id');
@@ -22,20 +27,25 @@ class LeaveRequestRepository
             ->get();
     }
 
-    public function getUserLeaveRequests(User $user): LengthAwarePaginator
+    public function getAllForUser(User $user): LengthAwarePaginator
     {
-        return $user->leaveRequests()->latest()->paginate();
+        return $user->leaveRequests()
+            ->latest()
+            ->paginate();
     }
 
-    public function create(User $user, array $data): LeaveRequest
+    public function create(array $data): LeaveRequest
     {
-        return LeaveRequest::query()->create(array_merge($data, [
-            'user_id' => $user->id,
-        ]));
+        return LeaveRequest::query()->create($data);
     }
 
-    public function findById(LeaveRequest $leaveRequest): ?LeaveRequest
+    public function update(LeaveRequest $leaveRequest, array $data): bool
     {
-        return LeaveRequest::find($leaveRequest->id);
+        return $leaveRequest->update($data);
+    }
+
+    public function delete(LeaveRequest $leaveRequest): ?bool
+    {
+        return $leaveRequest->delete();
     }
 }

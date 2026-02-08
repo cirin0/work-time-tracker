@@ -6,11 +6,10 @@ use App\Models\Company;
 use App\Models\User;
 use App\Repositories\CompanyRepository;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CompanyService
 {
-    public function __construct(protected CompanyRepository $repository)
+    public function __construct(protected CompanyRepository $companyRepository)
     {
     }
 
@@ -20,17 +19,17 @@ class CompanyService
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
 
-        return ['company' => $this->repository->create($data)];
+        return ['company' => $this->companyRepository->create($data)];
     }
 
     public function getCompanyById(Company $company): array
     {
-        return ['company' => $this->repository->findById($company)];
+        return ['company' => $this->companyRepository->find($company->id)];
     }
 
     public function getCompanyByName(string $company): array
     {
-        return ['company' => $this->repository->findByName($company)];
+        return ['company' => $this->companyRepository->findByName($company)];
     }
 
     public function update(Company $company, array $data): array
@@ -41,14 +40,17 @@ class CompanyService
             }
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
-        $updatedCompany = $this->repository->update($company, $data);
 
-        return ['company' => $updatedCompany];
+        $this->companyRepository->update($company, $data);
+
+        return ['company' => $company->fresh()];
     }
 
-    public function delete(Company $company): ?bool
+    public function delete(Company $company): array
     {
-        return $this->repository->delete($company);
+        $deleted = $this->companyRepository->delete($company);
+
+        return ['deleted' => $deleted];
     }
 
     public function addEmployeeToCompany(Company $company, int $employeeId, int $managerId): array
@@ -56,16 +58,19 @@ class CompanyService
         $user = User::findOrFail($employeeId);
 
         if ($user->company_id !== null) {
-            throw new ConflictHttpException('This user already belongs to a company.');
+            return ['message' => 'This user already belongs to a company.'];
         }
 
         if ($user->manager_id !== null) {
-            throw new ConflictHttpException('This user is already assigned to a manager.');
+            return ['message' => 'This user is already assigned to a manager.'];
         }
 
-        $employee = $this->repository->addEmployee($user, $company->id, $managerId);
+        $user->update([
+            'company_id' => $company->id,
+            'manager_id' => $managerId,
+        ]);
 
-        return ['employee' => $employee];
+        return ['employee' => $user->fresh()];
     }
 
     public function removeEmployeeFromCompany(Company $company, int $employeeId): array
@@ -73,11 +78,14 @@ class CompanyService
         $user = User::findOrFail($employeeId);
 
         if ($user->company_id !== $company->id) {
-            throw new ConflictHttpException('This user does not belong to this company.');
+            return ['message' => 'This user does not belong to this company.'];
         }
 
-        $employee = $this->repository->removeEmployee($user);
+        $user->update([
+            'company_id' => null,
+            'manager_id' => null,
+        ]);
 
-        return ['employee' => $employee];
+        return ['employee' => $user->fresh()];
     }
 }

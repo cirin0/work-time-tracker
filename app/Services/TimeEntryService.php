@@ -6,25 +6,23 @@ use App\Models\TimeEntry;
 use App\Models\User;
 use App\Repositories\TimeEntryRepository;
 use Carbon\Carbon;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TimeEntryService
 {
-    public function __construct(protected TimeEntryRepository $timeEntryRepository)
-    {
-    }
+    public function __construct(protected TimeEntryRepository $timeEntryRepository) {}
 
     public function startTimeEntry(User $user, array $data): array
     {
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if ($activeEntry) {
-            return [
-                'error' => true,
-                'message' => 'An active time entry already exists. Please stop it before starting a new one.',
-            ];
+            throw new BadRequestHttpException('An active time entry already exists. Please stop it before starting a new one.');
         }
 
-        $timeEntry = $this->timeEntryRepository->create($user, [
+        $timeEntry = $this->timeEntryRepository->create([
+            'user_id' => $user->id,
             'start_time' => now(),
             'start_comment' => $data['start_comment'] ?? null,
         ]);
@@ -37,10 +35,7 @@ class TimeEntryService
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if (!$activeEntry) {
-            return [
-                'error' => true,
-                'message' => 'No active time entry found.',
-            ];
+            throw new BadRequestHttpException('No active time entry found.');
         }
 
         $startTime = $activeEntry->start_time;
@@ -56,9 +51,9 @@ class TimeEntryService
             $updateData['stop_comment'] = $data['stop_comment'];
         }
 
-        $updatedTimeEntry = $this->timeEntryRepository->update($activeEntry, $updateData);
+        $this->timeEntryRepository->update($activeEntry, $updateData);
 
-        return ['time_entry' => $updatedTimeEntry];
+        return ['time_entry' => $activeEntry->fresh()];
     }
 
     public function getUserTimeEntries(User $user): array
@@ -75,28 +70,20 @@ class TimeEntryService
         return ['time_entry' => $activeEntry];
     }
 
-    /*
-     * TODO:
-     * AccessDeniedHttpException видає помолку, можна використати в LeaveRequestService
-     */
-
     public function getTimeEntryById(User $user, TimeEntry $timeEntry): array
     {
         if ($timeEntry->user_id !== $user->id) {
-            return [
-                'error' => true,
-                'message' => 'You do not have permission to view this time entry.',
-            ];
+            throw new AccessDeniedHttpException('You do not have permission to view this time entry.');
         }
 
-        $timeEntry = $this->timeEntryRepository->getById($timeEntry->id);
+        $entry = $this->timeEntryRepository->find($timeEntry->id);
 
-        return ['time_entry' => $timeEntry];
+        return ['time_entry' => $entry];
     }
 
     public function getTimeSummary(User $user): array
     {
-        $completedEntries = $this->timeEntryRepository->getSummaryForUser($user);
+        $completedEntries = $this->timeEntryRepository->getCompletedForUser($user);
 
         $totalMinutes = $completedEntries->sum(function ($entry) {
             return Carbon::parse($entry->start_time)
@@ -133,17 +120,11 @@ class TimeEntryService
     public function deleteTimeEntry(User $user, TimeEntry $timeEntry): array
     {
         if ($timeEntry->user_id !== $user->id) {
-            return [
-                'error' => true,
-                'message' => 'You do not have permission to delete this time entry.',
-            ];
+            throw new AccessDeniedHttpException('You do not have permission to delete this time entry.');
         }
 
-        $deleted = $this->timeEntryRepository->delete($timeEntry);
+        $this->timeEntryRepository->delete($timeEntry);
 
-        return [
-            'deleted' => $deleted,
-            'message' => $deleted ? 'Time entry deleted successfully.' : 'Failed to delete time entry.',
-        ];
+        return ['success' => true];
     }
 }

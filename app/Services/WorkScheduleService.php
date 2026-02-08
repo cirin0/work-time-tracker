@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\DailySchedule;
 use App\Models\WorkSchedule;
 use App\Repositories\WorkScheduleRepository;
-use Illuminate\Database\Eloquent\Collection;
 
 class WorkScheduleService
 {
@@ -13,15 +12,17 @@ class WorkScheduleService
     {
     }
 
-    public function getAllWorkSchedulesById(mixed $companyId): Collection
+    public function getAllWorkSchedulesById(mixed $companyId): array
     {
-        return $this->workScheduleRepository->getAllWorkSchedules($companyId);
+        $schedules = $this->workScheduleRepository->getAllForCompany($companyId);
+
+        return ['schedules' => $schedules];
     }
 
-    public function create(mixed $data)
+    public function create(mixed $data): array
     {
         if ($data['is_default'] ?? false) {
-            $this->workScheduleRepository->updateDefaultWorkSchedule($data['company_id']);
+            $this->resetDefaultWorkSchedule($data['company_id']);
         }
 
         $dailySchedulesData = $this->extractDailySchedulesData($data);
@@ -31,7 +32,15 @@ class WorkScheduleService
 
         $this->createDailySchedules($workSchedule, $dailySchedulesData);
 
-        return $workSchedule->load('dailySchedules');
+        return ['work_schedule' => $workSchedule->load('dailySchedules')];
+    }
+
+    private function resetDefaultWorkSchedule(int $companyId): void
+    {
+        WorkSchedule::query()
+            ->where('company_id', $companyId)
+            ->where('is_default', true)
+            ->update(['is_default' => false]);
     }
 
     private function extractDailySchedulesData(array $data): array
@@ -70,6 +79,7 @@ class WorkScheduleService
                 'is_working_day' => false
             ];
         }
+
         return $dailySchedules;
     }
 
@@ -81,25 +91,43 @@ class WorkScheduleService
         }
     }
 
-    public function delete(string $id): bool
+    public function delete(WorkSchedule $workSchedule, ?int $companyId = null): array
     {
-        return $this->workScheduleRepository->delete($id);
-    }
-
-    public function update(string $id, mixed $data): WorkSchedule|string
-    {
-        if (isset($data['is_default']) && $data['is_default'] ?? false) {
-            $this->workScheduleRepository->updateDefaultWorkSchedule($data['company_id']);
+        if ($companyId !== null && $workSchedule->company_id !== $companyId) {
+            return ['message' => 'Work schedule not found'];
         }
-        return $this->workScheduleRepository->update($id, $data);
+
+        $deleted = $this->workScheduleRepository->delete($workSchedule);
+
+        return ['deleted' => $deleted];
     }
 
-    public function getWorkScheduleById(string $id): ?WorkSchedule
+    public function update(WorkSchedule $workSchedule, mixed $data, ?int $companyId = null): array
+    {
+        if ($companyId !== null && $workSchedule->company_id !== $companyId) {
+            return ['message' => 'Work schedule not found'];
+        }
+
+        if (isset($data['is_default']) && $data['is_default'] ?? false) {
+            $this->resetDefaultWorkSchedule($data['company_id']);
+        }
+
+        $this->workScheduleRepository->update($workSchedule, $data);
+
+        return ['work_schedule' => $workSchedule->fresh()];
+    }
+
+    public function getWorkScheduleById(string $id, ?int $companyId = null): array
     {
         $workSchedule = $this->workScheduleRepository->find($id);
-        if (!$workSchedule) {
-            abort(404, 'Work schedule not found');
+        if (! $workSchedule) {
+            return ['message' => 'Work schedule not found'];
         }
-        return $workSchedule;
+
+        if ($companyId !== null && $workSchedule->company_id !== $companyId) {
+            return ['message' => 'Work schedule not found'];
+        }
+
+        return ['work_schedule' => $workSchedule];
     }
 }

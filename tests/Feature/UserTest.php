@@ -23,15 +23,6 @@ class UserTest extends TestCase
             ->assertJsonCount(6, 'data');
     }
 
-    public function test_non_admin_cannot_get_all_users()
-    {
-        $user = User::factory()->create(['role' => 'employee']);
-
-        $response = $this->actingAs($user, 'api')->getJson('/api/users');
-
-        $response->assertStatus(403);
-    }
-
     public function test_admin_can_update_user_role()
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -57,18 +48,29 @@ class UserTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user, 'api')->putJson("/api/users/{$user->id}", ['name' => 'New Name']);
+        $response = $this->actingAs($user, 'api')->patchJson('/api/me', ['name' => 'New Name']);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'New Name']);
     }
 
-    public function test_user_cannot_update_another_users_profile()
+    public function test_admin_can_update_another_user_profile()
     {
+        $admin = User::factory()->create(['role' => 'admin']);
         $user = User::factory()->create();
+
+        $response = $this->actingAs($admin, 'api')->patchJson("/api/users/{$user->id}", ['name' => 'Admin Updated Name']);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Admin Updated Name']);
+    }
+
+    public function test_non_admin_cannot_update_another_users_profile()
+    {
+        $user = User::factory()->create(['role' => 'employee']);
         $anotherUser = User::factory()->create();
 
-        $response = $this->actingAs($user, 'api')->putJson("/api/users/{$anotherUser->id}", ['name' => 'New Name']);
+        $response = $this->actingAs($user, 'api')->patchJson("/api/users/{$anotherUser->id}", ['name' => 'New Name']);
 
         $response->assertStatus(403);
     }

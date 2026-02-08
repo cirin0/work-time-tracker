@@ -11,6 +11,7 @@ use App\Models\TimeEntry;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class TimeEntryController extends Controller
@@ -58,12 +59,6 @@ class TimeEntryController extends Controller
     {
         $data = $this->timeEntryService->getTimeEntryById(Auth::user(), $timeEntry);
 
-        if (isset($data['error'])) {
-            return response()->json([
-                'message' => $data['message'],
-            ], 403);
-        }
-
         return response()->json([
             'message' => 'Time entry retrieved successfully.',
             'data' => new TimeEntryResource($data['time_entry']),
@@ -76,12 +71,6 @@ class TimeEntryController extends Controller
             Auth::user(),
             $request->validated()
         );
-
-        if (isset($data['error'])) {
-            return response()->json([
-                'message' => $data['message'],
-            ], 400);
-        }
 
         return response()->json([
             'message' => 'Time entry started successfully.',
@@ -96,30 +85,16 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
-        if (isset($data['error'])) {
-            return response()->json([
-                'message' => $data['message'],
-            ], 400);
-        }
-
         return response()->json([
             'message' => 'Time entry stopped successfully.',
             'data' => new TimeEntryResource($data['time_entry']),
         ]);
     }
 
-    public function destroy(TimeEntry $timeEntry): JsonResponse
+    public function destroy(TimeEntry $timeEntry): Response
     {
-        $data = $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
+        $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
 
-        if (isset($data['error'])) {
-            return response()->json([
-                'message' => $data['message'],
-            ], 403);
-        }
-
-        return response()->json([
-            'message' => $data['message'],
-        ], 204);
+        return response()->noContent();
     }
 }

@@ -37,9 +37,7 @@ class AuthController extends Controller
             'expires_in' => $data['expires_in'],
             'user' => new AuthResource($data['user']),
         ]);
-
     }
-
 
     public function refresh(): JsonResponse
     {
@@ -51,7 +49,6 @@ class AuthController extends Controller
             'expires_in' => $data['expires_in'],
             'user' => new AuthResource($data['user']),
         ]);
-
     }
 
     public function logout(): JsonResponse
@@ -59,7 +56,7 @@ class AuthController extends Controller
         $this->authService->logout();
 
         return response()->json([
-            'message' => 'Logged out successfully'
+            'message' => 'Logged out successfully',
         ]);
     }
 }
