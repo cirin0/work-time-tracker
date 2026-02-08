@@ -15,8 +15,10 @@ class TimeEntry extends Model
         'start_time',
         'stop_time',
         'duration',
-        'comment',
+        'start_comment',
+        'stop_comment',
     ];
+
     protected $casts = [
         'start_time' => 'datetime',
         'stop_time' => 'datetime',

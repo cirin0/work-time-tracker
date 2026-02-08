@@ -40,6 +40,7 @@ class WorkSchedule extends Model
 
     public function getDailySchedule(string $dayOfWeek): ?DailySchedule
     {
+        /** @phpstan-ignore-next-line */
         return $this->dailySchedules()->where('day_of_week', $dayOfWeek)->first();
     }
 

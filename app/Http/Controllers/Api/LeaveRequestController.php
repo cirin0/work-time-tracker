@@ -3,58 +3,46 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreLeaveRequestRequest;
 use App\Http\Resources\LeaveRequestResource;
-use Illuminate\Http\Request;
+use App\Models\LeaveRequest;
+use App\Services\LeaveRequestService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(protected LeaveRequestService $leaveRequestService) {}
+
+    public function index(): AnonymousResourceCollection
     {
-        $requests = Auth::user()->leaveRequests()->latest()->paginate();
-        return LeaveRequestResource::collection($requests);
+        $result = $this->leaveRequestService->getUserLeaveRequests(Auth::user());
+
+        return LeaveRequestResource::collection($result['requests']);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreLeaveRequestRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'type' => 'required|in:vacation,sick,personal',
-            'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'reason' => 'required|string|max:1000',
-        ]);
+        $result = $this->leaveRequestService->createLeaveRequest(
+            Auth::user(),
+            $request->validated()
+        );
 
-        $leaveRequest = Auth::user()->leaveRequests()->create($validated);
-        return response()->json($leaveRequest, 201);
+        return response()->json([
+            'message' => 'Leave request created successfully.',
+            'data' => new LeaveRequestResource($result['leave_request']),
+        ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function showById(LeaveRequest $leaveRequest): JsonResponse|LeaveRequestResource
     {
-        //
-    }
+        $result = $this->leaveRequestService->getLeaveRequestById($leaveRequest);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+        if (isset($result['message'])) {
+            return response()->json(['message' => $result['message']], 403);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return new LeaveRequestResource($result['leave_request']);
     }
 }

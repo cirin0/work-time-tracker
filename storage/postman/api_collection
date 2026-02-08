@@ -1,76 +1,10 @@
 {
     "info": {
-        "name": "Laravel",
+        "name": "work-time-tracker",
         "description": "API Documentation",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
-        {
-            "name": "documentation",
-            "item": [
-                {
-                    "name": "[GET] api/documentation",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/documentation",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "documentation"
-                            ]
-                        }
-                    }
-                }
-            ]
-        },
-        {
-            "name": "oauth2-callback",
-            "item": [
-                {
-                    "name": "[GET] api/oauth2-callback",
-                    "request": {
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/oauth2-callback",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "oauth2-callback"
-                            ]
-                        }
-                    }
-                }
-            ]
-        },
         {
             "name": "auth",
             "item": [
@@ -106,7 +40,7 @@
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"name\": \"name sample value\",\n    \"email\": \"user97@example.com\",\n    \"password\": \"password sample value\",\n    \"role\": \"role sample value\"\n}",
+                                    "raw": "{\n    \"name\": \"sample_text\",\n    \"email\": \"user49@example.com\",\n    \"password\": \"sample_text\",\n    \"role\": \"sample_text\"\n}",
                                     "options": []
                                 }
                             }
@@ -145,7 +79,7 @@
                                 },
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n    \"email\": \"user28@example.com\",\n    \"password\": \"password sample value\"\n}",
+                                    "raw": "{\n    \"email\": \"user65@example.com\",\n    \"password\": \"sample_text\"\n}",
                                     "options": []
                                 }
                             }
@@ -194,6 +128,121 @@
                             }
                         }
                     ]
+                },
+                {
+                    "name": "refresh",
+                    "item": [
+                        {
+                            "name": "[POST] api/auth/refresh",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/auth/refresh",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "refresh"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "messages",
+            "item": [
+                {
+                    "name": "[GET] api/messages/{receiverId}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/messages/:receiverId",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "messages",
+                                ":receiverId"
+                            ],
+                            "variable": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[POST] api/messages",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/messages",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "messages"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
                 }
             ]
         },
@@ -236,14 +285,19 @@
                             ]
                         }
                     }
-                },
+                }
+            ]
+        },
+        {
+            "name": "users",
+            "item": [
                 {
-                    "name": "time-summary",
+                    "name": "role",
                     "item": [
                         {
-                            "name": "[GET] api/me/time-summary",
+                            "name": "[POST] api/users/{user}/role",
                             "request": {
-                                "method": "GET",
+                                "method": "POST",
                                 "header": [
                                     {
                                         "key": "Accept",
@@ -257,15 +311,22 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{base_url}}/api/me/time-summary",
+                                    "raw": "{{base_url}}/api/users/:user/role",
                                     "host": [
                                         "{{base_url}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "me",
-                                        "time-summary"
-                                    ]
+                                        "users",
+                                        ":user",
+                                        "role"
+                                    ],
+                                    "variable": []
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"role\": \"sample_text\"\n}",
+                                    "options": []
                                 },
                                 "auth": {
                                     "type": "bearer",
@@ -277,187 +338,6 @@
                                     ]
                                 }
                             }
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "users",
-            "item": [
-                {
-                    "name": "",
-                    "item": [
-                        {
-                            "name": "role",
-                            "item": [
-                                {
-                                    "name": "[POST] api/users/{user}/role",
-                                    "request": {
-                                        "method": "POST",
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            },
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            }
-                                        ],
-                                        "url": {
-                                            "raw": "{{base_url}}/api/users/{user}/role",
-                                            "host": [
-                                                "{{base_url}}"
-                                            ],
-                                            "path": [
-                                                "api",
-                                                "users",
-                                                "{user}",
-                                                "role"
-                                            ]
-                                        },
-                                        "auth": {
-                                            "type": "bearer",
-                                            "bearer": [
-                                                {
-                                                    "key": "token",
-                                                    "value": "{{auth_token}}"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "avatar",
-                            "item": [
-                                {
-                                    "name": "[POST] api/users/{user}/avatar",
-                                    "request": {
-                                        "method": "POST",
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            },
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            }
-                                        ],
-                                        "url": {
-                                            "raw": "{{base_url}}/api/users/{user}/avatar",
-                                            "host": [
-                                                "{{base_url}}"
-                                            ],
-                                            "path": [
-                                                "api",
-                                                "users",
-                                                "{user}",
-                                                "avatar"
-                                            ]
-                                        },
-                                        "auth": {
-                                            "type": "bearer",
-                                            "bearer": [
-                                                {
-                                                    "key": "token",
-                                                    "value": "{{auth_token}}"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "name": "work-schedule",
-                            "item": [
-                                {
-                                    "name": "[GET] api/users/{user}/work-schedule",
-                                    "request": {
-                                        "method": "GET",
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            },
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            }
-                                        ],
-                                        "url": {
-                                            "raw": "{{base_url}}/api/users/{user}/work-schedule",
-                                            "host": [
-                                                "{{base_url}}"
-                                            ],
-                                            "path": [
-                                                "api",
-                                                "users",
-                                                "{user}",
-                                                "work-schedule"
-                                            ]
-                                        },
-                                        "auth": {
-                                            "type": "bearer",
-                                            "bearer": [
-                                                {
-                                                    "key": "token",
-                                                    "value": "{{auth_token}}"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                {
-                                    "name": "[PUT] api/users/{user}/work-schedule",
-                                    "request": {
-                                        "method": "PUT",
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            },
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json",
-                                                "type": "text"
-                                            }
-                                        ],
-                                        "url": {
-                                            "raw": "{{base_url}}/api/users/{user}/work-schedule",
-                                            "host": [
-                                                "{{base_url}}"
-                                            ],
-                                            "path": [
-                                                "api",
-                                                "users",
-                                                "{user}",
-                                                "work-schedule"
-                                            ]
-                                        },
-                                        "auth": {
-                                            "type": "bearer",
-                                            "bearer": [
-                                                {
-                                                    "key": "token",
-                                                    "value": "{{auth_token}}"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            ]
                         }
                     ]
                 },
@@ -478,19 +358,20 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/users/{user}",
+                            "raw": "{{base_url}}/api/users/:user",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "users",
-                                "{user}"
-                            ]
+                                ":user"
+                            ],
+                            "variable": []
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"name sample value\",\n    \"email\": \"user98@example.com\",\n    \"password\": \"password sample value\",\n    \"role\": \"role sample value\"\n}",
+                            "raw": "{\n    \"name\": \"sample_text\",\n    \"email\": \"sample_text\",\n    \"0\": \"sample_text\",\n    \"1\": \"user30@example.com\",\n    \"password\": \"sample_text\",\n    \"role\": \"sample_text\"\n}",
                             "options": []
                         },
                         "auth": {
@@ -503,6 +384,56 @@
                             ]
                         }
                     }
+                },
+                {
+                    "name": "avatar",
+                    "item": [
+                        {
+                            "name": "[POST] api/users/{user}/avatar",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/users/:user/avatar",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "users",
+                                        ":user",
+                                        "avatar"
+                                    ],
+                                    "variable": []
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"avatar\": \"sample_text\"\n}",
+                                    "options": []
+                                },
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
                 },
                 {
                     "name": "[DELETE] api/users/{user}",
@@ -521,15 +452,16 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/users/{user}",
+                            "raw": "{{base_url}}/api/users/:user",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "users",
-                                "{user}"
-                            ]
+                                ":user"
+                            ],
+                            "variable": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -587,17 +519,108 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/users/{user}",
+                            "raw": "{{base_url}}/api/users/:user",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "users",
-                                "{user}"
-                            ]
+                                ":user"
+                            ],
+                            "variable": []
                         }
                     }
+                },
+                {
+                    "name": "work-schedule",
+                    "item": [
+                        {
+                            "name": "[GET] api/users/{user}/work-schedule",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/users/:user/work-schedule",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "users",
+                                        ":user",
+                                        "work-schedule"
+                                    ],
+                                    "variable": []
+                                },
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}"
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "name": "[PUT] api/users/{user}/work-schedule",
+                            "request": {
+                                "method": "PUT",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/users/:user/work-schedule",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "users",
+                                        ":user",
+                                        "work-schedule"
+                                    ],
+                                    "variable": []
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"work_schedule_id\": 4\n}",
+                                    "options": []
+                                },
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -642,6 +665,45 @@
                     }
                 },
                 {
+                    "name": "[GET] api/leave-requests/{leaveRequest}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/leave-requests/:leaveRequest",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "leave-requests",
+                                ":leaveRequest"
+                            ],
+                            "variable": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
                     "name": "[POST] api/leave-requests",
                     "request": {
                         "method": "POST",
@@ -666,6 +728,11 @@
                                 "api",
                                 "leave-requests"
                             ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"type\": \"sample_text\",\n    \"start_date\": \"sample_text\",\n    \"end_date\": \"sample_text\",\n    \"reason\": \"sample_text\"\n}",
+                            "options": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -725,97 +792,99 @@
                             }
                         },
                         {
-                            "name": "",
+                            "name": "approve",
                             "item": [
                                 {
-                                    "name": "approve",
-                                    "item": [
-                                        {
-                                            "name": "[POST] api/manager/leave-requests/{leaveRequest}/approve",
-                                            "request": {
-                                                "method": "POST",
-                                                "header": [
-                                                    {
-                                                        "key": "Accept",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    },
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    }
-                                                ],
-                                                "url": {
-                                                    "raw": "{{base_url}}/api/manager/leave-requests/{leaveRequest}/approve",
-                                                    "host": [
-                                                        "{{base_url}}"
-                                                    ],
-                                                    "path": [
-                                                        "api",
-                                                        "manager",
-                                                        "leave-requests",
-                                                        "{leaveRequest}",
-                                                        "approve"
-                                                    ]
-                                                },
-                                                "auth": {
-                                                    "type": "bearer",
-                                                    "bearer": [
-                                                        {
-                                                            "key": "token",
-                                                            "value": "{{auth_token}}"
-                                                        }
-                                                    ]
-                                                }
+                                    "name": "[POST] api/manager/leave-requests/{leaveRequest}/approve",
+                                    "request": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json",
+                                                "type": "text"
                                             }
+                                        ],
+                                        "url": {
+                                            "raw": "{{base_url}}/api/manager/leave-requests/:leaveRequest/approve",
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "manager",
+                                                "leave-requests",
+                                                ":leaveRequest",
+                                                "approve"
+                                            ],
+                                            "variable": []
+                                        },
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{auth_token}}"
+                                                }
+                                            ]
                                         }
-                                    ]
-                                },
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "reject",
+                            "item": [
                                 {
-                                    "name": "reject",
-                                    "item": [
-                                        {
-                                            "name": "[POST] api/manager/leave-requests/{leaveRequest}/reject",
-                                            "request": {
-                                                "method": "POST",
-                                                "header": [
-                                                    {
-                                                        "key": "Accept",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    },
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    }
-                                                ],
-                                                "url": {
-                                                    "raw": "{{base_url}}/api/manager/leave-requests/{leaveRequest}/reject",
-                                                    "host": [
-                                                        "{{base_url}}"
-                                                    ],
-                                                    "path": [
-                                                        "api",
-                                                        "manager",
-                                                        "leave-requests",
-                                                        "{leaveRequest}",
-                                                        "reject"
-                                                    ]
-                                                },
-                                                "auth": {
-                                                    "type": "bearer",
-                                                    "bearer": [
-                                                        {
-                                                            "key": "token",
-                                                            "value": "{{auth_token}}"
-                                                        }
-                                                    ]
-                                                }
+                                    "name": "[POST] api/manager/leave-requests/{leaveRequest}/reject",
+                                    "request": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json",
+                                                "type": "text"
                                             }
+                                        ],
+                                        "url": {
+                                            "raw": "{{base_url}}/api/manager/leave-requests/:leaveRequest/reject",
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "manager",
+                                                "leave-requests",
+                                                ":leaveRequest",
+                                                "reject"
+                                            ],
+                                            "variable": []
+                                        },
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n    \"manager_comments\": \"sample_text\"\n}",
+                                            "options": []
+                                        },
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{auth_token}}"
+                                                }
+                                            ]
                                         }
-                                    ]
+                                    }
                                 }
                             ]
                         }
@@ -825,138 +894,146 @@
                     "name": "companies",
                     "item": [
                         {
-                            "name": "",
+                            "name": "add-employee",
                             "item": [
                                 {
-                                    "name": "add-employee",
-                                    "item": [
-                                        {
-                                            "name": "[POST] api/manager/companies/{company}/add-employee",
-                                            "request": {
-                                                "method": "POST",
-                                                "header": [
-                                                    {
-                                                        "key": "Accept",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    },
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    }
-                                                ],
-                                                "url": {
-                                                    "raw": "{{base_url}}/api/manager/companies/{company}/add-employee",
-                                                    "host": [
-                                                        "{{base_url}}"
-                                                    ],
-                                                    "path": [
-                                                        "api",
-                                                        "manager",
-                                                        "companies",
-                                                        "{company}",
-                                                        "add-employee"
-                                                    ]
-                                                },
-                                                "auth": {
-                                                    "type": "bearer",
-                                                    "bearer": [
-                                                        {
-                                                            "key": "token",
-                                                            "value": "{{auth_token}}"
-                                                        }
-                                                    ]
-                                                }
+                                    "name": "[POST] api/manager/companies/{company}/add-employee",
+                                    "request": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json",
+                                                "type": "text"
                                             }
+                                        ],
+                                        "url": {
+                                            "raw": "{{base_url}}/api/manager/companies/:company/add-employee",
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "manager",
+                                                "companies",
+                                                ":company",
+                                                "add-employee"
+                                            ],
+                                            "variable": []
+                                        },
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n    \"employee_id\": 2\n}",
+                                            "options": []
+                                        },
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{auth_token}}"
+                                                }
+                                            ]
                                         }
-                                    ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "remove-employee",
+                            "item": [
+                                {
+                                    "name": "[POST] api/manager/companies/{company}/remove-employee",
+                                    "request": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            }
+                                        ],
+                                        "url": {
+                                            "raw": "{{base_url}}/api/manager/companies/:company/remove-employee",
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "manager",
+                                                "companies",
+                                                ":company",
+                                                "remove-employee"
+                                            ],
+                                            "variable": []
+                                        },
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n    \"employee_id\": 2\n}",
+                                            "options": []
+                                        },
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{auth_token}}"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 },
                                 {
-                                    "name": "remove-employee",
-                                    "item": [
-                                        {
-                                            "name": "[POST] api/manager/companies/{company}/remove-employee",
-                                            "request": {
-                                                "method": "POST",
-                                                "header": [
-                                                    {
-                                                        "key": "Accept",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    },
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    }
-                                                ],
-                                                "url": {
-                                                    "raw": "{{base_url}}/api/manager/companies/{company}/remove-employee",
-                                                    "host": [
-                                                        "{{base_url}}"
-                                                    ],
-                                                    "path": [
-                                                        "api",
-                                                        "manager",
-                                                        "companies",
-                                                        "{company}",
-                                                        "remove-employee"
-                                                    ]
-                                                },
-                                                "auth": {
-                                                    "type": "bearer",
-                                                    "bearer": [
-                                                        {
-                                                            "key": "token",
-                                                            "value": "{{auth_token}}"
-                                                        }
-                                                    ]
-                                                }
+                                    "name": "[POST] api/manager/companies/{company}/remove-employee/{employee_id}",
+                                    "request": {
+                                        "method": "POST",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json",
+                                                "type": "text"
                                             }
+                                        ],
+                                        "url": {
+                                            "raw": "{{base_url}}/api/manager/companies/:company/remove-employee/:employee_id",
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "manager",
+                                                "companies",
+                                                ":company",
+                                                "remove-employee",
+                                                ":employee_id"
+                                            ],
+                                            "variable": []
                                         },
-                                        {
-                                            "name": "[POST] api/manager/companies/{company}/remove-employee/{employee_id}",
-                                            "request": {
-                                                "method": "POST",
-                                                "header": [
-                                                    {
-                                                        "key": "Accept",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    },
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json",
-                                                        "type": "text"
-                                                    }
-                                                ],
-                                                "url": {
-                                                    "raw": "{{base_url}}/api/manager/companies/{company}/remove-employee/{employee_id}",
-                                                    "host": [
-                                                        "{{base_url}}"
-                                                    ],
-                                                    "path": [
-                                                        "api",
-                                                        "manager",
-                                                        "companies",
-                                                        "{company}",
-                                                        "remove-employee",
-                                                        "{employee_id}"
-                                                    ]
-                                                },
-                                                "auth": {
-                                                    "type": "bearer",
-                                                    "bearer": [
-                                                        {
-                                                            "key": "token",
-                                                            "value": "{{auth_token}}"
-                                                        }
-                                                    ]
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{auth_token}}"
                                                 }
-                                            }
+                                            ]
                                         }
-                                    ]
+                                    }
                                 }
                             ]
                         }
@@ -967,6 +1044,43 @@
         {
             "name": "companies",
             "item": [
+                {
+                    "name": "[GET] api/companies",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/companies",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "companies"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
                 {
                     "name": "[GET] api/companies/{company}",
                     "request": {
@@ -984,15 +1098,16 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/companies/{company}",
+                            "raw": "{{base_url}}/api/companies/:company",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "companies",
-                                "{company}"
-                            ]
+                                ":company"
+                            ],
+                            "variable": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -1025,7 +1140,7 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{base_url}}/api/companies/name/{company}",
+                                    "raw": "{{base_url}}/api/companies/name/:company",
                                     "host": [
                                         "{{base_url}}"
                                     ],
@@ -1033,8 +1148,9 @@
                                         "api",
                                         "companies",
                                         "name",
-                                        "{company}"
-                                    ]
+                                        ":company"
+                                    ],
+                                    "variable": []
                                 },
                                 "auth": {
                                     "type": "bearer",
@@ -1077,7 +1193,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"name sample value\",\n    \"description\": \"description sample value\",\n    \"logo\": \"logo sample value\",\n    \"manager_id\": \"manager_id sample value\"\n}",
+                            "raw": "{\n    \"name\": \"sample_text\",\n    \"email\": \"user48@example.com\",\n    \"phone\": \"sample_text\",\n    \"logo\": \"sample_text\",\n    \"description\": \"sample_text\",\n    \"address\": \"sample_text\",\n    \"manager_id\": \"sample_text\"\n}",
                             "options": []
                         },
                         "auth": {
@@ -1108,19 +1224,20 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/companies/{company}",
+                            "raw": "{{base_url}}/api/companies/:company",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "companies",
-                                "{company}"
-                            ]
+                                ":company"
+                            ],
+                            "variable": []
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"name sample value\",\n    \"description\": \"description sample value\",\n    \"logo\": \"logo sample value\",\n    \"manager_id\": \"manager_id sample value\"\n}",
+                            "raw": "{\n    \"name\": \"sample_text\",\n    \"email\": \"user62@example.com\",\n    \"phone\": \"sample_text\",\n    \"logo\": \"sample_text\",\n    \"description\": \"sample_text\",\n    \"address\": \"sample_text\",\n    \"manager_id\": \"sample_text\"\n}",
                             "options": []
                         },
                         "auth": {
@@ -1151,109 +1268,16 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/companies/{company}",
+                            "raw": "{{base_url}}/api/companies/:company",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "companies",
-                                "{company}"
-                            ]
-                        },
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{auth_token}}"
-                                }
-                            ]
-                        }
-                    }
-                }
-            ]
-        },
-        {
-            "name": "clock-in",
-            "item": [
-                {
-                    "name": "[POST] api/clock-in",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/clock-in",
-                            "host": [
-                                "{{base_url}}"
+                                ":company"
                             ],
-                            "path": [
-                                "api",
-                                "clock-in"
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"comment\": \"comment sample value\"\n}",
-                            "options": []
-                        },
-                        "auth": {
-                            "type": "bearer",
-                            "bearer": [
-                                {
-                                    "key": "token",
-                                    "value": "{{auth_token}}"
-                                }
-                            ]
-                        }
-                    }
-                }
-            ]
-        },
-        {
-            "name": "clock-out",
-            "item": [
-                {
-                    "name": "[POST] api/clock-out",
-                    "request": {
-                        "method": "POST",
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json",
-                                "type": "text"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json",
-                                "type": "text"
-                            }
-                        ],
-                        "url": {
-                            "raw": "{{base_url}}/api/clock-out",
-                            "host": [
-                                "{{base_url}}"
-                            ],
-                            "path": [
-                                "api",
-                                "clock-out"
-                            ]
-                        },
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n    \"comment\": \"comment sample value\"\n}",
-                            "options": []
+                            "variable": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -1296,6 +1320,262 @@
                                 "api",
                                 "time-entries"
                             ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "active",
+                    "item": [
+                        {
+                            "name": "[GET] api/time-entries/active",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/time-entries/active",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "time-entries",
+                                        "active"
+                                    ]
+                                },
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{auth_token}}"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "summary",
+                    "item": [
+                        {
+                            "name": "me",
+                            "item": [
+                                {
+                                    "name": "[GET] api/time-entries/summary/me",
+                                    "request": {
+                                        "method": "GET",
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json",
+                                                "type": "text"
+                                            }
+                                        ],
+                                        "url": {
+                                            "raw": "{{base_url}}/api/time-entries/summary/me",
+                                            "host": [
+                                                "{{base_url}}"
+                                            ],
+                                            "path": [
+                                                "api",
+                                                "time-entries",
+                                                "summary",
+                                                "me"
+                                            ]
+                                        },
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{auth_token}}"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "[POST] api/time-entries",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/time-entries",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "time-entries"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"comment\": \"sample_text\"\n}",
+                            "options": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[GET] api/time-entries/{timeEntry}",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/time-entries/:timeEntry",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "time-entries",
+                                ":timeEntry"
+                            ],
+                            "variable": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[PUT] api/time-entries/{timeEntry}",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/time-entries/:timeEntry",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "time-entries",
+                                ":timeEntry"
+                            ],
+                            "variable": []
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"comment\": \"sample_text\"\n}",
+                            "options": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{auth_token}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "[DELETE] api/time-entries/{timeEntry}",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/time-entries/:timeEntry",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "time-entries",
+                                ":timeEntry"
+                            ],
+                            "variable": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -1378,7 +1658,7 @@
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"name sample value\",\n    \"is_default\": false,\n    \"daily_schedules\": [],\n    \"daily_schedules.day_of_week\": [],\n    \"daily_schedules.start_time\": [],\n    \"daily_schedules.end_time\": [],\n    \"daily_schedules.break_duration\": [],\n    \"daily_schedules.is_working_day\": []\n}",
+                            "raw": "{\n    \"name\": \"sample_text\",\n    \"is_default\": 0,\n    \"daily_schedules\": [\n        {\n            \"day_of_week\": \"sample_text\",\n            \"start_time\": \"sample_text\",\n            \"end_time\": \"sample_text\",\n            \"break_duration\": 4,\n            \"is_working_day\": 0\n        }\n    ]\n}",
                             "options": []
                         },
                         "auth": {
@@ -1409,15 +1689,16 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/work-schedules/{work_schedule}",
+                            "raw": "{{base_url}}/api/work-schedules/:work_schedule",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "work-schedules",
-                                "{work_schedule}"
-                            ]
+                                ":work_schedule"
+                            ],
+                            "variable": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -1447,19 +1728,20 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/work-schedules/{work_schedule}",
+                            "raw": "{{base_url}}/api/work-schedules/:work_schedule",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "work-schedules",
-                                "{work_schedule}"
-                            ]
+                                ":work_schedule"
+                            ],
+                            "variable": []
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"name\": \"name sample value\",\n    \"start_time\": \"start_time sample value\",\n    \"end_time\": \"end_time sample value\",\n    \"break_duration\": \"break_duration sample value\",\n    \"monday\": false,\n    \"tuesday\": true,\n    \"wednesday\": true,\n    \"thursday\": true,\n    \"friday\": true,\n    \"saturday\": true,\n    \"sunday\": false,\n    \"company_id\": \"company_id sample value\",\n    \"is_default\": true\n}",
+                            "raw": "{\n    \"name\": \"sample_text\",\n    \"start_time\": \"sample_text\",\n    \"end_time\": \"sample_text\",\n    \"break_duration\": 3,\n    \"monday\": 0,\n    \"tuesday\": 1,\n    \"wednesday\": 1,\n    \"thursday\": 0,\n    \"friday\": 1,\n    \"saturday\": 0,\n    \"sunday\": 1,\n    \"company_id\": \"sample_text\",\n    \"is_default\": 1\n}",
                             "options": []
                         },
                         "auth": {
@@ -1490,15 +1772,16 @@
                             }
                         ],
                         "url": {
-                            "raw": "{{base_url}}/api/work-schedules/{work_schedule}",
+                            "raw": "{{base_url}}/api/work-schedules/:work_schedule",
                             "host": [
                                 "{{base_url}}"
                             ],
                             "path": [
                                 "api",
                                 "work-schedules",
-                                "{work_schedule}"
-                            ]
+                                ":work_schedule"
+                            ],
+                            "variable": []
                         },
                         "auth": {
                             "type": "bearer",
@@ -1583,7 +1866,7 @@
     "variable": [
         {
             "key": "base_url",
-            "value": "http://localhost:8000"
+            "value": "http://localhost"
         }
     ]
 }

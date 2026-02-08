@@ -2,71 +2,88 @@
 
 namespace App\Services;
 
+use App\Models\TimeEntry;
+use App\Models\User;
 use App\Repositories\TimeEntryRepository;
 use Carbon\Carbon;
-use Exception;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TimeEntryService
 {
+    public function __construct(protected TimeEntryRepository $timeEntryRepository) {}
 
-    public function __construct(protected TimeEntryRepository $timeEntryRepository)
+    public function startTimeEntry(User $user, array $data): array
     {
-    }
-
-    public function startTimeEntry(?string $comment = null)
-    {
-        $userId = Auth::id();
-        $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($userId);
+        $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if ($activeEntry) {
-            throw new Exception('You already have an active time entry. Please stop it before starting a new one.');
+            throw new BadRequestHttpException('An active time entry already exists. Please stop it before starting a new one.');
         }
 
-        return $this->timeEntryRepository->create([
-            'user_id' => $userId,
+        $timeEntry = $this->timeEntryRepository->create([
+            'user_id' => $user->id,
             'start_time' => now(),
-            'comment' => $comment,
+            'start_comment' => $data['start_comment'] ?? null,
         ]);
+
+        return ['time_entry' => $timeEntry];
     }
 
-    public function stopTimeEntry(?string $comment = null)
+    public function stopActiveTimeEntry(User $user, array $data): array
     {
-        $userId = Auth::id();
-        $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($userId);
+        $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if (!$activeEntry) {
-            throw new NotFoundHttpException('You do not have an active time entry to stop.');
+            throw new BadRequestHttpException('No active time entry found.');
         }
 
         $startTime = $activeEntry->start_time;
         $stopTime = now();
         $duration = abs((int)$stopTime->diffInSeconds($startTime));
 
-        $data = [
+        $updateData = [
             'stop_time' => $stopTime,
             'duration' => $duration,
         ];
 
-        if ($comment) {
-            $data['comment'] = $comment;
+        if (isset($data['stop_comment'])) {
+            $updateData['stop_comment'] = $data['stop_comment'];
         }
 
-        return $this->timeEntryRepository->update($activeEntry->id, $data);
+        $this->timeEntryRepository->update($activeEntry, $updateData);
+
+        return ['time_entry' => $activeEntry->fresh()];
     }
 
-    public function getTimeEntries(): Collection
+    public function getUserTimeEntries(User $user): array
     {
-        return $this->timeEntryRepository->getAllForUser(Auth::id());
+        $timeEntries = $this->timeEntryRepository->getAllForUser($user);
+
+        return ['time_entries' => $timeEntries];
     }
 
-    public function getTimeSummary(): array
+    public function getActiveTimeEntry(User $user): array
     {
-        $userId = Auth::id();
-        $completedEntries = $this->timeEntryRepository->getSummaryForUser($userId);
+        $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
+
+        return ['time_entry' => $activeEntry];
+    }
+
+    public function getTimeEntryById(User $user, TimeEntry $timeEntry): array
+    {
+        if ($timeEntry->user_id !== $user->id) {
+            throw new AccessDeniedHttpException('You do not have permission to view this time entry.');
+        }
+
+        $entry = $this->timeEntryRepository->find($timeEntry->id);
+
+        return ['time_entry' => $entry];
+    }
+
+    public function getTimeSummary(User $user): array
+    {
+        $completedEntries = $this->timeEntryRepository->getCompletedForUser($user);
 
         $totalMinutes = $completedEntries->sum(function ($entry) {
             return Carbon::parse($entry->start_time)
@@ -78,7 +95,7 @@ class TimeEntryService
         $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
 
         return [
-            'user_id' => $userId,
+            'user_id' => $user->id,
             'total_hours' => $totalHours,
             'total_minutes' => $totalMinutes,
             'entries_count' => $entriesCount,
@@ -100,14 +117,14 @@ class TimeEntryService
         ];
     }
 
-    public function deleteTimeEntry(int $id): ?bool
+    public function deleteTimeEntry(User $user, TimeEntry $timeEntry): array
     {
-        $timeEntry = $this->timeEntryRepository->getById($id);
-
-        if ($timeEntry->user_id !== Auth::id()) {
+        if ($timeEntry->user_id !== $user->id) {
             throw new AccessDeniedHttpException('You do not have permission to delete this time entry.');
         }
 
-        return $this->timeEntryRepository->delete($id);
+        $this->timeEntryRepository->delete($timeEntry);
+
+        return ['success' => true];
     }
 }

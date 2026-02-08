@@ -17,6 +17,14 @@ class CompanyController extends Controller
     {
     }
 
+    // for test get all companies
+    public function index(): JsonResponse
+    {
+        $companies = Company::all();
+
+        return response()->json($companies);
+    }
+
     public function showById(Company $company): CompanyResource
     {
         $data = $this->companyService->getCompanyById($company);

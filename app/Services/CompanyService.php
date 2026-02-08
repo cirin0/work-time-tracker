@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Models\Company;
+use App\Models\User;
 use App\Repositories\CompanyRepository;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyService
 {
-    public function __construct(protected CompanyRepository $repository)
+    public function __construct(protected CompanyRepository $companyRepository)
     {
     }
 
@@ -18,17 +19,17 @@ class CompanyService
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
 
-        return ['company' => $this->repository->create($data)];
+        return ['company' => $this->companyRepository->create($data)];
     }
 
     public function getCompanyById(Company $company): array
     {
-        return ['company' => $this->repository->findById($company)];
+        return ['company' => $this->companyRepository->find($company->id)];
     }
 
     public function getCompanyByName(string $company): array
     {
-        return ['company' => $this->repository->findByName($company)];
+        return ['company' => $this->companyRepository->findByName($company)];
     }
 
     public function update(Company $company, array $data): array
@@ -39,13 +40,52 @@ class CompanyService
             }
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
-        $updatedCompany = $this->repository->update($company, $data);
 
-        return ['company' => $updatedCompany];
+        $this->companyRepository->update($company, $data);
+
+        return ['company' => $company->fresh()];
     }
 
-    public function delete(Company $company): ?bool
+    public function delete(Company $company): array
     {
-        return $this->repository->delete($company);
+        $deleted = $this->companyRepository->delete($company);
+
+        return ['deleted' => $deleted];
+    }
+
+    public function addEmployeeToCompany(Company $company, int $employeeId, int $managerId): array
+    {
+        $user = User::findOrFail($employeeId);
+
+        if ($user->company_id !== null) {
+            return ['message' => 'This user already belongs to a company.'];
+        }
+
+        if ($user->manager_id !== null) {
+            return ['message' => 'This user is already assigned to a manager.'];
+        }
+
+        $user->update([
+            'company_id' => $company->id,
+            'manager_id' => $managerId,
+        ]);
+
+        return ['employee' => $user->fresh()];
+    }
+
+    public function removeEmployeeFromCompany(Company $company, int $employeeId): array
+    {
+        $user = User::findOrFail($employeeId);
+
+        if ($user->company_id !== $company->id) {
+            return ['message' => 'This user does not belong to this company.'];
+        }
+
+        $user->update([
+            'company_id' => null,
+            'manager_id' => null,
+        ]);
+
+        return ['employee' => $user->fresh()];
     }
 }

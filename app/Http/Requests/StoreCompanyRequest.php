@@ -22,7 +22,7 @@ class StoreCompanyRequest extends FormRequest
             'address' => 'nullable|string|max:500',
             'manager_id' => 'sometimes|exists:users,id',
             // update in future
-            //            'manager_id' => 'required|exists:users,id',
+            //  TODO:        'manager_id' => 'required|exists:users,id',
         ];
     }
 }

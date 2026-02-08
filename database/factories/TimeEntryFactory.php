@@ -14,7 +14,8 @@ class TimeEntryFactory extends Factory
             'start_time' => $this->faker->dateTimeBetween('-1 week', 'now'),
             'stop_time' => null,
             'duration' => 0,
-            'comment' => $this->faker->sentence,
+            'start_comment' => $this->faker->sentence,
+            'stop_comment' => null,
         ];
     }
 }

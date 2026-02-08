@@ -16,7 +16,7 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         $user = auth()->user();
-        if (!in_array($user->getRole()->value, $roles)) {
+        if (!in_array($user->role->value, $roles)) {
             return response()->json([
                 'error' => 'Access denied. You do not have the required role.',
             ], 403);

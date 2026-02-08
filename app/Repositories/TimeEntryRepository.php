@@ -3,51 +3,52 @@
 namespace App\Repositories;
 
 use App\Models\TimeEntry;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
 class TimeEntryRepository
 {
-    public function getActiveEntryForUser(int $userId)
+    public function find(int $id): ?TimeEntry
     {
-        return TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()->find($id);
+    }
+
+    public function getActiveEntryForUser(User $user): ?TimeEntry
+    {
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
             ->whereNull('stop_time')
             ->first();
     }
 
-    public function create(array $data)
+    public function getAllForUser(User $user): Collection
     {
-        return TimeEntry::query()->create($data);
-    }
-
-    public function update(int $id, array $data)
-    {
-        $timeEntry = TimeEntry::query()->findOrFail($id);
-        $timeEntry->update($data);
-        return $timeEntry;
-    }
-
-    public function delete(int $id): ?bool
-    {
-        $timeEntry = TimeEntry::query()->findOrFail($id);
-        return $timeEntry->delete();
-    }
-
-    public function getById(int $id)
-    {
-        return TimeEntry::query()->findOrFail($id);
-    }
-
-    public function getAllForUser(int $userId): Collection
-    {
-        return TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
             ->orderBy('start_time', 'desc')
             ->get();
     }
 
-    public function getSummaryForUser(int $userId): Collection
+    public function getCompletedForUser(User $user): Collection
     {
-        return TimeEntry::query()->where('user_id', $userId)
+        return TimeEntry::query()
+            ->where('user_id', $user->id)
             ->whereNotNull('stop_time')
             ->get();
+    }
+
+    public function create(array $data): TimeEntry
+    {
+        return TimeEntry::query()->create($data);
+    }
+
+    public function update(TimeEntry $timeEntry, array $data): bool
+    {
+        return $timeEntry->update($data);
+    }
+
+    public function delete(TimeEntry $timeEntry): ?bool
+    {
+        return $timeEntry->delete();
     }
 }

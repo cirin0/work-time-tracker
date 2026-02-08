@@ -7,42 +7,38 @@ use Illuminate\Database\Eloquent\Collection;
 
 class WorkScheduleRepository
 {
-    public function all()
+    public function find(int $id): ?WorkSchedule
     {
-        return WorkSchedule::all();
+        return WorkSchedule::query()
+            ->with('dailySchedules')
+            ->find($id);
     }
 
-    public function find($id): ?WorkSchedule
+    public function getAll(): Collection
     {
-        return WorkSchedule::with('dailySchedules')->find($id);
+        return WorkSchedule::query()->get();
     }
 
-    public function create(array $data)
+    public function getAllForCompany(int $companyId): Collection
     {
-        return WorkSchedule::create($data);
-    }
-
-    public function delete($id): bool
-    {
-        return WorkSchedule::destroy($id);
-    }
-
-    public function getAllWorkSchedules($companyId): Collection
-    {
-        return WorkSchedule::with('dailySchedules')
+        return WorkSchedule::query()
+            ->with('dailySchedules')
             ->where('company_id', $companyId)
             ->get();
     }
 
-    public function updateDefaultWorkSchedule($company_id): void
+    public function create(array $data): WorkSchedule
     {
-        WorkSchedule::where('company_id', $company_id)
-            ->where('is_default', true)
-            ->update(['is_default' => false]);
+        return WorkSchedule::query()->create($data);
     }
 
-    public function update($id, array $data): bool
+    public function update(WorkSchedule $workSchedule, array $data): bool
     {
-        return WorkSchedule::findOrFail($id)->update($data);
+        return $workSchedule->update($data);
+    }
+
+    public function delete(WorkSchedule $workSchedule): ?bool
+    {
+        return $workSchedule->delete();
     }
 }
