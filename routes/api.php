@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
@@ -86,6 +87,13 @@ Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('work-schedules', WorkScheduleController::class);
     Route::get('users/{user}/work-schedule', [UserController::class, 'getWorkSchedule']);
     Route::put('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
+});
+
+Route::middleware('auth:api')->prefix('audit-logs')->group(function () {
+    Route::get('/', [AuditLogController::class, 'index']);
+    Route::middleware('role:admin,manager')->group(function () {
+        Route::get('/all', [AuditLogController::class, 'all']);
+    });
 });
 
 Route::get('/login', function () {

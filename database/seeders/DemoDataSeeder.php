@@ -166,8 +166,8 @@ class DemoDataSeeder extends Seeder
             'end_date' => Carbon::now()->addWeeks(2)->addDays(5)->format('Y-m-d'),
             'reason' => 'Planned vacation',
             'status' => 'approved',
-            'processed_by_manager_id' => null,
-            'manager_comments' => 'Admin vacation auto-approved',
+            'processed_by' => null,
+            'manager_comment' => 'Admin vacation auto-approved',
         ]);
 
         // Manager - pending leave request
@@ -178,8 +178,8 @@ class DemoDataSeeder extends Seeder
             'end_date' => Carbon::now()->addWeeks(3)->addDays(2)->format('Y-m-d'),
             'reason' => 'Personal matters to attend',
             'status' => 'pending',
-            'processed_by_manager_id' => null,
-            'manager_comments' => null,
+            'processed_by' => null,
+            'manager_comment' => null,
         ]);
 
         // Employee - multiple leave requests with different statuses
@@ -190,8 +190,8 @@ class DemoDataSeeder extends Seeder
             'end_date' => Carbon::now()->addWeek()->addDays(2)->format('Y-m-d'),
             'reason' => 'Medical appointment',
             'status' => 'pending',
-            'processed_by_manager_id' => null,
-            'manager_comments' => null,
+            'processed_by' => null,
+            'manager_comment' => null,
         ]);
 
         LeaveRequest::create([
@@ -201,8 +201,8 @@ class DemoDataSeeder extends Seeder
             'end_date' => Carbon::now()->addMonth()->addDays(7)->format('Y-m-d'),
             'reason' => 'Summer vacation',
             'status' => 'approved',
-            'processed_by_manager_id' => $manager->id,
-            'manager_comments' => 'Approved. Enjoy your vacation!',
+            'processed_by' => $manager->id,
+            'manager_comment' => 'Approved. Enjoy your vacation!',
         ]);
 
         LeaveRequest::create([
@@ -212,8 +212,8 @@ class DemoDataSeeder extends Seeder
             'end_date' => Carbon::now()->subWeek()->addDays(1)->format('Y-m-d'),
             'reason' => 'Family event',
             'status' => 'rejected',
-            'processed_by_manager_id' => $manager->id,
-            'manager_comments' => 'Already too many people on leave during this period. Please reschedule.',
+            'processed_by' => $manager->id,
+            'manager_comment' => 'Already too many people on leave during this period. Please reschedule.',
         ]);
 
         $this->command->info('Demo data seeded successfully!');

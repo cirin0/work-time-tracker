@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use App\Enums\UserRole;
+use App\Enums\WorkMode;
 use Spatie\LaravelData\Attributes\Computed;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -19,6 +20,8 @@ class UserData extends Data
         public ?int              $manager_id,
         public ?string           $avatar,
         public ?int              $work_schedule_id,
+        public WorkMode $work_mode,
+        public ?string  $pin_code,
         #[Computed]
         public ?CompanyData      $company,
         #[Computed]

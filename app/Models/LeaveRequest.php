@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Enums\LeaveRequestStatus;
 use App\Enums\LeaveRequestType;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
-    use hasFactory;
+    use hasFactory, Auditable;
 
     protected $fillable = [
         'user_id',
@@ -19,8 +20,8 @@ class LeaveRequest extends Model
         'end_date',
         'reason',
         'status',
-        'processed_by_manager_id',
-        'manager_comments',
+        'processed_by',
+        'manager_comment',
     ];
 
     public function user(): BelongsTo
@@ -28,9 +29,9 @@ class LeaveRequest extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function manager(): BelongsTo
+    public function processor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'processed_by_manager_id');
+        return $this->belongsTo(User::class, 'processed_by');
     }
 
     protected function casts(): array

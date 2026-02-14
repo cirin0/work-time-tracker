@@ -57,13 +57,13 @@ class LeaveRequestService
 
         $leaveRequest->update([
             'status' => LeaveRequestStatus::APPROVED,
-            'processed_by_manager_id' => Auth::id(),
+            'processed_by' => Auth::id(),
         ]);
 
         return ['leave_request' => $leaveRequest];
     }
 
-    public function reject(LeaveRequest $leaveRequest, string $managerComments): array
+    public function reject(LeaveRequest $leaveRequest, string $managerComment): array
     {
         if ($leaveRequest->user->manager_id !== Auth::id()) {
             return ['message' => 'You are not authorized to reject this leave request.'];
@@ -71,8 +71,8 @@ class LeaveRequestService
 
         $leaveRequest->update([
             'status' => LeaveRequestStatus::REJECTED,
-            'processed_by_manager_id' => Auth::id(),
-            'manager_comments' => $managerComments,
+            'processed_by' => Auth::id(),
+            'manager_comment' => $managerComment,
         ]);
 
         return ['leave_request' => $leaveRequest];
