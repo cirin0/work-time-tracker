@@ -75,7 +75,7 @@ class LeaveRequestTest extends TestCase
         $employee = User::factory()->create(['manager_id' => $manager->id]);
         $request = LeaveRequest::factory()->create(['user_id' => $employee->id, 'status' => 'pending']);
 
-        $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/reject", ['manager_comments' => 'Not enough details']);
+        $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/reject", ['manager_comment' => 'Not enough details']);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('leave_requests', ['id' => $request->id, 'status' => 'rejected']);

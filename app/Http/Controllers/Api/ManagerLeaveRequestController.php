@@ -40,7 +40,7 @@ class ManagerLeaveRequestController extends Controller
     {
         $result = $this->leaveRequestService->reject(
             $leaveRequest,
-            $request->validated('manager_comments')
+            $request->validated('manager_comment')
         );
 
         if (isset($result['message'])) {

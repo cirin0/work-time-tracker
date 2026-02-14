@@ -24,8 +24,8 @@ class LeaveRequestResource extends JsonResource
             'end_date' => $this->end_date,
             'reason' => $this->reason,
             'status' => $this->status,
-            'processed_by_manager_id' => $this->processed_by_manager_id,
-            'manager_comments' => $this->manager_comments,
+            'processed_by' => $this->processed_by,
+            'manager_comment' => $this->manager_comment,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

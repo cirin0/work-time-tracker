@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +14,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, Auditable;
 
     protected $fillable = [
         'name',
@@ -24,6 +25,8 @@ class User extends Authenticatable implements JWTSubject
         'manager_id',
         'avatar',
         'work_schedule_id',
+        'work_mode',
+        'pin_code',
     ];
 
     protected $hidden = [

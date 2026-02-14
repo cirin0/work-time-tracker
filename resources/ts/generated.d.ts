@@ -1,3 +1,18 @@
+export type AuditLog = {
+    id: number;
+    user_id: number | null;
+    user_name: string | null;
+    user_email: string | null;
+    action: string;
+    model_type: string | null;
+    model_id: number | null;
+    old_values: Array<any> | null;
+    new_values: Array<any> | null;
+    ip_address: string | null;
+    user_agent: string | null;
+    created_at: string;
+    model_name: string | null;
+};
 export type AuthUser = {
     id: number;
     name: string;
@@ -32,7 +47,7 @@ export type LeaveRequest = {
     reason: string | null;
     status: LeaveRequestStatus;
     processed_by_manager_id: number | null;
-    manager_comments: string | null;
+    manager_comment: string | null;
     created_at: string;
     user: UserBasic | null;
     manager: UserBasic | null;
@@ -81,6 +96,8 @@ export type User = {
     manager_id: number | null;
     avatar: string | null;
     work_schedule_id: number | null;
+    work_mode: WorkMode;
+    pin_code: string | null;
     company: Company | null;
     manager: UserBasic | null;
     work_schedule: WorkSchedule | null;
@@ -92,6 +109,7 @@ export type UserBasic = {
     avatar: string | null;
 };
 export type UserRole = 'employee' | 'admin' | 'manager';
+export type WorkMode = 'remote' | 'office' | 'hybrid';
 export type WorkSchedule = {
     id: number;
     name: string;

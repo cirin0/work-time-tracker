@@ -14,16 +14,16 @@ class RejectLeaveRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'manager_comments' => 'required|string|max:1000',
+            'manager_comment' => 'required|string|max:1000',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'manager_comments.required' => 'Manager comments are required when rejecting a leave request.',
-            'manager_comments.string' => 'Manager comments must be a text string.',
-            'manager_comments.max' => 'Manager comments must not exceed 1000 characters.',
+            'manager_comment.required' => 'Manager comments are required when rejecting a leave request.',
+            'manager_comment.string' => 'Manager comments must be a text string.',
+            'manager_comment.max' => 'Manager comments must not exceed 1000 characters.',
         ];
     }
 }
