@@ -23,7 +23,7 @@ trait Auditable
             }
         });
 
-        static::deleted(function (Model $model) {
+        static::deleting(function (Model $model) {
             self::logModelEvent($model, 'deleted', $model->getAttributes(), null);
         });
     }

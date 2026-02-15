@@ -31,6 +31,10 @@ class DemoDataSeeder extends Seeder
             'description' => 'A demo technology company for testing purposes',
             'address' => '123 Demo Street, Kyiv, Ukraine',
             'manager_id' => null,
+            'latitude' => 50.4501,
+            'longitude' => 30.5234,
+            'radius_meters' => 200,
+            'qr_secret' => 'demo-qr-secret-123',
         ]);
 
         // Create a work schedule for the company
@@ -77,6 +81,7 @@ class DemoDataSeeder extends Seeder
             'avatar' => null,
             'work_schedule_id' => $workSchedule->id,
             'email_verified_at' => now(),
+            'pin_code' => '1111',
         ]);
 
         // Create Manager user
@@ -90,6 +95,7 @@ class DemoDataSeeder extends Seeder
             'avatar' => null,
             'work_schedule_id' => $workSchedule->id,
             'email_verified_at' => now(),
+            'pin_code' => '2222',
         ]);
 
         // Update company manager
@@ -106,6 +112,7 @@ class DemoDataSeeder extends Seeder
             'avatar' => null,
             'work_schedule_id' => $workSchedule->id,
             'email_verified_at' => now(),
+            'pin_code' => '3333',
         ]);
 
         // Create Time Entries for each user
@@ -115,6 +122,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->subDays(1)->setTime(9, 0),
             'stop_time' => Carbon::now()->subDays(1)->setTime(17, 30),
             'duration' => 510, // 8.5 hours in minutes
+            'entry_type' => 'manual',
+            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
             'start_comment' => 'Admin completed full day work',
             'stop_comment' => 'Admin stopped working for the day',
         ]);
@@ -125,6 +134,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->subDays(2)->setTime(8, 30),
             'stop_time' => Carbon::now()->subDays(2)->setTime(16, 45),
             'duration' => 495, // ~8.25 hours in minutes
+            'entry_type' => 'manual',
+            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
             'start_comment' => 'Manager completed work with meetings',
             'stop_comment' => 'Manager stopped working for the day',
         ]);
@@ -134,6 +145,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->setTime(9, 15),
             'stop_time' => null,
             'duration' => 0,
+            'entry_type' => 'manual',
+            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
             'start_comment' => 'Manager currently working',
             'stop_comment' => null,
         ]);
@@ -144,6 +157,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->subDays(3)->setTime(9, 0),
             'stop_time' => Carbon::now()->subDays(3)->setTime(18, 0),
             'duration' => 540, // 9 hours in minutes
+            'entry_type' => 'manual',
+            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
             'start_comment' => 'Employee worked on project tasks',
             'stop_comment' => 'Employee stopped working for the day',
         ]);
@@ -153,6 +168,8 @@ class DemoDataSeeder extends Seeder
             'start_time' => Carbon::now()->setTime(8, 45),
             'stop_time' => null,
             'duration' => 0,
+            'entry_type' => 'manual',
+            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
             'start_comment' => 'Employee currently clocked in',
             'stop_comment' => null,
         ]);

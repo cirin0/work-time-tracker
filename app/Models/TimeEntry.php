@@ -15,6 +15,8 @@ class TimeEntry extends Model
         'start_time',
         'stop_time',
         'duration',
+        'entry_type',
+        'location_data',
         'start_comment',
         'stop_comment',
     ];
@@ -22,6 +24,7 @@ class TimeEntry extends Model
     protected $casts = [
         'start_time' => 'datetime',
         'stop_time' => 'datetime',
+        'location_data' => 'array',
     ];
 
     public function user(): BelongsTo

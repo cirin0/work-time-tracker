@@ -10,12 +10,12 @@ return new class extends Migration {
         Schema::create('companies', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('address')->nullable();
+            $table->unsignedBigInteger('manager_id')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
+            $table->string('address')->nullable();
             $table->string('description')->nullable();
             $table->string('logo')->nullable();
-            $table->unsignedBigInteger('manager_id')->nullable();
             $table->timestamps();
         });
 

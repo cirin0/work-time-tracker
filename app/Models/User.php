@@ -14,7 +14,7 @@ use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable, Auditable;
+    use Auditable, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -32,7 +32,8 @@ class User extends Authenticatable implements JWTSubject
     protected $hidden = [
         'password',
         'remember_token',
-        'email_verified_at'
+        'email_verified_at',
+        'pin_code',
     ];
 
     public function getJWTIdentifier()
@@ -98,6 +99,7 @@ class User extends Authenticatable implements JWTSubject
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'pin_code' => 'hashed',
         ];
     }
 }

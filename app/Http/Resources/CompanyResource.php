@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 
 class CompanyResource extends JsonResource
 {
-
     public static $wrap = null;
 
     public function toArray(Request $request): array
@@ -16,16 +15,19 @@ class CompanyResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'logo' => $this->logo ? Storage::url($this->logo) : null,
-            'description' => $this->description,
-            'address' => $this->address,
             'manager' => $this->manager ? [
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,
                 'email' => $this->manager->email,
             ] : null,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'address' => $this->address,
+            'description' => $this->description,
+            'logo' => $this->logo ? Storage::url($this->logo) : null,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'radius_meters' => $this->radius_meters,
             'employees' => $this->employees->filter(function ($user) {
                 return $user->role !== 'manager';
             })->map(function ($employee) {
