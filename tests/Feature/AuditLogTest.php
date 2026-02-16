@@ -47,8 +47,8 @@ class AuditLogTest extends TestCase
         // Should only see logs from their company
         $this->assertGreaterThanOrEqual(5, count($data));
         foreach ($data as $log) {
-            if ($log['user_id']) {
-                $user = User::find($log['user_id']);
+            if (isset($log['user']['id'])) {
+                $user = User::find($log['user']['id']);
                 $this->assertEquals($this->company->id, $user->company_id);
             }
         }
@@ -95,9 +95,11 @@ class AuditLogTest extends TestCase
                 'data' => [
                     '*' => [
                         'id',
-                        'user_id',
-                        'user_name',
-                        'user_email',
+                        'user' => [
+                            'id',
+                            'name',
+                            'email',
+                        ],
                         'action',
                         'model_type',
                         'model_name',

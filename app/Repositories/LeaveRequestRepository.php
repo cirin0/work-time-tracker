@@ -12,7 +12,9 @@ class LeaveRequestRepository
 {
     public function find(int $id): ?LeaveRequest
     {
-        return LeaveRequest::query()->find($id);
+        return LeaveRequest::query()
+            ->with(['user', 'processor'])
+            ->find($id);
     }
 
     public function getPendingForManager(User $manager): Collection
@@ -30,6 +32,7 @@ class LeaveRequestRepository
     public function getAllForUser(User $user): LengthAwarePaginator
     {
         return $user->leaveRequests()
+            ->with(['user', 'processor'])
             ->latest()
             ->paginate();
     }

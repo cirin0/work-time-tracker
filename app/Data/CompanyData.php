@@ -16,6 +16,11 @@ class CompanyData extends Data
         public ?string $logo,
         public ?string $description,
         public ?string $address,
+        public ?float  $latitude,
+        public ?float  $longitude,
+        public ?int    $radius_meters,
+        public string  $created_at,
+        public string  $updated_at,
     )
     {
     }

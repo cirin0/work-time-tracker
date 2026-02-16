@@ -2,16 +2,21 @@
 
 namespace App\Services;
 
+use App\Enums\WorkMode;
+use App\Models\Company;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Repositories\TimeEntryRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TimeEntryService
 {
-    public function __construct(protected TimeEntryRepository $timeEntryRepository) {}
+    public function __construct(protected TimeEntryRepository $timeEntryRepository)
+    {
+    }
 
     public function startTimeEntry(User $user, array $data): array
     {
@@ -21,17 +26,76 @@ class TimeEntryService
             throw new BadRequestHttpException('An active time entry already exists. Please stop it before starting a new one.');
         }
 
+        if ($user->work_mode === WorkMode::office) {
+            $company = $user->company;
+            if (!$company) {
+                throw new BadRequestHttpException('User is not assigned to any company.');
+            }
+
+            // 1. Check GPS
+            $distance = $this->calculateDistance(
+                (float)$data['latitude'],
+                (float)$data['longitude'],
+                (float)$company->latitude,
+                (float)$company->longitude
+            );
+
+            if ($distance > $company->radius_meters) {
+                throw new BadRequestHttpException('You are outside the office radius.');
+            }
+
+            // 2. Check QR code
+            if (!$this->verifyDynamicQrCode($company, $data['qr_code'])) {
+                throw new BadRequestHttpException('Invalid or expired QR code.');
+            }
+        }
+
         $timeEntry = $this->timeEntryRepository->create([
             'user_id' => $user->id,
             'start_time' => now(),
             'start_comment' => $data['start_comment'] ?? null,
+            'location_data' => isset($data['latitude']) ? [
+                'latitude' => $data['latitude'],
+                'longitude' => $data['longitude'],
+            ] : null,
         ]);
 
         return ['time_entry' => $timeEntry];
     }
 
+    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371000;
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lonDelta = deg2rad($lon2 - $lon1);
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    private function verifyDynamicQrCode(Company $company, string $qrCode): bool
+    {
+        if (!$company->qr_secret) {
+            return false;
+        }
+
+        $expectedCode = hash('sha256', $company->qr_secret . date('Y-m-d'));
+
+        return hash_equals($expectedCode, $qrCode);
+    }
+
     public function stopActiveTimeEntry(User $user, array $data): array
     {
+        if (!Hash::check($data['pin_code'], $user->pin_code)) {
+            throw new BadRequestHttpException('Invalid pin code.');
+        }
+
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if (!$activeEntry) {

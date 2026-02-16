@@ -30,6 +30,8 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/me', [ProfileController::class, 'updateProfile']);
     Route::post('/me/avatar', [ProfileController::class, 'updateAvatar']);
     Route::post('/me/change-password', [ProfileController::class, 'changePassword']);
+    Route::post('/me/pin-code', [ProfileController::class, 'setupPinCode']);
+    Route::patch('/me/pin-code', [ProfileController::class, 'changePinCode']);
 });
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {

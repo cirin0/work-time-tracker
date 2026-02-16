@@ -20,8 +20,9 @@ class LeaveRequestData extends Data
         public ?string            $reason,
         public LeaveRequestStatus $status,
         public ?int               $processed_by_manager_id,
-        public ?string $manager_comment,
+        public ?string            $manager_comment,
         public string             $created_at,
+        public string             $updated_at,
         #[Computed]
         public ?UserBasicData     $user,
         #[Computed]

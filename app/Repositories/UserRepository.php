@@ -10,17 +10,23 @@ class UserRepository
 {
     public function find(int $id): ?User
     {
-        return User::query()->find($id);
+        return User::query()
+            ->with(['company', 'manager', 'workSchedule'])
+            ->find($id);
     }
 
     public function getAll(): Collection
     {
-        return User::query()->get();
+        return User::query()
+            ->with(['company', 'manager', 'workSchedule'])
+            ->get();
     }
 
     public function getPaginated(int $perPage = 10): LengthAwarePaginator
     {
-        return User::query()->paginate($perPage);
+        return User::query()
+            ->with(['company', 'manager', 'workSchedule'])
+            ->paginate($perPage);
     }
 
     public function create(array $data): User

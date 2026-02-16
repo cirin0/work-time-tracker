@@ -11,6 +11,7 @@ export type AuditLog = {
     ip_address: string | null;
     user_agent: string | null;
     created_at: string;
+    updated_at: string;
     model_name: string | null;
 };
 export type AuthUser = {
@@ -30,13 +31,21 @@ export type Company = {
     logo: string | null;
     description: string | null;
     address: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    radius_meters: number | null;
+    created_at: string;
+    updated_at: string;
 };
 export type DailySchedule = {
     id: number;
     day_of_week: string;
     start_time: string | null;
     end_time: string | null;
+    break_duration: number | null;
     is_working_day: boolean;
+    created_at: string;
+    updated_at: string;
 };
 export type LeaveRequest = {
     id: number;
@@ -49,6 +58,7 @@ export type LeaveRequest = {
     processed_by_manager_id: number | null;
     manager_comment: string | null;
     created_at: string;
+    updated_at: string;
     user: UserBasic | null;
     manager: UserBasic | null;
 };
@@ -69,9 +79,12 @@ export type TimeEntry = {
     start_time: string;
     stop_time: string | null;
     duration: number | null;
+    entry_type: string | null;
+    location_data: Array<any> | null;
     start_comment: string | null;
     stop_comment: string | null;
     created_at: string;
+    updated_at: string;
     user: UserBasic | null;
 };
 export type TimeEntrySummary = {
@@ -98,6 +111,9 @@ export type User = {
     work_schedule_id: number | null;
     work_mode: WorkMode;
     pin_code: string | null;
+    created_at: string;
+    updated_at: string;
+    has_pin_code: boolean;
     company: Company | null;
     manager: UserBasic | null;
     work_schedule: WorkSchedule | null;
@@ -116,5 +132,7 @@ export type WorkSchedule = {
     description: string | null;
     is_default: boolean;
     company_id: number;
+    created_at: string;
+    updated_at: string;
     daily_schedules: Array<DailySchedule>;
 };

@@ -34,11 +34,6 @@ class Company extends Model
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    public function getEmployeeCountAttribute(): int
-    {
-        return $this->employees()->count();
-    }
-
     public function employees(): HasMany
     {
         return $this->hasMany(User::class, 'company_id');

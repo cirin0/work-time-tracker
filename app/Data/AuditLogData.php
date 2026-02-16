@@ -22,6 +22,7 @@ class AuditLogData extends Data
         public ?string $ip_address,
         public ?string $user_agent,
         public string  $created_at,
+        public string  $updated_at,
         #[Computed]
         public ?string $model_name,
     )
@@ -43,6 +44,7 @@ class AuditLogData extends Data
             ip_address: $auditLog->ip_address,
             user_agent: $auditLog->user_agent,
             created_at: $auditLog->created_at->toIso8601String(),
+            updated_at: $auditLog->updated_at->toIso8601String(),
             model_name: $auditLog->model_type ? class_basename($auditLog->model_type) : null,
         );
     }

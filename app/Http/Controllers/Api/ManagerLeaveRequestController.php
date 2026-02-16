@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Auth;
 
 class ManagerLeaveRequestController extends Controller
 {
-    public function __construct(protected LeaveRequestService $leaveRequestService) {}
+    public function __construct(protected LeaveRequestService $leaveRequestService)
+    {
+    }
 
     public function index(): AnonymousResourceCollection
     {
@@ -30,9 +32,11 @@ class ManagerLeaveRequestController extends Controller
             return response()->json(['message' => $result['message']], 403);
         }
 
+        $leaveRequest = $result['leave_request']->load(['user', 'processor']);
+
         return response()->json([
             'message' => 'Leave request approved successfully.',
-            'data' => new LeaveRequestResource($result['leave_request']),
+            'data' => new LeaveRequestResource($leaveRequest),
         ]);
     }
 
@@ -47,9 +51,11 @@ class ManagerLeaveRequestController extends Controller
             return response()->json(['message' => $result['message']], 403);
         }
 
+        $leaveRequest = $result['leave_request']->load(['user', 'processor']);
+
         return response()->json([
             'message' => 'Leave request rejected successfully.',
-            'data' => new LeaveRequestResource($result['leave_request']),
+            'data' => new LeaveRequestResource($leaveRequest),
         ]);
     }
 }

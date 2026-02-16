@@ -16,6 +16,8 @@ class WorkScheduleData extends Data
         public ?string        $description,
         public bool           $is_default,
         public int            $company_id,
+        public string         $created_at,
+        public string         $updated_at,
         /** @var DataCollection<DailyScheduleData> */
         #[DataCollectionOf(DailyScheduleData::class)]
         public DataCollection $daily_schedules,

@@ -13,6 +13,7 @@ class WorkScheduleResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'is_default' => (bool)$this->is_default,
+            'company' => CompanyResource::make($this->whenLoaded('company')),
             'daily_schedules' => DailyScheduleResource::collection($this->whenLoaded('dailySchedules')),
         ];
     }

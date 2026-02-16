@@ -10,19 +10,21 @@ class WorkScheduleRepository
     public function find(int $id): ?WorkSchedule
     {
         return WorkSchedule::query()
-            ->with('dailySchedules')
+            ->with(['dailySchedules', 'company'])
             ->find($id);
     }
 
     public function getAll(): Collection
     {
-        return WorkSchedule::query()->get();
+        return WorkSchedule::query()
+            ->with(['dailySchedules', 'company'])
+            ->get();
     }
 
     public function getAllForCompany(int $companyId): Collection
     {
         return WorkSchedule::query()
-            ->with('dailySchedules')
+            ->with(['dailySchedules', 'company'])
             ->where('company_id', $companyId)
             ->get();
     }
