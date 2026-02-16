@@ -19,18 +19,20 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'role' => $this->role,
             'avatar' => $this->avatar ? Storage::url($this->avatar) : null,
-            'company' => $this->company ? [
+            'work_mode' => $this->work_mode,
+            'has_pin_code' => !empty($this->pin_code),
+            'company' => $this->whenLoaded('company', fn() => [
                 'id' => $this->company->id,
                 'name' => $this->company->name,
-            ] : null,
-            'manager' => $this->manager ? [
+            ]),
+            'manager' => $this->whenLoaded('manager', fn() => [
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,
-            ] : null,
-            'work_schedule' => $this->workSchedule ? [
+            ]),
+            'work_schedule' => $this->whenLoaded('workSchedule', fn() => [
                 'id' => $this->workSchedule->id,
                 'name' => $this->workSchedule->name,
-            ] : null,
+            ]),
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];

@@ -20,8 +20,12 @@ class UserData extends Data
         public ?int              $manager_id,
         public ?string           $avatar,
         public ?int              $work_schedule_id,
-        public WorkMode $work_mode,
-        public ?string  $pin_code,
+        public WorkMode          $work_mode,
+        public ?string           $pin_code,
+        public string            $created_at,
+        public string            $updated_at,
+        #[Computed]
+        public bool              $has_pin_code,
         #[Computed]
         public ?CompanyData      $company,
         #[Computed]

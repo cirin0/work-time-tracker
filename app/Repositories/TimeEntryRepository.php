@@ -10,12 +10,15 @@ class TimeEntryRepository
 {
     public function find(int $id): ?TimeEntry
     {
-        return TimeEntry::query()->find($id);
+        return TimeEntry::query()
+            ->with('user')
+            ->find($id);
     }
 
     public function getActiveEntryForUser(User $user): ?TimeEntry
     {
         return TimeEntry::query()
+            ->with('user')
             ->where('user_id', $user->id)
             ->whereNull('stop_time')
             ->first();
@@ -24,6 +27,7 @@ class TimeEntryRepository
     public function getAllForUser(User $user): Collection
     {
         return TimeEntry::query()
+            ->with('user')
             ->where('user_id', $user->id)
             ->orderBy('start_time', 'desc')
             ->get();
@@ -32,6 +36,7 @@ class TimeEntryRepository
     public function getCompletedForUser(User $user): Collection
     {
         return TimeEntry::query()
+            ->with('user')
             ->where('user_id', $user->id)
             ->whereNotNull('stop_time')
             ->get();

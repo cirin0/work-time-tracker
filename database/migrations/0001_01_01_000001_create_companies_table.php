@@ -13,8 +13,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('manager_id')->nullable();
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
-            $table->string('address')->nullable();
-            $table->string('description')->nullable();
+            $table->text('address')->nullable();
+            $table->text('description')->nullable();
             $table->string('logo')->nullable();
             $table->timestamps();
         });

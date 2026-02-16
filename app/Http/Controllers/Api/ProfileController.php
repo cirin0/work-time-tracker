@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\ChangePinCodeRequest;
+use App\Http\Requests\SetupPinCodeRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\UserResource;
@@ -54,6 +56,41 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Password changed successfully',
+        ]);
+    }
+
+    public function setupPinCode(SetupPinCodeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->setupPinCode(
+            $user,
+            $request->validated('pin_code')
+        );
+
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json([
+            'message' => 'Pin code setup successfully',
+        ]);
+    }
+
+    public function changePinCode(ChangePinCodeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->changePinCode(
+            $user,
+            $request->validated('current_pin_code'),
+            $request->validated('new_pin_code')
+        );
+
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json([
+            'message' => 'Pin code changed successfully',
         ]);
     }
 }

@@ -13,14 +13,20 @@ class TimeEntryResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'start_time' => $this->start_time?->format('Y-m-d H:i:s'),
-            'stop_time' => $this->stop_time?->format('Y-m-d H:i:s'),
-            'duration' => $this->duration,
+            'user' => $this->whenLoaded('user', fn() => [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+            ]),
+            'start_time' => $this->start_time?->format('d-m-Y H:i:s'),
+            'stop_time' => $this->stop_time?->format('d-m-Y H:i:s'),
+            'duration' => $this->duration ?? 0,
+            'entry_type' => $this->entry_type ?? 'gps',
+            'location_data' => $this->location_data,
             'start_comment' => $this->start_comment,
             'stop_comment' => $this->stop_comment,
-            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
-            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at?->format('d-m-Y H:i:s'),
+            'updated_at' => $this->updated_at?->format('d-m-Y H:i:s'),
         ];
     }
 }

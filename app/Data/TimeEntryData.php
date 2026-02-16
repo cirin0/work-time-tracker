@@ -15,9 +15,12 @@ class TimeEntryData extends Data
         public string         $start_time,
         public ?string        $stop_time,
         public ?int           $duration,
+        public ?string        $entry_type,
+        public ?array         $location_data,
         public ?string        $start_comment,
         public ?string        $stop_comment,
         public string         $created_at,
+        public string         $updated_at,
         #[Computed]
         public ?UserBasicData $user,
     )

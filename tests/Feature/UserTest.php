@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -15,12 +16,53 @@ class UserTest extends TestCase
     public function test_admin_can_get_all_users()
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        User::factory()->count(5)->create();
+        User::factory()->count(2)->create();
 
         $response = $this->actingAs($admin, 'api')->getJson('/api/users');
 
-        $response->assertStatus(200)
-            ->assertJsonCount(6, 'data');
+        $response->assertStatus(200);
+
+        $users = User::with(['company', 'manager', 'workSchedule'])->get();
+        $expectedData = UserResource::collection($users)->resolve();
+
+        $response->assertExactJson([
+            'data' => $expectedData,
+            'links' => [
+                'first' => 'http://localhost/api/users?page=1',
+                'last' => 'http://localhost/api/users?page=1',
+                'prev' => null,
+                'next' => null,
+            ],
+            'meta' => [
+                'current_page' => 1,
+                'from' => 1,
+                'last_page' => 1,
+                'links' => [
+                    [
+                        'url' => null,
+                        'label' => '&laquo; Previous',
+                        'active' => false,
+                        'page' => null,
+                    ],
+                    [
+                        'url' => 'http://localhost/api/users?page=1',
+                        'label' => '1',
+                        'active' => true,
+                        'page' => 1,
+                    ],
+                    [
+                        'url' => null,
+                        'label' => 'Next &raquo;',
+                        'active' => false,
+                        'page' => null,
+                    ],
+                ],
+                'path' => 'http://localhost/api/users',
+                'per_page' => 10,
+                'to' => 3,
+                'total' => 3,
+            ],
+        ]);
     }
 
     public function test_admin_can_update_user_role()
@@ -31,7 +73,12 @@ class UserTest extends TestCase
         $response = $this->actingAs($admin, 'api')->postJson("/api/users/{$user->id}/role", ['role' => 'manager']);
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'role' => 'manager']);
+        $user->refresh();
+
+        $response->assertExactJson([
+            'message' => 'User role updated successfully',
+            'user' => (new UserResource($user))->resolve(),
+        ]);
     }
 
     public function test_non_admin_cannot_update_user_role()
@@ -51,7 +98,12 @@ class UserTest extends TestCase
         $response = $this->actingAs($user, 'api')->patchJson('/api/me', ['name' => 'New Name']);
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'New Name']);
+        $user->refresh();
+
+        $response->assertExactJson([
+            'message' => 'Profile updated successfully',
+            'user' => (new UserResource($user))->resolve(),
+        ]);
     }
 
     public function test_admin_can_update_another_user_profile()
@@ -62,7 +114,12 @@ class UserTest extends TestCase
         $response = $this->actingAs($admin, 'api')->patchJson("/api/users/{$user->id}", ['name' => 'Admin Updated Name']);
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Admin Updated Name']);
+        $user->refresh();
+
+        $response->assertExactJson([
+            'message' => 'User updated successfully',
+            'user' => (new UserResource($user))->resolve(),
+        ]);
     }
 
     public function test_non_admin_cannot_update_another_users_profile()
@@ -108,8 +165,13 @@ class UserTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-
         $user->refresh();
+
+        $response->assertExactJson([
+            'message' => 'Avatar updated successfully',
+            'user' => (new UserResource($user))->resolve(),
+        ]);
+
         $this->assertNotNull($user->avatar);
         Storage::disk('public')->assertExists($user->avatar);
     }

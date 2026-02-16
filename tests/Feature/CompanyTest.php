@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Http\Resources\CompanyResource;
+use App\Http\Resources\CompanyStoreResource;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,10 +25,11 @@ class CompanyTest extends TestCase
         ]);
 
         $response->assertCreated();
-        $this->assertDatabaseHas('companies', [
-            'name' => 'Test Company',
-            'email' => 'company@test.com',
-            'phone' => '1234567890',
+        $company = Company::first();
+
+        $response->assertExactJson([
+            'message' => 'Company created successfully',
+            'company' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 
@@ -70,8 +73,11 @@ class CompanyTest extends TestCase
 
         $response = $this->actingAs($user, 'api')->getJson("/api/companies/{$company->id}");
 
-        $response->assertOk()
-            ->assertJsonPath('name', $company->name);
+        $response->assertOk();
+
+        $company = Company::query()->with(['manager', 'employees'])->withCount('employees')->find($company->id);
+
+        $response->assertExactJson((new CompanyResource($company))->resolve());
     }
 
     public function test_admin_can_update_any_company(): void
@@ -86,11 +92,11 @@ class CompanyTest extends TestCase
             ]);
 
         $response->assertOk();
+        $company->refresh();
 
-        $this->assertDatabaseHas('companies', [
-            'id' => $company->id,
-            'name' => 'Updated Name',
-            'email' => 'updated@test.com',
+        $response->assertExactJson([
+            'message' => 'Company updated successfully',
+            'company' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 

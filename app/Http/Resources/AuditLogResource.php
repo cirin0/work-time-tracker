@@ -13,9 +13,11 @@ class AuditLogResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
-            'user_name' => $this->user?->name,
-            'user_email' => $this->user?->email,
+            'user' => $this->whenLoaded('user', fn() => [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+            ]),
             'action' => $this->action,
             'model_type' => $this->model_type,
             'model_name' => $this->model_type ? class_basename($this->model_type) : null,
@@ -24,8 +26,8 @@ class AuditLogResource extends JsonResource
             'new_values' => $this->new_values,
             'ip_address' => $this->ip_address,
             'user_agent' => $this->user_agent,
-            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
-            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at?->format('d-m-Y H:i:s'),
+            'updated_at' => $this->updated_at?->format('d-m-Y H:i:s'),
         ];
     }
 }

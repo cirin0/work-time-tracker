@@ -13,7 +13,10 @@ class DailyScheduleData extends Data
         public string  $day_of_week,
         public ?string $start_time,
         public ?string $end_time,
+        public ?int    $break_duration,
         public bool    $is_working_day,
+        public string  $created_at,
+        public string  $updated_at,
     )
     {
     }

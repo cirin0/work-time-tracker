@@ -72,9 +72,11 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
+        $entry = $data['time_entry']->load('user');
+
         return response()->json([
             'message' => 'Time entry started successfully.',
-            'data' => new TimeEntryResource($data['time_entry']),
+            'data' => new TimeEntryResource($entry),
         ], 201);
     }
 
@@ -85,9 +87,11 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
+        $entry = $data['time_entry']->load('user');
+
         return response()->json([
             'message' => 'Time entry stopped successfully.',
-            'data' => new TimeEntryResource($data['time_entry']),
+            'data' => new TimeEntryResource($entry),
         ]);
     }
 

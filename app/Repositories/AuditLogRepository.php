@@ -11,7 +11,9 @@ class AuditLogRepository
 {
     public function find(int $id): ?AuditLog
     {
-        return AuditLog::query()->find($id);
+        return AuditLog::query()
+            ->with('user:id,name,email')
+            ->find($id);
     }
 
     public function create(array $data): AuditLog
@@ -22,6 +24,7 @@ class AuditLogRepository
     public function getAllForUser(User $user, int $perPage = 50): LengthAwarePaginator
     {
         return AuditLog::query()
+            ->with('user:id,name,email')
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -30,6 +33,7 @@ class AuditLogRepository
     public function getAllForModel(string $modelType, int $modelId, int $perPage = 50): LengthAwarePaginator
     {
         return AuditLog::query()
+            ->with('user:id,name,email')
             ->where('model_type', $modelType)
             ->where('model_id', $modelId)
             ->orderBy('created_at', 'desc')
@@ -47,6 +51,7 @@ class AuditLogRepository
     public function getByAction(string $action, int $perPage = 50): LengthAwarePaginator
     {
         return AuditLog::query()
+            ->with('user:id,name,email')
             ->where('action', $action)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);

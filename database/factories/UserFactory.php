@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
+use App\Enums\WorkMode;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -27,9 +29,24 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => 'employee',
+            'role' => UserRole::EMPLOYEE,
             'pin_code' => '1234',
+            'work_mode' => WorkMode::remote,
         ];
+    }
+
+    public function office(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'work_mode' => WorkMode::office,
+        ]);
+    }
+
+    public function remote(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'work_mode' => WorkMode::remote,
+        ]);
     }
 
     /**

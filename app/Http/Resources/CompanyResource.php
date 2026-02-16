@@ -15,11 +15,11 @@ class CompanyResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'manager' => $this->manager ? [
+            'manager' => $this->whenLoaded('manager', fn() => [
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,
                 'email' => $this->manager->email,
-            ] : null,
+            ]),
             'email' => $this->email,
             'phone' => $this->phone,
             'address' => $this->address,
@@ -28,8 +28,8 @@ class CompanyResource extends JsonResource
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'radius_meters' => $this->radius_meters,
-            'employees' => $this->employees->filter(function ($user) {
-                return $user->role !== 'manager';
+            'employees' => $this->whenLoaded('employees', fn() => $this->employees->filter(function ($user) {
+                return $user->role->value !== 'manager';
             })->map(function ($employee) {
                 return [
                     'id' => $employee->id,
@@ -37,8 +37,8 @@ class CompanyResource extends JsonResource
                     'email' => $employee->email,
                     'avatar' => $employee->avatar ? Storage::url($employee->avatar) : null,
                 ];
-            }),
-            'users_count' => $this->employee_count,
+            })),
+            'users_count' => $this->employees_count,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];

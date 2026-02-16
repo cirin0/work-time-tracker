@@ -5,20 +5,4 @@
 // phpstan запускається командою: php -d memory_limit=512M vendor\bin\phpstan analyse
 
 
-// TODO: 7 тестів не проходять, але це нормально, їх треба виправити пізніше
-
-
-// TODO: виправити міграції, видалити зайві та об'єднати деякі
-
-
-// TODO: Можливо змінити LeaveRequest модель
-        public int     $id,
-        public int     $employee_id,
-        public string  $leave_type,
-        public string  $start_date,
-        public string  $end_date,
-        public string  $status,
-        public ?string $reason,
-
-// в папці resources/ts/api/ і resources/ts/api/ там старі типи
 // в resources/ts/api/generated.d.ts є актуальні типи  але вони не докінця правильно приписані в Data
