@@ -86,7 +86,7 @@ class CompanyTest extends TestCase
         $company = Company::factory()->create();
 
         $response = $this->actingAs($admin, 'api')
-            ->putJson("/api/companies/{$company->id}", [
+            ->patchJson("/api/companies/{$company->id}", [
                 'name' => 'Updated Name',
                 'email' => 'updated@test.com',
             ]);
@@ -106,7 +106,7 @@ class CompanyTest extends TestCase
         $company = Company::factory()->create();
 
         $response = $this->actingAs($employee, 'api')
-            ->putJson("/api/companies/{$company->id}", [
+            ->patchJson("/api/companies/{$company->id}", [
                 'name' => 'Updated Name',
             ]);
 
