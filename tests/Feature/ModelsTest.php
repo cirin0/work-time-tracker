@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EntryType;
 use App\Models\Company;
 use App\Models\TimeEntry;
 use App\Models\User;
@@ -38,11 +39,11 @@ test('company has new fields and qr_secret is hidden', function () {
 test('time entry has new fields and location_data is cast to array', function () {
     $location = ['lat' => 50.4501, 'lng' => 30.5234];
     $timeEntry = TimeEntry::factory()->create([
-        'entry_type' => 'qr',
+        'entry_type' => EntryType::QR,
         'location_data' => $location,
     ]);
 
-    expect($timeEntry->entry_type)->toBe('qr')
+    expect($timeEntry->entry_type)->toBe(EntryType::QR)
         ->and($timeEntry->location_data)->toBe($location)
         ->and($timeEntry->location_data)->toBeArray();
 });

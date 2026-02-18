@@ -4,7 +4,7 @@ namespace App\Enums;
 
 enum WorkMode: string
 {
-    case remote = 'remote';
-    case office = 'office';
-    case hybrid = 'hybrid';
+    case REMOTE = 'remote';
+    case OFFICE = 'office';
+    case HYBRID = 'hybrid';
 }

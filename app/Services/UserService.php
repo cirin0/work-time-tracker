@@ -44,6 +44,7 @@ class UserService
 
         $path = $avatar->store('avatars', 'public');
         $user->update(['avatar' => $path]);
+        $user->load(['company', 'manager', 'workSchedule']);
 
         return ['user' => $user];
     }
@@ -71,6 +72,7 @@ class UserService
     public function updateProfile(User $user, array $data): array
     {
         $user->update($data);
+        $user->load(['company', 'manager', 'workSchedule']);
 
         return ['user' => $user];
     }

@@ -31,21 +31,28 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'role' => UserRole::EMPLOYEE,
             'pin_code' => '1234',
-            'work_mode' => WorkMode::remote,
+            'work_mode' => WorkMode::REMOTE,
         ];
     }
 
     public function office(): static
     {
         return $this->state(fn(array $attributes) => [
-            'work_mode' => WorkMode::office,
+            'work_mode' => WorkMode::OFFICE,
         ]);
     }
 
     public function remote(): static
     {
         return $this->state(fn(array $attributes) => [
-            'work_mode' => WorkMode::remote,
+            'work_mode' => WorkMode::REMOTE,
+        ]);
+    }
+
+    public function hybrid(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'work_mode' => WorkMode::HYBRID,
         ]);
     }
 

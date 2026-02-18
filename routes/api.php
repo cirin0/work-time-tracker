@@ -36,7 +36,7 @@ Route::middleware('auth:api')->group(function () {
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
-    Route::get('/{user}', [UserController::class, 'show'])->middleware('role:admin,manager');
+    Route::get('/{user}', [UserController::class, 'show']);
     Route::patch('/{user}', [UserController::class, 'update']);
     Route::middleware('role:admin')->group(function () {
         Route::post('{user}/role', [UserController::class, 'updateRole']);
@@ -45,10 +45,9 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
-// TODO: fix data responses to be consistent
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
-    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'showById']);
+    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show']);
     Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
 
     Route::prefix('manager')->middleware('role:manager')->group(function () {
@@ -64,13 +63,12 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::middleware('auth:api')->prefix('companies')->group(function () {
-    Route::get('/', [CompanyController::class, 'index']);
-    Route::get('/{company}', [CompanyController::class, 'showById']);
+    Route::get('/{company}', [CompanyController::class, 'show']);
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
 
     Route::middleware('role:admin')->group(function () {
         Route::post('/', [CompanyController::class, 'store']);
-        Route::put('/{company}', [CompanyController::class, 'update']);
+        Route::patch('/{company}', [CompanyController::class, 'update']);
         Route::delete('/{company}', [CompanyController::class, 'destroy']);
     });
 });
@@ -88,7 +86,7 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('work-schedules', WorkScheduleController::class);
     Route::get('users/{user}/work-schedule', [UserController::class, 'getWorkSchedule']);
-    Route::put('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
+    Route::patch('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
 });
 
 Route::middleware('auth:api')->prefix('audit-logs')->group(function () {

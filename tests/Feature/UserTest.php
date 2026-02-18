@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\ProfileResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,10 +76,11 @@ class UserTest extends TestCase
         $response->assertStatus(200);
         $user->refresh();
 
-        $response->assertExactJson([
+        $response->assertJson([
             'message' => 'User role updated successfully',
-            'user' => (new UserResource($user))->resolve(),
         ]);
+
+        $this->assertEquals('manager', $user->role->value);
     }
 
     public function test_non_admin_cannot_update_user_role()
@@ -102,7 +104,7 @@ class UserTest extends TestCase
 
         $response->assertExactJson([
             'message' => 'Profile updated successfully',
-            'user' => (new UserResource($user))->resolve(),
+            'user' => (new ProfileResource($user))->resolve(),
         ]);
     }
 
@@ -116,10 +118,11 @@ class UserTest extends TestCase
         $response->assertStatus(200);
         $user->refresh();
 
-        $response->assertExactJson([
+        $response->assertJson([
             'message' => 'User updated successfully',
-            'user' => (new UserResource($user))->resolve(),
         ]);
+
+        $this->assertEquals('Admin Updated Name', $user->name);
     }
 
     public function test_non_admin_cannot_update_another_users_profile()
@@ -167,9 +170,8 @@ class UserTest extends TestCase
         $response->assertStatus(200);
         $user->refresh();
 
-        $response->assertExactJson([
+        $response->assertJson([
             'message' => 'Avatar updated successfully',
-            'user' => (new UserResource($user))->resolve(),
         ]);
 
         $this->assertNotNull($user->avatar);

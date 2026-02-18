@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EntryType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,14 +22,18 @@ class TimeEntry extends Model
         'stop_comment',
     ];
 
-    protected $casts = [
-        'start_time' => 'datetime',
-        'stop_time' => 'datetime',
-        'location_data' => 'array',
-    ];
-
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'start_time' => 'datetime',
+            'stop_time' => 'datetime',
+            'location_data' => 'array',
+            'entry_type' => EntryType::class,
+        ];
     }
 }

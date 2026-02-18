@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('time_entries', function (Blueprint $table) {
-            $table->enum('entry_type', ['gps', 'qr', 'remote', 'manual'])->default('gps')->after('duration');
+            $table->enum('entry_type', ['gps', 'qr', 'gps_qr', 'remote', 'manual'])->default('gps')->after('duration');
             $table->json('location_data')->nullable()->after('entry_type');
         });
     }

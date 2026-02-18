@@ -84,7 +84,7 @@ class UserController extends Controller
         Gate::authorize('manage-profile', $user);
         $data = $this->userService->getWorkSchedule($user);
 
-        if (! $data['work_schedule']) {
+        if (!$data['work_schedule']) {
             return response()->json([
                 'message' => 'User has no work schedule assigned',
                 'user' => new UserResource($data['user']),

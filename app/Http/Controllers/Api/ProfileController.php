@@ -8,7 +8,7 @@ use App\Http\Requests\ChangePinCodeRequest;
 use App\Http\Requests\SetupPinCodeRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\ProfileResource;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 
@@ -18,9 +18,10 @@ class ProfileController extends Controller
     {
     }
 
-    public function me(): UserResource
+    public function me(): ProfileResource
     {
-        return new UserResource(auth()->user());
+        $user = auth()->user()->load(['company', 'manager', 'workSchedule']);
+        return new ProfileResource($user);
     }
 
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
@@ -30,7 +31,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => new UserResource($data['user']),
+            'user' => new ProfileResource($data['user']),
         ]);
     }
 
@@ -41,7 +42,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Avatar updated successfully',
-            'user' => new UserResource($data['user']),
+            'user' => new ProfileResource($data['user']),
         ]);
     }
 

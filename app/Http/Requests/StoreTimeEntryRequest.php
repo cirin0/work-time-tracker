@@ -15,7 +15,7 @@ class StoreTimeEntryRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
-        $isOffice = $user && $user->work_mode === WorkMode::office;
+        $isOffice = $user && $user->work_mode === WorkMode::OFFICE;
 
         return [
             'start_comment' => 'nullable|string|max:255',

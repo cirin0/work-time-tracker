@@ -25,7 +25,7 @@ class CompanyController extends Controller
         return response()->json($companies);
     }
 
-    public function showById(Company $company): CompanyResource
+    public function show(Company $company): CompanyResource
     {
         $data = $this->companyService->getCompanyById($company);
 

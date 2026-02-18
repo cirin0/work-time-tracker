@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Auth;
 
 class LeaveRequestController extends Controller
 {
-    public function __construct(protected LeaveRequestService $leaveRequestService) {}
+    public function __construct(protected LeaveRequestService $leaveRequestService)
+    {
+    }
 
     public function index(): AnonymousResourceCollection
     {
@@ -35,7 +37,7 @@ class LeaveRequestController extends Controller
         ], 201);
     }
 
-    public function showById(LeaveRequest $leaveRequest): JsonResponse|LeaveRequestResource
+    public function show(LeaveRequest $leaveRequest): JsonResponse|LeaveRequestResource
     {
         $result = $this->leaveRequestService->getLeaveRequestById($leaveRequest);
 

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\EntryType;
 use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\DailySchedule;
@@ -17,12 +18,12 @@ class DemoDataSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Creates one user for each role (Employee, Manager, Admin) with associated entities
-     * in various states (pending, approved, rejected, completed, active, etc.)
      */
     public function run(): void
     {
-        // Create a company
+        $password = Hash::make('password');
+
+        // 1. Create one company
         $company = Company::create([
             'name' => 'Demo Tech Corp',
             'email' => 'contact@demotech.com',
@@ -37,63 +38,72 @@ class DemoDataSeeder extends Seeder
             'qr_secret' => 'demo-qr-secret-123',
         ]);
 
-        // Create a work schedule for the company
-        $workSchedule = WorkSchedule::create([
-            'name' => 'Standard 9-5 Schedule',
-            'company_id' => $company->id,
-            'is_default' => true,
-        ]);
+        // 2. Create 5 different work schedules
+        $workSchedules = [];
+        $scheduleData = [
+            ['name' => 'Standard 9-18', 'start' => '09:00', 'end' => '18:00'],
+            ['name' => 'Early 8-17', 'start' => '08:00', 'end' => '17:00'],
+            ['name' => 'Late 10-19', 'start' => '10:00', 'end' => '19:00'],
+            ['name' => 'Morning Shift 7-16', 'start' => '07:00', 'end' => '16:00'],
+            ['name' => 'Night Owl 12-21', 'start' => '12:00', 'end' => '21:00'],
+        ];
 
-        // Create daily schedules for working days (Monday-Friday)
-        $workingDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-        foreach ($workingDays as $day) {
-            DailySchedule::create([
-                'work_schedule_id' => $workSchedule->id,
-                'day_of_week' => $day,
-                'is_working_day' => true,
-                'start_time' => '09:00',
-                'end_time' => '17:00',
-                'break_duration' => 60,
+        foreach ($scheduleData as $index => $data) {
+            $schedule = WorkSchedule::create([
+                'name' => $data['name'],
+                'company_id' => $company->id,
+                'is_default' => $index === 0,
             ]);
+
+            $workingDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            foreach ($workingDays as $day) {
+                DailySchedule::create([
+                    'work_schedule_id' => $schedule->id,
+                    'day_of_week' => $day,
+                    'is_working_day' => true,
+                    'start_time' => $data['start'],
+                    'end_time' => $data['end'],
+                    'break_duration' => 60,
+                ]);
+            }
+
+            $weekendDays = ['saturday', 'sunday'];
+            foreach ($weekendDays as $day) {
+                DailySchedule::create([
+                    'work_schedule_id' => $schedule->id,
+                    'day_of_week' => $day,
+                    'is_working_day' => false,
+                    'start_time' => '09:00',
+                    'end_time' => '17:00',
+                    'break_duration' => 0,
+                ]);
+            }
+
+            $workSchedules[] = $schedule;
         }
 
-        // Create weekend daily schedules (non-working)
-        $weekendDays = ['saturday', 'sunday'];
-        foreach ($weekendDays as $day) {
-            DailySchedule::create([
-                'work_schedule_id' => $workSchedule->id,
-                'day_of_week' => $day,
-                'is_working_day' => false,
-                'start_time' => '09:00',
-                'end_time' => '17:00',
-                'break_duration' => 0,
-            ]);
-        }
-
-        // Create Admin user
+        // 3. Create 1 Admin user (optional but good for management)
         $admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@demotech.com',
-            'password' => Hash::make('password'),
+            'password' => $password,
             'role' => UserRole::ADMIN,
             'company_id' => $company->id,
             'manager_id' => null,
-            'avatar' => null,
-            'work_schedule_id' => $workSchedule->id,
+            'work_schedule_id' => $workSchedules[0]->id,
             'email_verified_at' => now(),
             'pin_code' => '1111',
         ]);
 
-        // Create Manager user
+        // 4. Create 1 Manager for all employees
         $manager = User::create([
             'name' => 'Manager User',
             'email' => 'manager@demotech.com',
-            'password' => Hash::make('password'),
+            'password' => $password,
             'role' => UserRole::MANAGER,
             'company_id' => $company->id,
             'manager_id' => $admin->id,
-            'avatar' => null,
-            'work_schedule_id' => $workSchedule->id,
+            'work_schedule_id' => $workSchedules[0]->id,
             'email_verified_at' => now(),
             'pin_code' => '2222',
         ]);
@@ -101,149 +111,71 @@ class DemoDataSeeder extends Seeder
         // Update company manager
         $company->update(['manager_id' => $manager->id]);
 
-        // Create Employee user
-        $employee = User::create([
-            'name' => 'Employee User',
-            'email' => 'employee@demotech.com',
-            'password' => Hash::make('password'),
-            'role' => UserRole::EMPLOYEE,
-            'company_id' => $company->id,
-            'manager_id' => $manager->id,
-            'avatar' => null,
-            'work_schedule_id' => $workSchedule->id,
-            'email_verified_at' => now(),
-            'pin_code' => '3333',
-        ]);
+        // 5. Create 10 employees
+        for ($i = 1; $i <= 10; $i++) {
+            $employee = User::create([
+                'name' => "Employee $i",
+                'email' => "employee$i@demotech.com",
+                'password' => $password,
+                'role' => UserRole::EMPLOYEE,
+                'company_id' => $company->id,
+                'manager_id' => $manager->id,
+                'work_schedule_id' => $workSchedules[($i - 1) % 5]->id,
+                'email_verified_at' => now(),
+                'pin_code' => $i <= 5 ? str_repeat($i, 4) : null, // PIN for first 5 employees
+            ]);
 
-        // Create Time Entries for each user
-        // Admin - completed time entry
-        TimeEntry::create([
-            'user_id' => $admin->id,
-            'start_time' => Carbon::now()->subDays(1)->setTime(9, 0),
-            'stop_time' => Carbon::now()->subDays(1)->setTime(17, 30),
-            'duration' => 510, // 8.5 hours in minutes
-            'entry_type' => 'manual',
-            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
-            'start_comment' => 'Admin completed full day work',
-            'stop_comment' => 'Admin stopped working for the day',
-        ]);
+            // 6. Create 5 Time Entries for each employee
+            for ($j = 1; $j <= 5; $j++) {
+                $date = Carbon::now()->subDays($j + 1);
+                $startTime = (clone $date)->setTime(9, 0)->addMinutes(rand(-15, 15));
+                $stopTime = (clone $startTime)->addHours(8)->addMinutes(rand(0, 60));
 
-        // Manager - completed and active time entry
-        TimeEntry::create([
-            'user_id' => $manager->id,
-            'start_time' => Carbon::now()->subDays(2)->setTime(8, 30),
-            'stop_time' => Carbon::now()->subDays(2)->setTime(16, 45),
-            'duration' => 495, // ~8.25 hours in minutes
-            'entry_type' => 'manual',
-            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
-            'start_comment' => 'Manager completed work with meetings',
-            'stop_comment' => 'Manager stopped working for the day',
-        ]);
+                TimeEntry::create([
+                    'user_id' => $employee->id,
+                    'start_time' => $startTime,
+                    'stop_time' => $stopTime,
+                    'duration' => $startTime->diffInMinutes($stopTime),
+                    'entry_type' => EntryType::MANUAL,
+                    'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
+                    'start_comment' => "Clocked in on day $j",
+                    'stop_comment' => "Clocked out on day $j",
+                ]);
+            }
 
-        TimeEntry::create([
-            'user_id' => $manager->id,
-            'start_time' => Carbon::now()->setTime(9, 15),
-            'stop_time' => null,
-            'duration' => 0,
-            'entry_type' => 'manual',
-            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
-            'start_comment' => 'Manager currently working',
-            'stop_comment' => null,
-        ]);
+            // 7. Create 5 Leave Requests for each employee
+            $leaveTypes = ['sick', 'vacation', 'personal'];
+            $statuses = ['pending', 'approved', 'rejected'];
 
-        // Employee - completed and active time entries
-        TimeEntry::create([
-            'user_id' => $employee->id,
-            'start_time' => Carbon::now()->subDays(3)->setTime(9, 0),
-            'stop_time' => Carbon::now()->subDays(3)->setTime(18, 0),
-            'duration' => 540, // 9 hours in minutes
-            'entry_type' => 'manual',
-            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
-            'start_comment' => 'Employee worked on project tasks',
-            'stop_comment' => 'Employee stopped working for the day',
-        ]);
+            for ($k = 1; $k <= 5; $k++) {
+                $startDate = Carbon::now()->addWeeks($k + 1)->startOfWeek();
+                $endDate = (clone $startDate)->addDays(rand(1, 4));
 
-        TimeEntry::create([
-            'user_id' => $employee->id,
-            'start_time' => Carbon::now()->setTime(8, 45),
-            'stop_time' => null,
-            'duration' => 0,
-            'entry_type' => 'manual',
-            'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
-            'start_comment' => 'Employee currently clocked in',
-            'stop_comment' => null,
-        ]);
+                LeaveRequest::create([
+                    'user_id' => $employee->id,
+                    'type' => $leaveTypes[array_rand($leaveTypes)],
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'reason' => "Request $k for employee $i",
+                    'status' => $statuses[array_rand($statuses)],
+                    'processed_by' => $k % 2 === 0 ? $manager->id : null,
+                    'manager_comment' => $k % 2 === 0 ? 'Processed by manager' : null,
+                ]);
+            }
+        }
 
-        // Create Leave Requests with different statuses
-        // Admin - approved leave request
-        LeaveRequest::create([
-            'user_id' => $admin->id,
-            'type' => 'vacation',
-            'start_date' => Carbon::now()->addWeeks(2)->format('Y-m-d'),
-            'end_date' => Carbon::now()->addWeeks(2)->addDays(5)->format('Y-m-d'),
-            'reason' => 'Planned vacation',
-            'status' => 'approved',
-            'processed_by' => null,
-            'manager_comment' => 'Admin vacation auto-approved',
-        ]);
-
-        // Manager - pending leave request
-        LeaveRequest::create([
-            'user_id' => $manager->id,
-            'type' => 'personal',
-            'start_date' => Carbon::now()->addWeeks(3)->format('Y-m-d'),
-            'end_date' => Carbon::now()->addWeeks(3)->addDays(2)->format('Y-m-d'),
-            'reason' => 'Personal matters to attend',
-            'status' => 'pending',
-            'processed_by' => null,
-            'manager_comment' => null,
-        ]);
-
-        // Employee - multiple leave requests with different statuses
-        LeaveRequest::create([
-            'user_id' => $employee->id,
-            'type' => 'sick',
-            'start_date' => Carbon::now()->addWeek()->format('Y-m-d'),
-            'end_date' => Carbon::now()->addWeek()->addDays(2)->format('Y-m-d'),
-            'reason' => 'Medical appointment',
-            'status' => 'pending',
-            'processed_by' => null,
-            'manager_comment' => null,
-        ]);
-
-        LeaveRequest::create([
-            'user_id' => $employee->id,
-            'type' => 'vacation',
-            'start_date' => Carbon::now()->addMonth()->format('Y-m-d'),
-            'end_date' => Carbon::now()->addMonth()->addDays(7)->format('Y-m-d'),
-            'reason' => 'Summer vacation',
-            'status' => 'approved',
-            'processed_by' => $manager->id,
-            'manager_comment' => 'Approved. Enjoy your vacation!',
-        ]);
-
-        LeaveRequest::create([
-            'user_id' => $employee->id,
-            'type' => 'personal',
-            'start_date' => Carbon::now()->subWeek()->format('Y-m-d'),
-            'end_date' => Carbon::now()->subWeek()->addDays(1)->format('Y-m-d'),
-            'reason' => 'Family event',
-            'status' => 'rejected',
-            'processed_by' => $manager->id,
-            'manager_comment' => 'Already too many people on leave during this period. Please reschedule.',
-        ]);
-
-        $this->command->info('Demo data seeded successfully!');
-        $this->command->info('Users created:');
-        $this->command->info('- Admin: admin@demotech.com (password: password)');
-        $this->command->info('- Manager: manager@demotech.com (password: password)');
-        $this->command->info('- Employee: employee@demotech.com (password: password)');
-        $this->command->info('');
-        $this->command->info('Entities created:');
-        $this->command->info('- 1 Company');
-        $this->command->info('- 1 Work Schedule with 7 Daily Schedules');
-        $this->command->info('- 3 Users (Admin, Manager, Employee)');
-        $this->command->info('- 5 Time Entries (2 active, 3 completed)');
-        $this->command->info('- 5 Leave Requests (2 pending, 2 approved, 1 rejected)');
+        $this->command->info('-------------------------------------------------------');
+        $this->command->info(' Demo Data Seeded Successfully!');
+        $this->command->info('-------------------------------------------------------');
+        $this->command->info(' Company:    Demo Tech Corp');
+        $this->command->info(' Schedules:  5 different work schedules');
+        $this->command->info(' Users:      1 Admin, 1 Manager, 10 Employees');
+        $this->command->info(' Password:   "password" (for all users)');
+        $this->command->info(' PIN Codes:');
+        $this->command->info('   - Admin:    1111');
+        $this->command->info('   - Manager:  2222');
+        $this->command->info('   - Employee 1-5: 1111, 2222, 3333, 4444, 5555');
+        $this->command->info('   - Employee 6-10: (no PIN set)');
+        $this->command->info(' Activity:   5 Time Entries & 5 Leave Requests per employee');
     }
 }
