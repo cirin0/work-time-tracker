@@ -81,6 +81,7 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive']);
     Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
     Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
+    Route::get('/qr-code/daily', [TimeEntryController::class, 'getDailyQrCode']);
 });
 
 Route::middleware(['auth:api'])->group(function () {

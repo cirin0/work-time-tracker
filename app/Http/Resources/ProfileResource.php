@@ -19,9 +19,6 @@ class ProfileResource extends JsonResource
             'avatar' => $this->avatar ? Storage::url($this->avatar) : null,
             'role' => $this->role,
             'work_mode' => $this->work_mode,
-            'company_id' => $this->company_id,
-            'manager_id' => $this->manager_id,
-            'work_schedule_id' => $this->work_schedule_id,
             'has_pin_code' => !empty($this->pin_code),
             'company' => $this->whenLoaded('company', fn() => [
                 'id' => $this->company->id,

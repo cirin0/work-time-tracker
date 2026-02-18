@@ -49,7 +49,7 @@ class TimeEntryService
                 return ['message' => 'You are not within the company radius.'];
             }
 
-            if (!$this->verifyDynamicQrCode($company, $data['qr_code'])) {
+            if (!isset($data['qr_code']) || !$this->verifyDynamicQrCode($company, $data['qr_code'])) {
                 throw new BadRequestHttpException('Invalid or expired QR code.');
             }
         }
@@ -90,7 +90,7 @@ class TimeEntryService
             return false;
         }
 
-        $expectedCode = hash('sha256', $company->qr_secret . date('Y-m-d'));
+        $expectedCode = hash('sha256', $company->qr_secret . date('d-m-Y'));
 
         return hash_equals($expectedCode, $qrCode);
     }

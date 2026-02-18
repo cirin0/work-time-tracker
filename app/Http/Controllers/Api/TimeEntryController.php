@@ -10,6 +10,7 @@ use App\Http\Resources\TimeEntrySummaryResource;
 use App\Models\TimeEntry;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -104,5 +105,24 @@ class TimeEntryController extends Controller
         $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
 
         return response()->noContent();
+    }
+
+    public function getDailyQrCode(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $company = $user->company;
+
+        if (!$company || !$company->qr_secret) {
+            return response()->json([
+                'message' => 'Company QR secret not configured.',
+            ], 400);
+        }
+
+        $dailyToken = hash('sha256', $company->qr_secret . date('d-m-Y'));
+
+        return response()->json([
+            'qr_data' => $dailyToken,
+            'expires_at' => now()->endOfDay()->toIso8601String(),
+        ]);
     }
 }
