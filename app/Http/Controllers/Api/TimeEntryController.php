@@ -72,6 +72,10 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
         $entry = $data['time_entry']->load('user');
 
         return response()->json([

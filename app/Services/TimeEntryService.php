@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\EntryType;
 use App\Enums\WorkMode;
 use App\Models\Company;
 use App\Models\TimeEntry;
@@ -26,13 +27,17 @@ class TimeEntryService
             throw new BadRequestHttpException('An active time entry already exists. Please stop it before starting a new one.');
         }
 
-        if ($user->work_mode === WorkMode::office) {
-            $company = $user->company;
-            if (!$company) {
-                throw new BadRequestHttpException('User is not assigned to any company.');
-            }
+        $hasGpsData = isset($data['latitude']) && isset($data['longitude']);
 
-            // 1. Check GPS
+        $entryType = match ($user->work_mode) {
+            WorkMode::OFFICE => EntryType::GPS_QR,
+            WorkMode::REMOTE => EntryType::REMOTE,
+            WorkMode::HYBRID => $hasGpsData ? EntryType::GPS : EntryType::MANUAL,
+        };
+
+        if ($user->work_mode === WorkMode::OFFICE) {
+            $company = $user->company;
+
             $distance = $this->calculateDistance(
                 (float)$data['latitude'],
                 (float)$data['longitude'],
@@ -41,10 +46,9 @@ class TimeEntryService
             );
 
             if ($distance > $company->radius_meters) {
-                throw new BadRequestHttpException('You are outside the office radius.');
+                return ['message' => 'You are not within the company radius.'];
             }
 
-            // 2. Check QR code
             if (!$this->verifyDynamicQrCode($company, $data['qr_code'])) {
                 throw new BadRequestHttpException('Invalid or expired QR code.');
             }
@@ -53,8 +57,9 @@ class TimeEntryService
         $timeEntry = $this->timeEntryRepository->create([
             'user_id' => $user->id,
             'start_time' => now(),
+            'entry_type' => $entryType,
             'start_comment' => $data['start_comment'] ?? null,
-            'location_data' => isset($data['latitude']) ? [
+            'location_data' => $hasGpsData ? [
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
             ] : null,
