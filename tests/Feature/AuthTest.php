@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Company;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -108,7 +110,15 @@ class AuthTest extends TestCase
 
     public function test_authenticated_user_can_get_their_profile()
     {
-        $user = User::factory()->create();
+        $company = Company::factory()->create();
+        $manager = User::factory()->create(['company_id' => $company->id]);
+        $workSchedule = WorkSchedule::factory()->create(['company_id' => $company->id]);
+
+        $user = User::factory()->create([
+            'company_id' => $company->id,
+            'manager_id' => $manager->id,
+            'work_schedule_id' => $workSchedule->id,
+        ]);
 
         $response = $this->actingAs($user, 'api')
             ->getJson('/api/me');
@@ -119,6 +129,31 @@ class AuthTest extends TestCase
                 'name',
                 'email',
                 'role',
+                'avatar',
+                'work_mode',
+                'has_pin_code',
+                'company' => ['id', 'name'],
+                'manager' => ['id', 'name'],
+                'work_schedule' => ['id', 'name'],
+                'created_at',
+                'updated_at',
+            ])
+            ->assertJson([
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'company' => [
+                    'id' => $company->id,
+                    'name' => $company->name,
+                ],
+                'manager' => [
+                    'id' => $manager->id,
+                    'name' => $manager->name,
+                ],
+                'work_schedule' => [
+                    'id' => $workSchedule->id,
+                    'name' => $workSchedule->name,
+                ],
             ]);
     }
 
