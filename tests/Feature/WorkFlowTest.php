@@ -26,7 +26,7 @@ class WorkFlowTest extends TestCase
             'company_id' => $company->id,
         ]);
 
-        $qrCode = hash('sha256', 'secret123' . date('Y-m-d'));
+        $qrCode = hash('sha256', 'secret123' . date('d-m-Y'));
 
         $response = $this->actingAs($user, 'api')->postJson('/api/time-entries', [
             'latitude' => 50.4501,
@@ -172,7 +172,7 @@ class WorkFlowTest extends TestCase
             'company_id' => $company->id,
         ]);
 
-        $qrCode = hash('sha256', $company->qr_secret . date('Y-m-d'));
+        $qrCode = hash('sha256', $company->qr_secret . date('d-m-Y'));
 
         $response = $this->actingAs($user, 'api')->postJson('/api/time-entries', [
             'latitude' => 50.4501,

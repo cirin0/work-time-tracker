@@ -66,6 +66,7 @@ class TimeEntryTest extends TestCase
         $expectedData = TimeEntryResource::collection($entries)->resolve();
 
         $response->assertExactJson([
+            'message' => 'Time entries retrieved successfully.',
             'data' => $expectedData,
         ]);
     }
