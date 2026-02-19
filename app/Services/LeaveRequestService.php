@@ -14,6 +14,13 @@ class LeaveRequestService
     {
     }
 
+    public function getAllForManager(User $manager, $perPage): array
+    {
+        $requests = $this->leaveRequestRepository->getAllForManager($manager, $perPage);
+
+        return ['requests' => $requests];
+    }
+
     public function getPendingForManager(User $manager): array
     {
         $requests = $this->leaveRequestRepository->getPendingForManager($manager);

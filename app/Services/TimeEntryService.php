@@ -196,4 +196,112 @@ class TimeEntryService
 
         return ['success' => true];
     }
+
+    public function getUserTimeEntriesById(int $userId): array
+    {
+        $timeEntries = $this->timeEntryRepository->getAllForUserById($userId);
+
+        return ['time_entries' => $timeEntries];
+    }
+
+    public function getTimeSummaryById(int $userId): array
+    {
+        $completedEntries = $this->timeEntryRepository->getCompletedForUserById($userId);
+
+        $totalMinutes = $completedEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $totalHours = round($totalMinutes / 60, 2);
+        $entriesCount = $completedEntries->count();
+        $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
+
+        return [
+            'user_id' => $userId,
+            'total_hours' => $totalHours,
+            'total_minutes' => $totalMinutes,
+            'entries_count' => $entriesCount,
+            'average_work_time' => $averageWorkTime,
+            'summary' => [
+                'today' => $completedEntries->where('start_time', '>=', Carbon::today())->sum(function ($entry) {
+                    return Carbon::parse($entry->start_time)
+                        ->diffInMinutes(Carbon::parse($entry->stop_time));
+                }),
+                'week' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek())->sum(function ($entry) {
+                    return Carbon::parse($entry->start_time)
+                        ->diffInMinutes(Carbon::parse($entry->stop_time));
+                }),
+                'month' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth())->sum(function ($entry) {
+                    return Carbon::parse($entry->start_time)
+                        ->diffInMinutes(Carbon::parse($entry->stop_time));
+                }),
+            ],
+        ];
+    }
+
+    public function getCompanyStatistics(int $companyId): array
+    {
+        $completedEntries = $this->timeEntryRepository->getCompletedForCompany($companyId);
+        $activeEntries = $this->timeEntryRepository->getActiveForCompany($companyId);
+
+        $totalMinutes = $completedEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $totalHours = round($totalMinutes / 60, 2);
+        $entriesCount = $completedEntries->count();
+
+        // Статистика по періодам
+        $today = $completedEntries->where('start_time', '>=', Carbon::today());
+        $week = $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek());
+        $month = $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth());
+
+        $todayMinutes = $today->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $weekMinutes = $week->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $monthMinutes = $month->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        // Статистика по працівниках
+        $activeEmployees = $activeEntries->pluck('user_id')->unique()->count();
+        $totalEmployees = $completedEntries->pluck('user_id')->unique()->count();
+
+        return [
+            'company_id' => $companyId,
+            'total_hours' => $totalHours,
+            'total_minutes' => $totalMinutes,
+            'entries_count' => $entriesCount,
+            'active_entries_count' => $activeEntries->count(),
+            'active_employees' => $activeEmployees,
+            'total_employees_with_entries' => $totalEmployees,
+            'summary' => [
+                'today' => [
+                    'minutes' => $todayMinutes,
+                    'hours' => round($todayMinutes / 60, 2),
+                    'entries' => $today->count(),
+                ],
+                'week' => [
+                    'minutes' => $weekMinutes,
+                    'hours' => round($weekMinutes / 60, 2),
+                    'entries' => $week->count(),
+                ],
+                'month' => [
+                    'minutes' => $monthMinutes,
+                    'hours' => round($monthMinutes / 60, 2),
+                    'entries' => $month->count(),
+                ],
+            ],
+        ];
+    }
 }
