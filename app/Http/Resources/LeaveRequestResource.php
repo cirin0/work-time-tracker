@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class LeaveRequestResource extends JsonResource
 {
@@ -17,6 +18,7 @@ class LeaveRequestResource extends JsonResource
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
+                'avatar' => $this->user->avatar ? Storage::url($this->user->avatar) : null,
             ]),
             'type' => $this->type,
             'start_date' => $this->start_date->format('d-m-Y'),
@@ -27,6 +29,7 @@ class LeaveRequestResource extends JsonResource
                 'id' => $this->processor->id,
                 'name' => $this->processor->name,
                 'email' => $this->processor->email,
+                'avatar' => $this->processor->avatar ? Storage::url($this->processor->avatar) : null,
             ]),
             'manager_comment' => $this->manager_comment,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),

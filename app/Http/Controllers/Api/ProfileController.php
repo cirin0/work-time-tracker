@@ -9,6 +9,7 @@ use App\Http\Requests\SetupPinCodeRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\ProfileResource;
+use App\Http\Resources\WorkScheduleResource;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 
@@ -92,6 +93,25 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Pin code changed successfully',
+        ]);
+    }
+
+    public function getWorkSchedule(): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->getWorkSchedule($user);
+
+        if (!$data['work_schedule']) {
+            return response()->json([
+                'message' => 'You have no work schedule assigned',
+                'user' => new ProfileResource($data['user']),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Work schedule retrieved successfully',
+            'user' => new ProfileResource($data['user']),
+            'work_schedule' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
 }

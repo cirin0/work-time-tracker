@@ -19,6 +19,7 @@ class CompanyResource extends JsonResource
                 'id' => $this->manager->id,
                 'name' => $this->manager->name,
                 'email' => $this->manager->email,
+                'avatar' => $this->manager->avatar ? Storage::url($this->manager->avatar) : null,
             ]),
             'email' => $this->email,
             'phone' => $this->phone,
@@ -38,7 +39,7 @@ class CompanyResource extends JsonResource
                     'avatar' => $employee->avatar ? Storage::url($employee->avatar) : null,
                 ];
             })),
-            'users_count' => $this->employees_count,
+            'employee_count' => $this->employees_count,
             'created_at' => $this->created_at->format('d-m-Y H:i:s'),
             'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];

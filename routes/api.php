@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\ManagerCompanyController;
 use App\Http\Controllers\Api\ManagerLeaveRequestController;
+use App\Http\Controllers\Api\ManagerUserController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TimeEntryController;
@@ -29,9 +30,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [ProfileController::class, 'me']);
     Route::patch('/me', [ProfileController::class, 'updateProfile']);
     Route::post('/me/avatar', [ProfileController::class, 'updateAvatar']);
-    Route::post('/me/change-password', [ProfileController::class, 'changePassword']);
+    Route::post('/me/chang-password', [ProfileController::class, 'changePassword']);
     Route::post('/me/pin-code', [ProfileController::class, 'setupPinCode']);
     Route::patch('/me/pin-code', [ProfileController::class, 'changePinCode']);
+    Route::get('/me/work-schedule', [ProfileController::class, 'getWorkSchedule']);
 });
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
@@ -52,12 +54,21 @@ Route::middleware('auth:api')->group(function () {
 
     Route::prefix('manager')->middleware('role:manager')->group(function () {
         Route::get('/leave-requests', [ManagerLeaveRequestController::class, 'index']);
+        Route::get('/leave-requests/pending', [ManagerLeaveRequestController::class, 'getPendingLeaveRequests']);
         Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
         Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
 
         Route::post('/companies/{company}/add-employee', [ManagerCompanyController::class, 'addEmployeeToCompany']);
         Route::post('/companies/{company}/remove-employee', [ManagerCompanyController::class, 'deleteEmployeeFromCompany']);
         Route::post('/companies/{company}/remove-employee/{employee_id}', [ManagerCompanyController::class, 'deleteEmployeeFromCompanyById']);
+
+        Route::get('/users', [ManagerUserController::class, 'getCompanyUsers']);
+        Route::get('/users/{user}', [ManagerUserController::class, 'getUser']);
+        Route::get('/statistics', [ManagerUserController::class, 'getCompanyStatistics']);
+        Route::get('/users/{user}/time-entries', [ManagerUserController::class, 'getUserTimeEntries']);
+        Route::get('/users/{user}/time-summary', [ManagerUserController::class, 'getUserTimeSummary']);
+        Route::get('/users/{user}/work-schedule', [ManagerUserController::class, 'getUserWorkSchedule']);
+        Route::patch('/users/{user}/work-schedule', [ManagerUserController::class, 'updateUserWorkSchedule']);
     });
 
 });
@@ -86,8 +97,6 @@ Route::middleware('auth:api')->group(function () {
 
 Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('work-schedules', WorkScheduleController::class);
-    Route::get('users/{user}/work-schedule', [UserController::class, 'getWorkSchedule']);
-    Route::patch('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
 });
 
 Route::middleware('auth:api')->prefix('audit-logs')->group(function () {

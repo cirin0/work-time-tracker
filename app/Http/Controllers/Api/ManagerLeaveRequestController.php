@@ -8,6 +8,7 @@ use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Services\LeaveRequestService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +18,15 @@ class ManagerLeaveRequestController extends Controller
     {
     }
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $perPage = $request->input('per_page', 10);
+        $result = $this->leaveRequestService->getAllForManager(Auth::user(), $perPage);
+
+        return LeaveRequestResource::collection($result['requests']);
+    }
+
+    public function getPendingLeaveRequests(): AnonymousResourceCollection
     {
         $result = $this->leaveRequestService->getPendingForManager(Auth::user());
 

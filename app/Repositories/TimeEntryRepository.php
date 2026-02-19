@@ -56,4 +56,44 @@ class TimeEntryRepository
     {
         return $timeEntry->delete();
     }
+
+    public function getAllForUserById(int $userId): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->where('user_id', $userId)
+            ->orderBy('start_time', 'desc')
+            ->get();
+    }
+
+    public function getCompletedForUserById(int $userId): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->where('user_id', $userId)
+            ->whereNotNull('stop_time')
+            ->get();
+    }
+
+    public function getCompletedForCompany(int $companyId): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->whereHas('user', function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->whereNotNull('stop_time')
+            ->get();
+    }
+
+    public function getActiveForCompany(int $companyId): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->whereHas('user', function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->whereNull('stop_time')
+            ->get();
+    }
 }

@@ -11,7 +11,6 @@ use App\Models\TimeEntry;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
@@ -49,11 +48,14 @@ class TimeEntryController extends Controller
         ]);
     }
 
-    public function index(): AnonymousResourceCollection
+    public function index(): JsonResponse
     {
         $data = $this->timeEntryService->getUserTimeEntries(Auth::user());
 
-        return TimeEntryResource::collection($data['time_entries']);
+        return response()->json([
+            'message' => 'Time entries retrieved successfully.',
+            'data' => TimeEntryResource::collection($data['time_entries']),
+        ]);
     }
 
     public function show(TimeEntry $timeEntry): JsonResponse
@@ -121,8 +123,11 @@ class TimeEntryController extends Controller
         $dailyToken = hash('sha256', $company->qr_secret . date('d-m-Y'));
 
         return response()->json([
-            'qr_data' => $dailyToken,
-            'expires_at' => now()->endOfDay()->toIso8601String(),
+            'message' => 'Daily QR code retrieved successfully.',
+            'data' => [
+                'qr_data' => $dailyToken,
+                'expires_at' => now()->endOfDay()->toIso8601String(),
+            ],
         ]);
     }
 }

@@ -6,7 +6,6 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Requests\UpdateUserRoleRequest;
-use App\Http\Requests\UpdateUserWorkScheduleRequest;
 use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
@@ -75,44 +74,6 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Avatar updated successfully',
-            'user' => new UserResource($data['user']),
-        ]);
-    }
-
-    public function getWorkSchedule(User $user): JsonResponse
-    {
-        Gate::authorize('manage-profile', $user);
-        $data = $this->userService->getWorkSchedule($user);
-
-        if (!$data['work_schedule']) {
-            return response()->json([
-                'message' => 'User has no work schedule assigned',
-                'user' => new UserResource($data['user']),
-            ]);
-        }
-
-        return response()->json([
-            'work_schedule' => $data['work_schedule'],
-            'user' => new UserResource($data['user']),
-        ]);
-    }
-
-    public function updateWorkSchedule(UpdateUserWorkScheduleRequest $request, User $user): JsonResponse
-    {
-        Gate::authorize('manage-profile', $user);
-        $workScheduleId = $request->validated('work_schedule_id');
-
-        if ($user->work_schedule_id === $workScheduleId) {
-            return response()->json([
-                'message' => 'User already has this work schedule assigned',
-                'user' => new UserResource($user),
-            ]);
-        }
-
-        $data = $this->userService->updateUserWorkSchedule($user, $workScheduleId);
-
-        return response()->json([
-            'message' => 'Work schedule updated successfully',
             'user' => new UserResource($data['user']),
         ]);
     }
