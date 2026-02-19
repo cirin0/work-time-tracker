@@ -19,6 +19,10 @@ class CompanyFactory extends Factory
             'description' => $this->faker->paragraph,
             'address' => $this->faker->streetAddress,
             'manager_id' => null,
+            'latitude' => $this->faker->latitude,
+            'longitude' => $this->faker->longitude,
+            'radius_meters' => $this->faker->numberBetween(50, 500),
+            'qr_secret' => $this->faker->uuid,
         ];
     }
 }

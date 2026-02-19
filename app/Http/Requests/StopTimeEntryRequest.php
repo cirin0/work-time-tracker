@@ -15,6 +15,7 @@ class StopTimeEntryRequest extends FormRequest
     {
         return [
             'stop_comment' => 'nullable|string|max:255',
+            'pin_code' => 'required|string|size:4',
         ];
     }
 
@@ -23,6 +24,8 @@ class StopTimeEntryRequest extends FormRequest
         return [
             'stop_comment.string' => 'The comment must be a text string.',
             'stop_comment.max' => 'The comment must not exceed 255 characters.',
+            'pin_code.required' => 'Pin code is required to stop the time entry.',
+            'pin_code.size' => 'Pin code must be exactly 4 digits.',
         ];
     }
 }

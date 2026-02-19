@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\TimeEntryResource;
+use App\Http\Resources\TimeEntrySummaryResource;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Services\TimeEntryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,15 +16,26 @@ class TimeEntryTest extends TestCase
 
     public function test_user_can_start_and_stop_time_entry(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['pin_code' => bcrypt('1234')]);
 
         $response = $this->actingAs($user, 'api')->postJson('/api/time-entries');
         $response->assertCreated();
-        $this->assertDatabaseHas('time_entries', ['user_id' => $user->id, 'stop_time' => null]);
+        $entry = TimeEntry::query()->where('user_id', $user->id)->first();
+        $entry->load('user');
 
-        $response = $this->actingAs($user, 'api')->patchJson('/api/time-entries/active/stop');
+        $response->assertExactJson([
+            'message' => 'Time entry started successfully.',
+            'data' => (new TimeEntryResource($entry))->resolve(),
+        ]);
+
+        $response = $this->actingAs($user, 'api')->patchJson('/api/time-entries/active/stop', ['pin_code' => '1234']);
         $response->assertOk();
-        $this->assertDatabaseMissing('time_entries', ['user_id' => $user->id, 'stop_time' => null]);
+        $entry->refresh()->load('user');
+
+        $response->assertExactJson([
+            'message' => 'Time entry stopped successfully.',
+            'data' => (new TimeEntryResource($entry))->resolve(),
+        ]);
     }
 
     public function test_user_cannot_start_time_entry_if_already_active(): void
@@ -37,7 +51,7 @@ class TimeEntryTest extends TestCase
         $user = User::factory()->create();
         TimeEntry::factory()->create(['user_id' => $user->id, 'stop_time' => now()]);
 
-        $this->actingAs($user, 'api')->patchJson('/api/time-entries/active/stop')->assertStatus(400);
+        $this->actingAs($user, 'api')->patchJson('/api/time-entries/active/stop', ['pin_code' => '1234'])->assertStatus(400);
     }
 
     public function test_user_can_view_their_time_entries(): void
@@ -45,9 +59,16 @@ class TimeEntryTest extends TestCase
         $user = User::factory()->create();
         TimeEntry::factory()->count(5)->create(['user_id' => $user->id]);
 
-        $this->actingAs($user, 'api')->getJson('/api/time-entries')
-            ->assertOk()
-            ->assertJsonCount(5, 'data');
+        $response = $this->actingAs($user, 'api')->getJson('/api/time-entries');
+        $response->assertOk();
+
+        $entries = TimeEntry::with('user')->where('user_id', $user->id)->orderBy('start_time', 'desc')->get();
+        $expectedData = TimeEntryResource::collection($entries)->resolve();
+
+        $response->assertExactJson([
+            'message' => 'Time entries retrieved successfully.',
+            'data' => $expectedData,
+        ]);
     }
 
     public function test_user_can_get_active_time_entry(): void
@@ -57,11 +78,15 @@ class TimeEntryTest extends TestCase
             'user_id' => $user->id,
             'stop_time' => null,
         ]);
+        $activeEntry->load('user');
 
-        $this->actingAs($user, 'api')->getJson('/api/time-entries/active')
-            ->assertOk()
-            ->assertJsonPath('data.id', $activeEntry->id)
-            ->assertJsonPath('data.stop_time', null);
+        $response = $this->actingAs($user, 'api')->getJson('/api/time-entries/active');
+        $response->assertOk();
+
+        $response->assertExactJson([
+            'message' => 'Active time entry retrieved successfully.',
+            'data' => (new TimeEntryResource($activeEntry))->resolve(),
+        ]);
     }
 
     public function test_user_gets_null_when_no_active_time_entry(): void
@@ -80,10 +105,15 @@ class TimeEntryTest extends TestCase
     {
         $user = User::factory()->create();
         $timeEntry = TimeEntry::factory()->create(['user_id' => $user->id]);
+        $timeEntry->load('user');
 
-        $this->actingAs($user, 'api')->getJson("/api/time-entries/{$timeEntry->id}")
-            ->assertOk()
-            ->assertJsonPath('data.id', $timeEntry->id);
+        $response = $this->actingAs($user, 'api')->getJson("/api/time-entries/{$timeEntry->id}");
+        $response->assertOk();
+
+        $response->assertExactJson([
+            'message' => 'Time entry retrieved successfully.',
+            'data' => (new TimeEntryResource($timeEntry))->resolve(),
+        ]);
     }
 
     public function test_user_cannot_view_other_users_time_entry(): void
@@ -126,9 +156,15 @@ class TimeEntryTest extends TestCase
             'stop_time' => now(),
         ]);
 
-        $this->actingAs($user, 'api')->getJson('/api/time-entries/summary/me')
-            ->assertOk()
-            ->assertJsonStructure(['data' => ['summary' => ['today', 'week', 'month']]]);
+        $response = $this->actingAs($user, 'api')->getJson('/api/time-entries/summary/me');
+        $response->assertOk();
+
+        $summaryData = app(TimeEntryService::class)->getTimeSummary($user);
+
+        $response->assertExactJson([
+            'message' => 'Time summary retrieved successfully.',
+            'data' => (new TimeEntrySummaryResource($summaryData))->resolve(),
+        ]);
     }
 
     public function test_unauthenticated_user_cannot_access_time_entry_routes(): void

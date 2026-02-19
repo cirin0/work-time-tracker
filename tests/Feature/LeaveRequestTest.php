@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use Carbon\Carbon;
@@ -24,7 +25,12 @@ class LeaveRequestTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertDatabaseHas('leave_requests', ['user_id' => $user->id, 'type' => 'vacation']);
+        $leaveRequest = LeaveRequest::first();
+
+        $response->assertExactJson([
+            'message' => 'Leave request created successfully.',
+            'data' => (new LeaveRequestResource($leaveRequest))->resolve(),
+        ]);
     }
 
     public function test_leave_request_creation_requires_valid_data()
@@ -43,8 +49,49 @@ class LeaveRequestTest extends TestCase
 
         $response = $this->actingAs($user, 'api')->getJson('/api/leave-requests');
 
-        $response->assertStatus(200)
-            ->assertJsonCount(3, 'data');
+        $response->assertStatus(200);
+
+        $requests = LeaveRequest::with(['user', 'processor'])->where('user_id', $user->id)->latest()->get();
+        $expectedData = LeaveRequestResource::collection($requests)->resolve();
+
+        $response->assertExactJson([
+            'data' => $expectedData,
+            'links' => [
+                'first' => 'http://localhost/api/leave-requests?page=1',
+                'last' => 'http://localhost/api/leave-requests?page=1',
+                'prev' => null,
+                'next' => null,
+            ],
+            'meta' => [
+                'current_page' => 1,
+                'from' => 1,
+                'last_page' => 1,
+                'links' => [
+                    [
+                        'url' => null,
+                        'label' => '&laquo; Previous',
+                        'active' => false,
+                        'page' => null,
+                    ],
+                    [
+                        'url' => 'http://localhost/api/leave-requests?page=1',
+                        'label' => '1',
+                        'active' => true,
+                        'page' => 1,
+                    ],
+                    [
+                        'url' => null,
+                        'label' => 'Next &raquo;',
+                        'active' => false,
+                        'page' => null,
+                    ],
+                ],
+                'path' => 'http://localhost/api/leave-requests',
+                'per_page' => 15,
+                'to' => 3,
+                'total' => 3,
+            ],
+        ]);
     }
 
     public function test_manager_can_view_all_leave_requests()
@@ -66,7 +113,12 @@ class LeaveRequestTest extends TestCase
         $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/approve");
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('leave_requests', ['id' => $request->id, 'status' => 'approved']);
+        $request->refresh()->load(['user', 'processor']);
+
+        $response->assertExactJson([
+            'message' => 'Leave request approved successfully.',
+            'data' => (new LeaveRequestResource($request))->resolve(),
+        ]);
     }
 
     public function test_manager_can_reject_leave_request()
@@ -75,10 +127,15 @@ class LeaveRequestTest extends TestCase
         $employee = User::factory()->create(['manager_id' => $manager->id]);
         $request = LeaveRequest::factory()->create(['user_id' => $employee->id, 'status' => 'pending']);
 
-        $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/reject", ['manager_comments' => 'Not enough details']);
+        $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/reject", ['manager_comment' => 'Not enough details']);
 
         $response->assertStatus(200);
-        $this->assertDatabaseHas('leave_requests', ['id' => $request->id, 'status' => 'rejected']);
+        $request->refresh()->load(['user', 'processor']);
+
+        $response->assertExactJson([
+            'message' => 'Leave request rejected successfully.',
+            'data' => (new LeaveRequestResource($request))->resolve(),
+        ]);
     }
 
     public function test_non_manager_cannot_access_manager_routes()

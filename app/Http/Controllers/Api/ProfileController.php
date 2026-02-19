@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\ChangePinCodeRequest;
+use App\Http\Requests\SetupPinCodeRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\ProfileResource;
+use App\Http\Resources\WorkScheduleResource;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 
@@ -16,9 +19,10 @@ class ProfileController extends Controller
     {
     }
 
-    public function me(): UserResource
+    public function me(): ProfileResource
     {
-        return new UserResource(auth()->user());
+        $user = auth()->user()->load(['company', 'manager', 'workSchedule']);
+        return new ProfileResource($user);
     }
 
     public function updateProfile(UpdateProfileRequest $request): JsonResponse
@@ -28,7 +32,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'user' => new UserResource($data['user']),
+            'user' => new ProfileResource($data['user']),
         ]);
     }
 
@@ -39,7 +43,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Avatar updated successfully',
-            'user' => new UserResource($data['user']),
+            'user' => new ProfileResource($data['user']),
         ]);
     }
 
@@ -54,6 +58,60 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Password changed successfully',
+        ]);
+    }
+
+    public function setupPinCode(SetupPinCodeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->setupPinCode(
+            $user,
+            $request->validated('pin_code')
+        );
+
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json([
+            'message' => 'Pin code setup successfully',
+        ]);
+    }
+
+    public function changePinCode(ChangePinCodeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->changePinCode(
+            $user,
+            $request->validated('current_pin_code'),
+            $request->validated('new_pin_code')
+        );
+
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json([
+            'message' => 'Pin code changed successfully',
+        ]);
+    }
+
+    public function getWorkSchedule(): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->getWorkSchedule($user);
+
+        if (!$data['work_schedule']) {
+            return response()->json([
+                'message' => 'You have no work schedule assigned',
+                'user' => new ProfileResource($data['user']),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Work schedule retrieved successfully',
+            'user' => new ProfileResource($data['user']),
+            'work_schedule' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
 }

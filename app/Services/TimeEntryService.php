@@ -2,16 +2,22 @@
 
 namespace App\Services;
 
+use App\Enums\EntryType;
+use App\Enums\WorkMode;
+use App\Models\Company;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Repositories\TimeEntryRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TimeEntryService
 {
-    public function __construct(protected TimeEntryRepository $timeEntryRepository) {}
+    public function __construct(protected TimeEntryRepository $timeEntryRepository)
+    {
+    }
 
     public function startTimeEntry(User $user, array $data): array
     {
@@ -21,17 +27,80 @@ class TimeEntryService
             throw new BadRequestHttpException('An active time entry already exists. Please stop it before starting a new one.');
         }
 
+        $hasGpsData = isset($data['latitude']) && isset($data['longitude']);
+
+        $entryType = match ($user->work_mode) {
+            WorkMode::OFFICE => EntryType::GPS_QR,
+            WorkMode::REMOTE => EntryType::REMOTE,
+            WorkMode::HYBRID => $hasGpsData ? EntryType::GPS : EntryType::MANUAL,
+        };
+
+        if ($user->work_mode === WorkMode::OFFICE) {
+            $company = $user->company;
+
+            $distance = $this->calculateDistance(
+                (float)$data['latitude'],
+                (float)$data['longitude'],
+                (float)$company->latitude,
+                (float)$company->longitude
+            );
+
+            if ($distance > $company->radius_meters) {
+                return ['message' => 'You are not within the company radius.'];
+            }
+
+            if (!isset($data['qr_code']) || !$this->verifyDynamicQrCode($company, $data['qr_code'])) {
+                throw new BadRequestHttpException('Invalid or expired QR code.');
+            }
+        }
+
         $timeEntry = $this->timeEntryRepository->create([
             'user_id' => $user->id,
             'start_time' => now(),
+            'entry_type' => $entryType,
             'start_comment' => $data['start_comment'] ?? null,
+            'location_data' => $hasGpsData ? [
+                'latitude' => $data['latitude'],
+                'longitude' => $data['longitude'],
+            ] : null,
         ]);
 
         return ['time_entry' => $timeEntry];
     }
 
+    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $earthRadius = 6371000;
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lonDelta = deg2rad($lon2 - $lon1);
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lonDelta / 2) * sin($lonDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    private function verifyDynamicQrCode(Company $company, string $qrCode): bool
+    {
+        if (!$company->qr_secret) {
+            return false;
+        }
+
+        $expectedCode = hash('sha256', $company->qr_secret . date('d-m-Y'));
+
+        return hash_equals($expectedCode, $qrCode);
+    }
+
     public function stopActiveTimeEntry(User $user, array $data): array
     {
+        if (!Hash::check($data['pin_code'], $user->pin_code)) {
+            throw new BadRequestHttpException('Invalid pin code.');
+        }
+
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if (!$activeEntry) {
@@ -126,5 +195,113 @@ class TimeEntryService
         $this->timeEntryRepository->delete($timeEntry);
 
         return ['success' => true];
+    }
+
+    public function getUserTimeEntriesById(int $userId): array
+    {
+        $timeEntries = $this->timeEntryRepository->getAllForUserById($userId);
+
+        return ['time_entries' => $timeEntries];
+    }
+
+    public function getTimeSummaryById(int $userId): array
+    {
+        $completedEntries = $this->timeEntryRepository->getCompletedForUserById($userId);
+
+        $totalMinutes = $completedEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $totalHours = round($totalMinutes / 60, 2);
+        $entriesCount = $completedEntries->count();
+        $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
+
+        return [
+            'user_id' => $userId,
+            'total_hours' => $totalHours,
+            'total_minutes' => $totalMinutes,
+            'entries_count' => $entriesCount,
+            'average_work_time' => $averageWorkTime,
+            'summary' => [
+                'today' => $completedEntries->where('start_time', '>=', Carbon::today())->sum(function ($entry) {
+                    return Carbon::parse($entry->start_time)
+                        ->diffInMinutes(Carbon::parse($entry->stop_time));
+                }),
+                'week' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek())->sum(function ($entry) {
+                    return Carbon::parse($entry->start_time)
+                        ->diffInMinutes(Carbon::parse($entry->stop_time));
+                }),
+                'month' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth())->sum(function ($entry) {
+                    return Carbon::parse($entry->start_time)
+                        ->diffInMinutes(Carbon::parse($entry->stop_time));
+                }),
+            ],
+        ];
+    }
+
+    public function getCompanyStatistics(int $companyId): array
+    {
+        $completedEntries = $this->timeEntryRepository->getCompletedForCompany($companyId);
+        $activeEntries = $this->timeEntryRepository->getActiveForCompany($companyId);
+
+        $totalMinutes = $completedEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $totalHours = round($totalMinutes / 60, 2);
+        $entriesCount = $completedEntries->count();
+
+        // Статистика по періодам
+        $today = $completedEntries->where('start_time', '>=', Carbon::today());
+        $week = $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek());
+        $month = $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth());
+
+        $todayMinutes = $today->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $weekMinutes = $week->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        $monthMinutes = $month->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        // Статистика по працівниках
+        $activeEmployees = $activeEntries->pluck('user_id')->unique()->count();
+        $totalEmployees = $completedEntries->pluck('user_id')->unique()->count();
+
+        return [
+            'company_id' => $companyId,
+            'total_hours' => $totalHours,
+            'total_minutes' => $totalMinutes,
+            'entries_count' => $entriesCount,
+            'active_entries_count' => $activeEntries->count(),
+            'active_employees' => $activeEmployees,
+            'total_employees_with_entries' => $totalEmployees,
+            'summary' => [
+                'today' => [
+                    'minutes' => $todayMinutes,
+                    'hours' => round($todayMinutes / 60, 2),
+                    'entries' => $today->count(),
+                ],
+                'week' => [
+                    'minutes' => $weekMinutes,
+                    'hours' => round($weekMinutes / 60, 2),
+                    'entries' => $week->count(),
+                ],
+                'month' => [
+                    'minutes' => $monthMinutes,
+                    'hours' => round($monthMinutes / 60, 2),
+                    'entries' => $month->count(),
+                ],
+            ],
+        ];
     }
 }

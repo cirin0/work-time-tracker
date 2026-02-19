@@ -13,22 +13,25 @@ class Company extends Model
 
     protected $fillable = [
         'name',
+        'manager_id',
         'email',
         'phone',
-        'logo',
-        'description',
         'address',
-        'manager_id',
+        'description',
+        'logo',
+        'latitude',
+        'longitude',
+        'radius_meters',
+        'qr_secret',
+    ];
+
+    protected $hidden = [
+        'qr_secret',
     ];
 
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
-    }
-
-    public function getEmployeeCountAttribute(): int
-    {
-        return $this->employees()->count();
     }
 
     public function employees(): HasMany

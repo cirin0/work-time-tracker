@@ -14,6 +14,11 @@ class TimeEntryFactory extends Factory
             'start_time' => $this->faker->dateTimeBetween('-1 week', 'now'),
             'stop_time' => null,
             'duration' => 0,
+            'entry_type' => 'gps',
+            'location_data' => [
+                'lat' => $this->faker->latitude,
+                'lng' => $this->faker->longitude,
+            ],
             'start_comment' => $this->faker->sentence,
             'stop_comment' => null,
         ];

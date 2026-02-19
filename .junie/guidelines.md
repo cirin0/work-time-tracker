@@ -5,133 +5,96 @@ changes) before submitting results.
 
 ## 1) Project Overview
 
-- Framework: Laravel (PHP)
-- Purpose: Time tracking backend with API endpoints. The codebase also includes real‑time messaging/event examples (
-  e.g., `Message`, `MessageSent` event) and API routes.
-- Entry points:
-    - HTTP API routes in `routes/api.php`
-    - Console kernel and artisan commands via `artisan`
-- Notable components (examples):
-    - Models: `app/Models/User.php`, `app/Models/Message.php`
-    - Events: `app/Events/MessageSent.php`
-    - Controllers: `app/Http/Controllers/...` (e.g., `Api/MessageController.php`)
-    - Config: `config/*.php` (e.g., `broadcasting.php`, `logging.php`)
-    - Tests: `tests/` with PHPUnit configuration in `phpunit.xml`
+- **Framework**: Laravel 12 (PHP 8.4)
+- **Purpose**: Time tracking backend with API endpoints. Includes real-time messaging, audit logging, and leave
+  management.
+- **Key Architectures**:
+    - Service-Repository pattern for business logic.
+    - Form Requests for validation.
+    - Eloquent API Resources for response formatting.
+    - Auditable trait for automatic logging of model changes.
 
 ## 2) Repository Structure (high level)
 
-- `app/` — Application code (Models, Http Controllers, Services, Events, etc.)
-- `bootstrap/` — Framework bootstrap files and cache
-- `config/` — Application configuration
-- `database/` — Migrations, factories, and seeders
-- `public/` — Public web root
-- `resources/` — Views and frontend resources
-- `routes/` — Route definitions (`api.php`, `web.php` if present)
-- `storage/` — Logs, cache, compiled files, API docs (if generated)
-- `tests/` — Automated tests (feature/unit)
-- `vendor/` — Composer dependencies
+- `app/Http/Controllers/Api/` — API Controllers (thin, delegating to Services).
+- `app/Services/` — Business logic implementation.
+- `app/Repositories/` — Data access logic.
+- `app/Models/` — Eloquent models (e.g., `User`, `TimeEntry`, `Company`, `AuditLog`, `LeaveRequest`).
+- `app/Http/Requests/` — Form Request validation classes.
+- `app/Http/Resources/` — API Resources for JSON serialization.
+- `app/Traits/` — Shared traits (e.g., `Auditable`).
+- `app/Events/` — Broadcast events (e.g., `MessageSent`).
+- `routes/api.php` — API route definitions.
+- `tests/` — Pest tests (Feature and Unit).
 
 ## 3) Running the Project Locally
 
-Prerequisites: PHP 8.x, Composer, and a database (MySQL/PostgreSQL/SQLite). Node.js is optional unless frontend assets
-are being built.
-
 Typical setup:
 
-1. Install dependencies:
+1. **Install dependencies**:
    ```bash
    composer install
    ```
-2. Environment:
-    - Copy `.env.example` to `.env` if needed and configure DB and cache settings.
-    - Generate key if not present:
-      ```bash
-      php artisan key:generate
-      ```
-3. Database:
+2. **Environment**:
+    - Use `.env` for configuration (PostgreSQL is default).
+3. **Database**:
    ```bash
    php artisan migrate --seed
    ```
-4. Serve API locally:
+4. **Serve API locally**:
    ```bash
    php artisan serve
    ```
 
-Broadcasting/real‑time (optional): configure `BROADCAST_DRIVER` (e.g., `pusher`) in `.env` and corresponding keys if
-using events like `MessageSent`.
+## 4) Testing and Verification
 
-## 4) How Junie Runs Tests and Verifies Changes
-
-- Test runner: PHPUnit (configured via `phpunit.xml`). You can also use `php artisan test` which wraps PHPUnit.
-- Default commands:
-    - Fast run:
+- **Test Runner**: Pest (PHPUnit wrapper).
+- **Default commands**:
+    - Run all tests:
       ```bash
       php artisan test
       ```
-    - Or directly:
+    - Filter tests:
       ```bash
-      ./vendor/bin/phpunit
+      php artisan test --filter=test_name
       ```
-- Database for tests:
-    - Prefer SQLite for speed. If using SQLite, set in `.env.testing`:
-      ```ini
-      DB_CONNECTION=sqlite
-      DB_DATABASE=:memory:
-      ```
-      or point `DB_DATABASE` to `database/database.sqlite` and ensure the file exists.
-- When Junie must run tests:
-    - Always run tests after modifying PHP code (controllers, models, services, events, routes).
-    - For documentation‑only changes, running tests is not required.
+- **When to run tests**: Always after modifying PHP code (controllers, services, repositories, models, events).
 
-## 5) Build/Run Policy Before Submitting
+## 5) Coding Style and Conventions
 
-- PHP/Laravel has no compile step; however:
-    - If code changed: run the test suite as noted above.
-    - If routes or container bindings changed: optionally run `php artisan route:list` or start the app locally to
-      sanity‑check.
-    - Do not commit generated caches (`bootstrap/cache/*`) or storage logs.
+- **Laravel Way**: Use `php artisan make:` for all components.
+- **Patterns**:
+    - Keep Controllers thin; put logic in Services.
+    - Use Repositories for complex queries.
+    - Use `casts()` method in Models instead of `$casts` property.
+    - Use PHP 8 constructor property promotion.
+- **Formatting**: Run Laravel Pint before finalizing:
+    ```bash
+    vendor/bin/pint --dirty
+    ```
 
-## 6) Coding Style and Conventions
+## 6) Audit Logging
 
-- Follow PSR‑12 and Laravel conventions:
-    - Class and file names in StudlyCase, methods in camelCase.
-    - Use dependency injection in controllers/services where possible.
-    - Keep controllers thin; put domain logic into services/repositories when applicable.
-- Formatting:
-    - Match existing import order and spacing found in neighboring files.
-    - Use strict types where already used in the codebase; otherwise, follow existing patterns.
-- Static analysis and linting:
-    - If tools are configured (e.g., PHPStan, Pint, or PHP-CS-Fixer), run them. If not, keep to Laravel defaults and
-      PSR‑12.
+- Models using the `Auditable` trait automatically log `created`, `updated`, and `deleted` events to the `audit_logs`
+  table via `AuditLogService`.
 
-## 7) Common Commands Cheat‑Sheet
+## 7) Common Commands Cheat-Sheet
 
 ```bash
-# Run tests
+# Run tests (Pest)
 php artisan test
-./vendor/bin/phpunit
 
-# Run migrations/seeders
-php artisan migrate --seed
+# Lint code (Pint)
+vendor/bin/pint --dirty
 
-# Serve the application
-php artisan serve
+# Show API routes
+php artisan route:list --path=api
 
-# Show routes
-php artisan route:list
+# Create new components
+php artisan make:service MyService
+php artisan make:repository MyRepository
+php artisan make:model MyModel -mfs
 ```
-
-## 8) Notes for Real‑Time/Broadcasting
-
-- Broadcasting driver is configured in `config/broadcasting.php` and `.env`.
-- If features rely on Pusher or websockets, ensure the related `.env` keys are set before manual testing.
-
-## 9) Contribution Expectations for Junie
-
-- For any non-trivial change:
-    - Explain what changed and why in the submission summary.
-    - Run tests and include a brief note about their status.
-- For trivial documentation or config edits that don’t affect runtime, tests are optional.
 
 ===
 

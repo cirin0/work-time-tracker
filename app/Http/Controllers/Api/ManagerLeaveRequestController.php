@@ -8,14 +8,25 @@ use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Services\LeaveRequestService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 
 class ManagerLeaveRequestController extends Controller
 {
-    public function __construct(protected LeaveRequestService $leaveRequestService) {}
+    public function __construct(protected LeaveRequestService $leaveRequestService)
+    {
+    }
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $perPage = $request->input('per_page', 10);
+        $result = $this->leaveRequestService->getAllForManager(Auth::user(), $perPage);
+
+        return LeaveRequestResource::collection($result['requests']);
+    }
+
+    public function getPendingLeaveRequests(): AnonymousResourceCollection
     {
         $result = $this->leaveRequestService->getPendingForManager(Auth::user());
 
@@ -30,9 +41,11 @@ class ManagerLeaveRequestController extends Controller
             return response()->json(['message' => $result['message']], 403);
         }
 
+        $leaveRequest = $result['leave_request']->load(['user', 'processor']);
+
         return response()->json([
             'message' => 'Leave request approved successfully.',
-            'data' => new LeaveRequestResource($result['leave_request']),
+            'data' => new LeaveRequestResource($leaveRequest),
         ]);
     }
 
@@ -40,16 +53,18 @@ class ManagerLeaveRequestController extends Controller
     {
         $result = $this->leaveRequestService->reject(
             $leaveRequest,
-            $request->validated('manager_comments')
+            $request->validated('manager_comment')
         );
 
         if (isset($result['message'])) {
             return response()->json(['message' => $result['message']], 403);
         }
 
+        $leaveRequest = $result['leave_request']->load(['user', 'processor']);
+
         return response()->json([
             'message' => 'Leave request rejected successfully.',
-            'data' => new LeaveRequestResource($result['leave_request']),
+            'data' => new LeaveRequestResource($leaveRequest),
         ]);
     }
 }

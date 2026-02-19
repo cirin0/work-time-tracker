@@ -10,7 +10,7 @@ use App\Http\Resources\TimeEntrySummaryResource;
 use App\Models\TimeEntry;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,11 +48,14 @@ class TimeEntryController extends Controller
         ]);
     }
 
-    public function index(): AnonymousResourceCollection
+    public function index(): JsonResponse
     {
         $data = $this->timeEntryService->getUserTimeEntries(Auth::user());
 
-        return TimeEntryResource::collection($data['time_entries']);
+        return response()->json([
+            'message' => 'Time entries retrieved successfully.',
+            'data' => TimeEntryResource::collection($data['time_entries']),
+        ]);
     }
 
     public function show(TimeEntry $timeEntry): JsonResponse
@@ -72,9 +75,15 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
+        if (isset($data['message'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        $entry = $data['time_entry']->load('user');
+
         return response()->json([
             'message' => 'Time entry started successfully.',
-            'data' => new TimeEntryResource($data['time_entry']),
+            'data' => new TimeEntryResource($entry),
         ], 201);
     }
 
@@ -85,9 +94,11 @@ class TimeEntryController extends Controller
             $request->validated()
         );
 
+        $entry = $data['time_entry']->load('user');
+
         return response()->json([
             'message' => 'Time entry stopped successfully.',
-            'data' => new TimeEntryResource($data['time_entry']),
+            'data' => new TimeEntryResource($entry),
         ]);
     }
 
@@ -96,5 +107,27 @@ class TimeEntryController extends Controller
         $this->timeEntryService->deleteTimeEntry(Auth::user(), $timeEntry);
 
         return response()->noContent();
+    }
+
+    public function getDailyQrCode(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $company = $user->company;
+
+        if (!$company || !$company->qr_secret) {
+            return response()->json([
+                'message' => 'Company QR secret not configured.',
+            ], 400);
+        }
+
+        $dailyToken = hash('sha256', $company->qr_secret . date('d-m-Y'));
+
+        return response()->json([
+            'message' => 'Daily QR code retrieved successfully.',
+            'data' => [
+                'qr_data' => $dailyToken,
+                'expires_at' => now()->endOfDay()->toIso8601String(),
+            ],
+        ]);
     }
 }

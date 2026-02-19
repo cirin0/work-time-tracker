@@ -44,6 +44,7 @@ class UserService
 
         $path = $avatar->store('avatars', 'public');
         $user->update(['avatar' => $path]);
+        $user->load(['company', 'manager', 'workSchedule']);
 
         return ['user' => $user];
     }
@@ -71,6 +72,7 @@ class UserService
     public function updateProfile(User $user, array $data): array
     {
         $user->update($data);
+        $user->load(['company', 'manager', 'workSchedule']);
 
         return ['user' => $user];
     }
@@ -94,11 +96,33 @@ class UserService
 
     public function changePassword(User $user, array $data): array
     {
-        if (! Hash::check($data['current_password'], $user->password)) {
+        if (!Hash::check($data['current_password'], $user->password)) {
             return ['message' => 'The current password is incorrect.'];
         }
 
         $user->update(['password' => Hash::make($data['new_password'])]);
+
+        return ['user' => $user];
+    }
+
+    public function setupPinCode(User $user, string $pinCode): array
+    {
+        if ($user->pin_code) {
+            return ['message' => 'Pin code is already set.'];
+        }
+
+        $user->update(['pin_code' => $pinCode]);
+
+        return ['user' => $user];
+    }
+
+    public function changePinCode(User $user, string $oldPinCode, string $newPinCode): array
+    {
+        if (!Hash::check($oldPinCode, $user->pin_code)) {
+            return ['message' => 'The current pin code is incorrect.'];
+        }
+
+        $user->update(['pin_code' => $newPinCode]);
 
         return ['user' => $user];
     }

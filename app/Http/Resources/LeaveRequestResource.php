@@ -4,30 +4,36 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class LeaveRequestResource extends JsonResource
 {
-
     public static $wrap = null;
 
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
-            'user' => [
+            'user' => $this->whenLoaded('user', fn() => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
-            ],
+                'avatar' => $this->user->avatar ? Storage::url($this->user->avatar) : null,
+            ]),
             'type' => $this->type,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
+            'start_date' => $this->start_date->format('d-m-Y'),
+            'end_date' => $this->end_date->format('d-m-Y'),
             'reason' => $this->reason,
             'status' => $this->status,
-            'processed_by_manager_id' => $this->processed_by_manager_id,
-            'manager_comments' => $this->manager_comments,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'processor' => $this->whenLoaded('processor', fn() => [
+                'id' => $this->processor->id,
+                'name' => $this->processor->name,
+                'email' => $this->processor->email,
+                'avatar' => $this->processor->avatar ? Storage::url($this->processor->avatar) : null,
+            ]),
+            'manager_comment' => $this->manager_comment,
+            'created_at' => $this->created_at->format('d-m-Y H:i:s'),
+            'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
         ];
     }
 }

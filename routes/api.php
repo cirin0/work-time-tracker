@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
 use App\Http\Controllers\Api\ManagerCompanyController;
 use App\Http\Controllers\Api\ManagerLeaveRequestController;
+use App\Http\Controllers\Api\ManagerUserController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TimeEntryController;
@@ -28,12 +30,15 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [ProfileController::class, 'me']);
     Route::patch('/me', [ProfileController::class, 'updateProfile']);
     Route::post('/me/avatar', [ProfileController::class, 'updateAvatar']);
-    Route::post('/me/change-password', [ProfileController::class, 'changePassword']);
+    Route::post('/me/chang-password', [ProfileController::class, 'changePassword']);
+    Route::post('/me/pin-code', [ProfileController::class, 'setupPinCode']);
+    Route::patch('/me/pin-code', [ProfileController::class, 'changePinCode']);
+    Route::get('/me/work-schedule', [ProfileController::class, 'getWorkSchedule']);
 });
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
-    Route::get('/{user}', [UserController::class, 'show'])->middleware('role:admin,manager');
+    Route::get('/{user}', [UserController::class, 'show']);
     Route::patch('/{user}', [UserController::class, 'update']);
     Route::middleware('role:admin')->group(function () {
         Route::post('{user}/role', [UserController::class, 'updateRole']);
@@ -42,32 +47,39 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
-// TODO: fix data responses to be consistent
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
-    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'showById']);
+    Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show']);
     Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
 
     Route::prefix('manager')->middleware('role:manager')->group(function () {
         Route::get('/leave-requests', [ManagerLeaveRequestController::class, 'index']);
+        Route::get('/leave-requests/pending', [ManagerLeaveRequestController::class, 'getPendingLeaveRequests']);
         Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
         Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
 
         Route::post('/companies/{company}/add-employee', [ManagerCompanyController::class, 'addEmployeeToCompany']);
         Route::post('/companies/{company}/remove-employee', [ManagerCompanyController::class, 'deleteEmployeeFromCompany']);
         Route::post('/companies/{company}/remove-employee/{employee_id}', [ManagerCompanyController::class, 'deleteEmployeeFromCompanyById']);
+
+        Route::get('/users', [ManagerUserController::class, 'getCompanyUsers']);
+        Route::get('/users/{user}', [ManagerUserController::class, 'getUser']);
+        Route::get('/statistics', [ManagerUserController::class, 'getCompanyStatistics']);
+        Route::get('/users/{user}/time-entries', [ManagerUserController::class, 'getUserTimeEntries']);
+        Route::get('/users/{user}/time-summary', [ManagerUserController::class, 'getUserTimeSummary']);
+        Route::get('/users/{user}/work-schedule', [ManagerUserController::class, 'getUserWorkSchedule']);
+        Route::patch('/users/{user}/work-schedule', [ManagerUserController::class, 'updateUserWorkSchedule']);
     });
 
 });
 
 Route::middleware('auth:api')->prefix('companies')->group(function () {
-    Route::get('/', [CompanyController::class, 'index']);
-    Route::get('/{company}', [CompanyController::class, 'showById']);
+    Route::get('/{company}', [CompanyController::class, 'show']);
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
 
     Route::middleware('role:admin')->group(function () {
         Route::post('/', [CompanyController::class, 'store']);
-        Route::put('/{company}', [CompanyController::class, 'update']);
+        Route::patch('/{company}', [CompanyController::class, 'update']);
         Route::delete('/{company}', [CompanyController::class, 'destroy']);
     });
 });
@@ -80,12 +92,18 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive']);
     Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
     Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
+    Route::get('/qr-code/daily', [TimeEntryController::class, 'getDailyQrCode']);
 });
 
 Route::middleware(['auth:api'])->group(function () {
     Route::apiResource('work-schedules', WorkScheduleController::class);
-    Route::get('users/{user}/work-schedule', [UserController::class, 'getWorkSchedule']);
-    Route::put('users/{user}/work-schedule', [UserController::class, 'updateWorkSchedule']);
+});
+
+Route::middleware('auth:api')->prefix('audit-logs')->group(function () {
+    Route::get('/', [AuditLogController::class, 'index']);
+    Route::middleware('role:admin,manager')->group(function () {
+        Route::get('/all', [AuditLogController::class, 'all']);
+    });
 });
 
 Route::get('/login', function () {
