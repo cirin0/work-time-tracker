@@ -18,7 +18,7 @@ class UpdateCompanyRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255', Rule::unique('companies', 'name')],
             'email' => 'sometimes|nullable|email|max:255',
             'phone' => 'sometimes|nullable|string|max:20',
-            'logo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logo' => 'sometimes|nullable|image|mimes:jpeg,png,jpg|max:2048',
             'description' => 'sometimes|nullable|string|max:1000',
             'address' => 'sometimes|nullable|string|max:500',
             'manager_id' => 'sometimes|exists:users,id',
