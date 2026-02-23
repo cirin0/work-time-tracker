@@ -159,29 +159,54 @@ class TimeEntryService
                 ->diffInMinutes(Carbon::parse($entry->stop_time));
         });
 
-        $totalHours = round($totalMinutes / 60, 2);
+        $totalHours = (int)floor($totalMinutes / 60);
+        $totalMinutesRemainder = (int)($totalMinutes % 60);
         $entriesCount = $completedEntries->count();
-        $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
+        $averageWorkTime = $entriesCount > 0 ? (int)round($totalMinutes / $entriesCount) : 0;
+
+        // Today's data
+        $todayEntries = $completedEntries->where('start_time', '>=', Carbon::today());
+        $todayMinutes = $todayEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        // Week's data
+        $weekEntries = $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek());
+        $weekMinutes = $weekEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        // Month's data
+        $monthEntries = $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth());
+        $monthMinutes = $monthEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
 
         return [
             'user_id' => $user->id,
             'total_hours' => $totalHours,
-            'total_minutes' => $totalMinutes,
+            'total_minutes' => $totalMinutesRemainder,
             'entries_count' => $entriesCount,
             'average_work_time' => $averageWorkTime,
             'summary' => [
-                'today' => $completedEntries->where('start_time', '>=', Carbon::today())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'week' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'month' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
+                'today' => [
+                    'hours' => (int)floor($todayMinutes / 60),
+                    'minutes' => (int)($todayMinutes % 60),
+                    'entries' => $todayEntries->count(),
+                ],
+                'week' => [
+                    'hours' => (int)floor($weekMinutes / 60),
+                    'minutes' => (int)($weekMinutes % 60),
+                    'entries' => $weekEntries->count(),
+                ],
+                'month' => [
+                    'hours' => (int)floor($monthMinutes / 60),
+                    'minutes' => (int)($monthMinutes % 60),
+                    'entries' => $monthEntries->count(),
+                ],
             ],
         ];
     }
@@ -213,29 +238,54 @@ class TimeEntryService
                 ->diffInMinutes(Carbon::parse($entry->stop_time));
         });
 
-        $totalHours = round($totalMinutes / 60, 2);
+        $totalHours = (int)floor($totalMinutes / 60);
+        $totalMinutesRemainder = (int)($totalMinutes % 60);
         $entriesCount = $completedEntries->count();
-        $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
+        $averageWorkTime = $entriesCount > 0 ? (int)round($totalMinutes / $entriesCount) : 0;
+
+        // Today's data
+        $todayEntries = $completedEntries->where('start_time', '>=', Carbon::today());
+        $todayMinutes = $todayEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        // Week's data
+        $weekEntries = $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek());
+        $weekMinutes = $weekEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
+
+        // Month's data
+        $monthEntries = $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth());
+        $monthMinutes = $monthEntries->sum(function ($entry) {
+            return Carbon::parse($entry->start_time)
+                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        });
 
         return [
             'user_id' => $userId,
             'total_hours' => $totalHours,
-            'total_minutes' => $totalMinutes,
+            'total_minutes' => $totalMinutesRemainder,
             'entries_count' => $entriesCount,
             'average_work_time' => $averageWorkTime,
             'summary' => [
-                'today' => $completedEntries->where('start_time', '>=', Carbon::today())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'week' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'month' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
+                'today' => [
+                    'hours' => (int)floor($todayMinutes / 60),
+                    'minutes' => (int)($todayMinutes % 60),
+                    'entries' => $todayEntries->count(),
+                ],
+                'week' => [
+                    'hours' => (int)floor($weekMinutes / 60),
+                    'minutes' => (int)($weekMinutes % 60),
+                    'entries' => $weekEntries->count(),
+                ],
+                'month' => [
+                    'hours' => (int)floor($monthMinutes / 60),
+                    'minutes' => (int)($monthMinutes % 60),
+                    'entries' => $monthEntries->count(),
+                ],
             ],
         ];
     }

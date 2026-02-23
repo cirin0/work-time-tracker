@@ -53,7 +53,9 @@ class LeaveRequestService
             return ['message' => 'You are not authorized to view this leave request.'];
         }
 
-        return ['leave_request' => $leaveRequest];
+        $leaveRequestWithRelations = $this->leaveRequestRepository->getByIdWithRelations($leaveRequest->id);
+
+        return ['leave_request' => $leaveRequestWithRelations];
     }
 
     public function approve(LeaveRequest $leaveRequest): array

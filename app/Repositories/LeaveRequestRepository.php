@@ -10,13 +10,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class LeaveRequestRepository
 {
-    public function find(int $id): ?LeaveRequest
-    {
-        return LeaveRequest::query()
-            ->with(['user', 'processor'])
-            ->find($id);
-    }
-
     public function getAllForManager(User $manager, int $perPage = 10): LengthAwarePaginator
     {
         $employeeIds = $manager->employees()->pluck('id');
@@ -43,9 +36,15 @@ class LeaveRequestRepository
     public function getAllForUser(User $user): LengthAwarePaginator
     {
         return $user->leaveRequests()
-            ->with(['user', 'processor'])
             ->latest()
             ->paginate();
+    }
+
+    public function getByIdWithRelations(int $id): ?LeaveRequest
+    {
+        return LeaveRequest::query()
+            ->with(['user', 'processor'])
+            ->find($id);
     }
 
     public function create(array $data): LeaveRequest

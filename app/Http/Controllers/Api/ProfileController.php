@@ -104,14 +104,13 @@ class ProfileController extends Controller
         if (!$data['work_schedule']) {
             return response()->json([
                 'message' => 'You have no work schedule assigned',
-                'user' => new ProfileResource($data['user']),
+                'data' => null,
             ]);
         }
 
         return response()->json([
             'message' => 'Work schedule retrieved successfully',
-            'user' => new ProfileResource($data['user']),
-            'work_schedule' => new WorkScheduleResource($data['work_schedule']),
+            'data' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
 }
