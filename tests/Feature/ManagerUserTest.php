@@ -26,7 +26,7 @@ class ManagerUserTest extends TestCase
         User::factory()->count(3)->create(['company_id' => $this->company->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson('/api/manager/users');
+            ->getJson('/api/managers/users');
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -39,7 +39,7 @@ class ManagerUserTest extends TestCase
     public function test_manager_can_view_employee_details(): void
     {
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$this->employee->id}");
+            ->getJson("/api/managers/users/{$this->employee->id}");
 
         $response->assertOk()
             ->assertJson([
@@ -57,7 +57,7 @@ class ManagerUserTest extends TestCase
         $anotherEmployee = User::factory()->create(['company_id' => $anotherCompany->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$anotherEmployee->id}");
+            ->getJson("/api/managers/users/{$anotherEmployee->id}");
 
         $response->assertForbidden()
             ->assertJson([
@@ -70,7 +70,7 @@ class ManagerUserTest extends TestCase
         TimeEntry::factory()->count(3)->create(['user_id' => $this->employee->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$this->employee->id}/time-entries");
+            ->getJson("/api/managers/users/{$this->employee->id}/time-entries");
 
         $response->assertOk();
 
@@ -93,7 +93,7 @@ class ManagerUserTest extends TestCase
         $anotherEmployee = User::factory()->create(['company_id' => $anotherCompany->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$anotherEmployee->id}/time-entries");
+            ->getJson("/api/managers/users/{$anotherEmployee->id}/time-entries");
 
         $response->assertForbidden()
             ->assertJson([
@@ -109,7 +109,7 @@ class ManagerUserTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$this->employee->id}/time-summary");
+            ->getJson("/api/managers/users/{$this->employee->id}/time-summary");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -131,7 +131,7 @@ class ManagerUserTest extends TestCase
         $anotherEmployee = User::factory()->create(['company_id' => $anotherCompany->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$anotherEmployee->id}/time-summary");
+            ->getJson("/api/managers/users/{$anotherEmployee->id}/time-summary");
 
         $response->assertForbidden()
             ->assertJson([
@@ -145,7 +145,7 @@ class ManagerUserTest extends TestCase
         $this->employee->update(['work_schedule_id' => $workSchedule->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$this->employee->id}/work-schedule");
+            ->getJson("/api/managers/users/{$this->employee->id}/work-schedule");
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -161,7 +161,7 @@ class ManagerUserTest extends TestCase
         $anotherEmployee = User::factory()->create(['company_id' => $anotherCompany->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson("/api/manager/users/{$anotherEmployee->id}/work-schedule");
+            ->getJson("/api/managers/users/{$anotherEmployee->id}/work-schedule");
 
         $response->assertForbidden()
             ->assertJson([
@@ -174,7 +174,7 @@ class ManagerUserTest extends TestCase
         $workSchedule = WorkSchedule::factory()->create(['company_id' => $this->company->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->patchJson("/api/manager/users/{$this->employee->id}/work-schedule", [
+            ->patchJson("/api/managers/users/{$this->employee->id}/work-schedule", [
                 'work_schedule_id' => $workSchedule->id,
             ]);
 
@@ -196,7 +196,7 @@ class ManagerUserTest extends TestCase
         $workSchedule = WorkSchedule::factory()->create(['company_id' => $this->company->id]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->patchJson("/api/manager/users/{$anotherEmployee->id}/work-schedule", [
+            ->patchJson("/api/managers/users/{$anotherEmployee->id}/work-schedule", [
                 'work_schedule_id' => $workSchedule->id,
             ]);
 
@@ -209,7 +209,7 @@ class ManagerUserTest extends TestCase
     public function test_employee_cannot_access_manager_endpoints(): void
     {
         $response = $this->actingAs($this->employee, 'api')
-            ->getJson('/api/manager/users');
+            ->getJson('/api/managers/users');
 
         $response->assertForbidden();
     }
@@ -239,7 +239,7 @@ class ManagerUserTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson('/api/manager/statistics');
+            ->getJson('/api/managers/statistics');
 
         $response->assertOk()
             ->assertJsonStructure([

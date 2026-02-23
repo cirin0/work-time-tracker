@@ -13,15 +13,6 @@ class ChangePasswordTest extends TestCase
 
     protected User $user;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->user = User::factory()->create([
-            'password' => Hash::make('oldpassword123'),
-        ]);
-    }
-
     public function test_user_can_change_password_with_valid_credentials(): void
     {
         $response = $this->actingAs($this->user, 'api')->postJson('/api/me/change-password', [
@@ -29,6 +20,7 @@ class ChangePasswordTest extends TestCase
             'new_password' => 'newpassword123',
             'new_password_confirmation' => 'newpassword123',
         ]);
+
 
         $response->assertOk()
             ->assertJson([
@@ -111,5 +103,14 @@ class ChangePasswordTest extends TestCase
         ]);
 
         $response->assertUnauthorized();
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->user = User::factory()->create([
+            'password' => Hash::make('oldpassword123'),
+        ]);
     }
 }

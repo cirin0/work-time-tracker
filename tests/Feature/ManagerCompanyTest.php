@@ -18,7 +18,7 @@ class ManagerCompanyTest extends TestCase
         $employee = User::factory()->create(['role' => 'employee', 'company_id' => null, 'manager_id' => null]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/add-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -40,7 +40,7 @@ class ManagerCompanyTest extends TestCase
         $employee = User::factory()->create(['role' => 'employee', 'company_id' => null, 'manager_id' => null]);
 
         $response = $this->actingAs($otherManager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/add-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -59,7 +59,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/add-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -79,7 +79,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/add-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/add-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -93,7 +93,7 @@ class ManagerCompanyTest extends TestCase
         $company = Company::factory()->create(['manager_id' => $manager->id]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/add-employee", []);
+            ->postJson("/api/managers/companies/{$company->id}/add-employee", []);
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors('employee_id');
@@ -110,7 +110,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/remove-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -136,7 +136,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($otherManager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/remove-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -155,7 +155,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/remove-employee", [
+            ->postJson("/api/managers/companies/{$company->id}/remove-employee", [
                 'employee_id' => $employee->id,
             ]);
 
@@ -174,7 +174,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($manager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/remove-employee/{$employee->id}");
+            ->postJson("/api/managers/companies/{$company->id}/remove-employee/{$employee->id}");
 
         $response->assertSuccessful()
             ->assertJsonFragment(['message' => 'Employee removed from company successfully.']);
@@ -198,7 +198,7 @@ class ManagerCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($otherManager, 'api')
-            ->postJson("/api/manager/companies/{$company->id}/remove-employee/{$employee->id}");
+            ->postJson("/api/managers/companies/{$company->id}/remove-employee/{$employee->id}");
 
         $response->assertForbidden();
     }

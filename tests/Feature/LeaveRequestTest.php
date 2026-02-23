@@ -51,7 +51,7 @@ class LeaveRequestTest extends TestCase
 
         $response->assertStatus(200);
 
-        $requests = LeaveRequest::with(['user', 'processor'])->where('user_id', $user->id)->latest()->get();
+        $requests = LeaveRequest::query()->where('user_id', $user->id)->latest()->get();
         $expectedData = LeaveRequestResource::collection($requests)->resolve();
 
         $response->assertExactJson([
@@ -94,12 +94,27 @@ class LeaveRequestTest extends TestCase
         ]);
     }
 
+    public function test_user_can_view_single_leave_request_with_full_details()
+    {
+        $user = User::factory()->create();
+        $leaveRequest = LeaveRequest::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user, 'api')->getJson("/api/leave-requests/{$leaveRequest->id}");
+
+        $response->assertStatus(200);
+
+        // Show endpoint returns full data with relationships loaded
+        $leaveRequestWithRelations = LeaveRequest::with(['user', 'processor'])->find($leaveRequest->id);
+
+        $response->assertExactJson((new LeaveRequestResource($leaveRequestWithRelations))->resolve());
+    }
+
     public function test_manager_can_view_all_leave_requests()
     {
         $manager = User::factory()->create(['role' => 'manager']);
         LeaveRequest::factory()->count(5)->create();
 
-        $response = $this->actingAs($manager, 'api')->getJson('/api/manager/leave-requests');
+        $response = $this->actingAs($manager, 'api')->getJson('/api/managers/leave-requests');
 
         $response->assertStatus(200);
     }
@@ -110,7 +125,7 @@ class LeaveRequestTest extends TestCase
         $employee = User::factory()->create(['manager_id' => $manager->id]);
         $request = LeaveRequest::factory()->create(['user_id' => $employee->id, 'status' => 'pending']);
 
-        $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/approve");
+        $response = $this->actingAs($manager, 'api')->postJson("/api/managers/leave-requests/{$request->id}/approve");
 
         $response->assertStatus(200);
         $request->refresh()->load(['user', 'processor']);
@@ -127,7 +142,7 @@ class LeaveRequestTest extends TestCase
         $employee = User::factory()->create(['manager_id' => $manager->id]);
         $request = LeaveRequest::factory()->create(['user_id' => $employee->id, 'status' => 'pending']);
 
-        $response = $this->actingAs($manager, 'api')->postJson("/api/manager/leave-requests/{$request->id}/reject", ['manager_comment' => 'Not enough details']);
+        $response = $this->actingAs($manager, 'api')->postJson("/api/managers/leave-requests/{$request->id}/reject", ['manager_comment' => 'Not enough details']);
 
         $response->assertStatus(200);
         $request->refresh()->load(['user', 'processor']);
@@ -143,8 +158,8 @@ class LeaveRequestTest extends TestCase
         $user = User::factory()->create(['role' => 'employee']);
         $request = LeaveRequest::factory()->create();
 
-        $this->actingAs($user, 'api')->getJson('/api/manager/leave-requests')->assertStatus(403);
-        $this->actingAs($user, 'api')->postJson("/api/manager/leave-requests/{$request->id}/approve")->assertStatus(403);
-        $this->actingAs($user, 'api')->postJson("/api/manager/leave-requests/{$request->id}/reject")->assertStatus(403);
+        $this->actingAs($user, 'api')->getJson('/api/managers/leave-requests')->assertStatus(403);
+        $this->actingAs($user, 'api')->postJson("/api/managers/leave-requests/{$request->id}/approve")->assertStatus(403);
+        $this->actingAs($user, 'api')->postJson("/api/managers/leave-requests/{$request->id}/reject")->assertStatus(403);
     }
 }
