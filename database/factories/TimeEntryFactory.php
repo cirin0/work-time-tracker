@@ -21,6 +21,11 @@ class TimeEntryFactory extends Factory
             ],
             'start_comment' => $this->faker->sentence,
             'stop_comment' => null,
+            'lateness_minutes' => null,
+            'scheduled_start_time' => null,
+            'early_leave_minutes' => null,
+            'scheduled_end_time' => null,
+            'overtime_minutes' => null,
         ];
     }
 }

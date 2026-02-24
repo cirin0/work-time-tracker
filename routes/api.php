@@ -53,7 +53,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
 });
 
-Route::middleware('auth:api')->prefix('managers')->middleware('role:manager')->group(function () {
+Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admin')->group(function () {
     Route::get('/leave-requests', [ManagerLeaveRequestController::class, 'index']);
     Route::get('/leave-requests/pending', [ManagerLeaveRequestController::class, 'getPendingLeaveRequests']);
     Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);

@@ -21,6 +21,11 @@ class TimeEntry extends Model
         'location_data',
         'start_comment',
         'stop_comment',
+        'lateness_minutes',
+        'scheduled_start_time',
+        'early_leave_minutes',
+        'scheduled_end_time',
+        'overtime_minutes',
     ];
 
     public function user(): BelongsTo

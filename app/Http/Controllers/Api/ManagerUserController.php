@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserWorkScheduleRequest;
+use App\Http\Resources\CompanyStatisticsResource;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
 use App\Http\Resources\UserResource;
@@ -155,7 +156,7 @@ class ManagerUserController extends Controller
 
         return response()->json([
             'message' => 'Company statistics retrieved successfully.',
-            'data' => $data,
+            'data' => new CompanyStatisticsResource($data),
         ]);
     }
 }
