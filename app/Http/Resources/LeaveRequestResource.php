@@ -15,10 +15,10 @@ class LeaveRequestResource extends JsonResource
         $baseData = [
             'id' => $this->id,
             'type' => $this->type,
-            'start_date' => $this->start_date->format('d-m-Y'),
-            'end_date' => $this->end_date->format('d-m-Y'),
+            'start_date' => $this->start_date->format('Y-m-d'),
+            'end_date' => $this->end_date->format('Y-m-d'),
             'status' => $this->status,
-            'created_at' => $this->created_at->format('d-m-Y H:i:s'),
+            'created_at' => $this->created_at,
         ];
 
         if ($this->relationLoaded('user')) {
@@ -30,7 +30,7 @@ class LeaveRequestResource extends JsonResource
             ];
             $baseData['reason'] = $this->reason;
             $baseData['manager_comment'] = $this->manager_comment;
-            $baseData['updated_at'] = $this->updated_at->format('d-m-Y H:i:s');
+            $baseData['updated_at'] = $this->updated_at;
         }
 
         if ($this->relationLoaded('processor') && $this->processor) {
