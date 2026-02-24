@@ -17,21 +17,28 @@ class TimeEntrySummaryResource extends JsonResource
             'total_minutes' => $this->resource['total_minutes'],
             'entries_count' => $this->resource['entries_count'],
             'average_work_time' => $this->resource['average_work_time'],
+            'attendance' => $this->resource['attendance'],
             'summary' => [
                 'today' => [
                     'hours' => $this->resource['summary']['today']['hours'],
                     'minutes' => $this->resource['summary']['today']['minutes'],
                     'entries' => $this->resource['summary']['today']['entries'],
+                    'late_count' => $this->resource['summary']['today']['late_count'],
+                    'early_count' => $this->resource['summary']['today']['early_count'],
                 ],
                 'week' => [
                     'hours' => $this->resource['summary']['week']['hours'],
                     'minutes' => $this->resource['summary']['week']['minutes'],
                     'entries' => $this->resource['summary']['week']['entries'],
+                    'late_count' => $this->resource['summary']['week']['late_count'],
+                    'early_count' => $this->resource['summary']['week']['early_count'],
                 ],
                 'month' => [
                     'hours' => $this->resource['summary']['month']['hours'],
                     'minutes' => $this->resource['summary']['month']['minutes'],
                     'entries' => $this->resource['summary']['month']['entries'],
+                    'late_count' => $this->resource['summary']['month']['late_count'],
+                    'early_count' => $this->resource['summary']['month']['early_count'],
                 ],
             ],
         ];

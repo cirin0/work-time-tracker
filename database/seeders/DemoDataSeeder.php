@@ -126,12 +126,25 @@ class DemoDataSeeder extends Seeder
             ]);
 
             // 6. Create 5 Time Entries for each employee
+            $employeeSchedule = $workSchedules[($i - 1) % 5];
+            $dailySchedule = $employeeSchedule->dailySchedules()->where('day_of_week', 'monday')->first();
+
+            // Different time periods for first 3 employees to populate today/week/month summaries
+            $timeOffsets = match ($i) {
+                1 => [0, 0, 1, 2, 3], // Today and recent days (for today + week)
+                2 => [1, 2, 3, 4, 5], // This week (for week)
+                3 => [7, 14, 21, 25, 28], // This month (for month)
+                default => [2, 3, 4, 5, 6], // Other employees - last week
+            };
+
             for ($j = 1; $j <= 5; $j++) {
-                $date = Carbon::now()->subDays($j + 1);
-                $startTime = (clone $date)->setTime(9, 0)->addMinutes(rand(-15, 15));
+                $daysAgo = $timeOffsets[$j - 1];
+                $date = Carbon::now()->subDays($daysAgo);
+                $randomOffset = rand(-15, 15);
+                $startTime = (clone $date)->setTime(9, 0)->addMinutes($randomOffset);
                 $stopTime = (clone $startTime)->addHours(8)->addMinutes(rand(0, 60));
 
-                TimeEntry::create([
+                $entryData = [
                     'user_id' => $employee->id,
                     'start_time' => $startTime,
                     'stop_time' => $stopTime,
@@ -140,7 +153,32 @@ class DemoDataSeeder extends Seeder
                     'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
                     'start_comment' => "Clocked in on day $j",
                     'stop_comment' => "Clocked out on day $j",
-                ]);
+                ];
+
+                // Add schedule tracking data for first 3 employees
+                if ($i <= 3 && $dailySchedule) {
+                    $scheduledStart = Carbon::parse($dailySchedule->start_time);
+                    $scheduledEnd = Carbon::parse($dailySchedule->end_time);
+
+                    // Calculate lateness (positive = late, negative = early, 0 = on time)
+                    $scheduledStartFull = (clone $startTime)->setTimeFrom($scheduledStart);
+                    $latenessMinutes = $scheduledStartFull->diffInMinutes($startTime, false);
+
+                    // Calculate early leave (positive = left early, negative = overtime)
+                    $scheduledEndFull = (clone $stopTime)->setTimeFrom($scheduledEnd);
+                    $earlyLeaveMinutes = $stopTime->diffInMinutes($scheduledEndFull, false);
+
+                    // Calculate overtime (only if worked past scheduled end time)
+                    $overtimeMinutes = $earlyLeaveMinutes < 0 ? abs($earlyLeaveMinutes) : 0;
+
+                    $entryData['lateness_minutes'] = $latenessMinutes;
+                    $entryData['scheduled_start_time'] = $scheduledStart->format('H:i:s');
+                    $entryData['early_leave_minutes'] = $earlyLeaveMinutes > 0 ? $earlyLeaveMinutes : 0;
+                    $entryData['scheduled_end_time'] = $scheduledEnd->format('H:i:s');
+                    $entryData['overtime_minutes'] = $overtimeMinutes;
+                }
+
+                TimeEntry::create($entryData);
             }
 
             // 7. Create 5 Leave Requests for each employee
@@ -177,5 +215,10 @@ class DemoDataSeeder extends Seeder
         $this->command->info('   - Employee 1-5: 1111, 2222, 3333, 4444, 5555');
         $this->command->info('   - Employee 6-10: (no PIN set)');
         $this->command->info(' Activity:   5 Time Entries & 5 Leave Requests per employee');
+        $this->command->info(' Schedule Tracking: Employees 1-3 have lateness/overtime data');
+        $this->command->info('   - Employee 1: entries for today/this week (today+week summary)');
+        $this->command->info('   - Employee 2: entries for this week (week summary)');
+        $this->command->info('   - Employee 3: entries for this month (month summary)');
+        $this->command->info('-------------------------------------------------------');
     }
 }
