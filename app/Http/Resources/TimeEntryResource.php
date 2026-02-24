@@ -18,15 +18,15 @@ class TimeEntryResource extends JsonResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
             ]),
-            'start_time' => $this->start_time?->format('d-m-Y H:i:s'),
-            'stop_time' => $this->stop_time?->format('d-m-Y H:i:s'),
+            'start_time' => $this->start_time,
+            'stop_time' => $this->stop_time,
             'duration' => $this->duration ?? 0,
             'entry_type' => $this->entry_type ?? 'gps',
             'location_data' => $this->location_data,
             'start_comment' => $this->start_comment,
             'stop_comment' => $this->stop_comment,
-            'created_at' => $this->created_at?->format('d-m-Y H:i:s'),
-            'updated_at' => $this->updated_at?->format('d-m-Y H:i:s'),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

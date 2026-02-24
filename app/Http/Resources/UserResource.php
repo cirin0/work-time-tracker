@@ -38,8 +38,8 @@ class UserResource extends JsonResource
                 'id' => $this->workSchedule->id,
                 'name' => $this->workSchedule->name,
             ]);
-            $data['created_at'] = $this->created_at->format('d-m-Y H:i:s');
-            $data['updated_at'] = $this->updated_at->format('d-m-Y H:i:s');
+            $data['created_at'] = $this->created_at;
+            $data['updated_at'] = $this->updated_at;
         }
 
         if ($isAdmin) {

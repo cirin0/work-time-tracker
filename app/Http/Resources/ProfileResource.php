@@ -34,8 +34,8 @@ class ProfileResource extends JsonResource
                 'id' => $this->workSchedule->id,
                 'name' => $this->workSchedule->name,
             ]),
-            'created_at' => $this->created_at?->format('d-m-Y H:i:s'),
-            'updated_at' => $this->updated_at?->format('d-m-Y H:i:s'),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }
