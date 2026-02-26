@@ -29,7 +29,7 @@ class UserManagementTest extends TestCase
                         'id',
                         'name',
                         'email',
-                        'role',
+                        'avatar',
                     ],
                 ],
             ]);
@@ -51,7 +51,7 @@ class UserManagementTest extends TestCase
                 'id',
                 'name',
                 'email',
-                'role',
+                'avatar',
             ]);
     }
 
@@ -66,7 +66,7 @@ class UserManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin, 'api')
-            ->postJson("/api/users/{$user->id}/role", [
+            ->patchJson("/api/admin/users/{$user->id}/role", [
                 'role' => UserRole::MANAGER->value,
             ]);
 
@@ -106,7 +106,7 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($admin, 'api')
-            ->patchJson("/api/users/{$user->id}", [
+            ->patchJson("/api/admin/users/{$user->id}", [
                 'name' => 'Admin Updated Name',
                 'email' => 'admin-updated@example.com',
             ]);
@@ -129,25 +129,11 @@ class UserManagementTest extends TestCase
         $anotherUser = User::factory()->create();
 
         $response = $this->actingAs($user, 'api')
-            ->patchJson("/api/users/{$anotherUser->id}", [
+            ->patchJson("/api/admin/users/{$anotherUser->id}", [
                 'name' => 'Hacked Name',
             ]);
 
         $response->assertStatus(403);
-    }
-
-    public function test_user_can_delete_their_account()
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user, 'api')
-            ->deleteJson("/api/users/{$user->id}");
-
-        $response->assertStatus(204);
-
-        $this->assertDatabaseMissing('users', [
-            'id' => $user->id,
-        ]);
     }
 
     public function test_non_admin_cannot_update_user_role()
@@ -161,7 +147,7 @@ class UserManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($regularUser, 'api')
-            ->postJson("/api/users/{$anotherUser->id}/role", [
+            ->patchJson("/api/admin/users/{$anotherUser->id}/role", [
                 'role' => UserRole::MANAGER->value,
             ]);
 

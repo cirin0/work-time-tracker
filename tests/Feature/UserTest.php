@@ -71,13 +71,13 @@ class UserTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $user = User::factory()->create(['role' => 'employee']);
 
-        $response = $this->actingAs($admin, 'api')->postJson("/api/users/{$user->id}/role", ['role' => 'manager']);
+        $response = $this->actingAs($admin, 'api')->patchJson("/api/admin/users/{$user->id}/role", ['role' => 'manager']);
 
         $response->assertStatus(200);
         $user->refresh();
 
         $response->assertJson([
-            'message' => 'User role updated successfully',
+            'message' => 'User role updated successfully.',
         ]);
 
         $this->assertEquals('manager', $user->role->value);
@@ -88,7 +88,7 @@ class UserTest extends TestCase
         $user = User::factory()->create(['role' => 'employee']);
         $anotherUser = User::factory()->create();
 
-        $response = $this->actingAs($user, 'api')->postJson("/api/users/{$anotherUser->id}/role", ['role' => 'admin']);
+        $response = $this->actingAs($user, 'api')->patchJson("/api/admin/users/{$anotherUser->id}/role", ['role' => 'admin']);
 
         $response->assertStatus(403);
     }
@@ -113,13 +113,13 @@ class UserTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $user = User::factory()->create();
 
-        $response = $this->actingAs($admin, 'api')->patchJson("/api/users/{$user->id}", ['name' => 'Admin Updated Name']);
+        $response = $this->actingAs($admin, 'api')->patchJson("/api/admin/users/{$user->id}", ['name' => 'Admin Updated Name']);
 
         $response->assertStatus(200);
         $user->refresh();
 
         $response->assertJson([
-            'message' => 'User updated successfully',
+            'message' => 'User updated successfully.',
         ]);
 
         $this->assertEquals('Admin Updated Name', $user->name);
@@ -130,19 +130,9 @@ class UserTest extends TestCase
         $user = User::factory()->create(['role' => 'employee']);
         $anotherUser = User::factory()->create();
 
-        $response = $this->actingAs($user, 'api')->patchJson("/api/users/{$anotherUser->id}", ['name' => 'New Name']);
+        $response = $this->actingAs($user, 'api')->patchJson("/api/admin/users/{$anotherUser->id}", ['name' => 'New Name']);
 
         $response->assertStatus(403);
-    }
-
-    public function test_user_can_delete_their_own_account()
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user, 'api')->deleteJson("/api/users/{$user->id}");
-
-        $response->assertStatus(204);
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 
     public function test_admin_can_delete_a_user()
@@ -150,7 +140,7 @@ class UserTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $user = User::factory()->create();
 
-        $response = $this->actingAs($admin, 'api')->deleteJson("/api/users/{$user->id}");
+        $response = $this->actingAs($admin, 'api')->deleteJson("/api/admin/users/{$user->id}");
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
@@ -163,7 +153,7 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         $file = UploadedFile::fake()->image('avatar.jpg');
 
-        $response = $this->actingAs($user, 'api')->postJson("/api/users/{$user->id}/avatar", [
+        $response = $this->actingAs($user, 'api')->postJson("/api/me/avatar", [
             'avatar' => $file,
         ]);
 

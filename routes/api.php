@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\AdminCompanyController;
+use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\LeaveRequestController;
-use App\Http\Controllers\Api\ManagerCompanyController;
 use App\Http\Controllers\Api\ManagerLeaveRequestController;
 use App\Http\Controllers\Api\ManagerUserController;
 use App\Http\Controllers\Api\MessageController;
@@ -39,12 +40,6 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware('auth:api')->prefix('/users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
     Route::get('/{user}', [UserController::class, 'show']);
-    Route::patch('/{user}', [UserController::class, 'update']);
-    Route::middleware('role:admin')->group(function () {
-        Route::post('{user}/role', [UserController::class, 'updateRole']);
-    });
-    Route::post('/{user}/avatar', [UserController::class, 'uploadAvatar']);
-    Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
 Route::middleware('auth:api')->group(function () {
@@ -59,10 +54,6 @@ Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admi
     Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
     Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
 
-    Route::post('/companies/{company}/add-employee', [ManagerCompanyController::class, 'addEmployeeToCompany']);
-    Route::post('/companies/{company}/remove-employee', [ManagerCompanyController::class, 'deleteEmployeeFromCompany']);
-    Route::post('/companies/{company}/remove-employee/{employee_id}', [ManagerCompanyController::class, 'deleteEmployeeFromCompanyById']);
-
     Route::get('/users', [ManagerUserController::class, 'getCompanyUsers']);
     Route::get('/users/{user}', [ManagerUserController::class, 'getUser']);
     Route::get('/statistics', [ManagerUserController::class, 'getCompanyStatistics']);
@@ -75,12 +66,26 @@ Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admi
 Route::middleware('auth:api')->prefix('companies')->group(function () {
     Route::get('/{company}', [CompanyController::class, 'show']);
     Route::get('/name/{company}', [CompanyController::class, 'showByName']);
+});
 
-    Route::middleware('role:admin')->group(function () {
-        Route::post('/', [CompanyController::class, 'store']);
-        Route::patch('/{company}', [CompanyController::class, 'update']);
-        Route::delete('/{company}', [CompanyController::class, 'destroy']);
-    });
+Route::middleware('role:admin')->prefix('admin')->group(function () {
+    Route::post('/companies', [AdminCompanyController::class, 'store']);
+    Route::patch('/companies/{company}', [AdminCompanyController::class, 'update']);
+    Route::post('/companies/{company}/logo', [AdminCompanyController::class, 'updateLogo']);
+    Route::delete('/companies/{company}', [AdminCompanyController::class, 'destroy']);
+    Route::post('/companies/{company}/assign-manager', [AdminCompanyController::class, 'assignManager']);
+    Route::post('/companies/{company}/add-employee', [AdminCompanyController::class, 'addEmployee']);
+    Route::post('/companies/{company}/remove-employee', [AdminCompanyController::class, 'removeEmployee']);
+    Route::post('/companies/{company}/remove-employee/{employee_id}', [AdminCompanyController::class, 'removeEmployeeById']);
+
+    Route::get('/users', [AdminUserController::class, 'getAllUsers']);
+    Route::get('/users/{user}', [AdminUserController::class, 'getUser']);
+    Route::get('/companies/{companyId}/users', [AdminUserController::class, 'getUsersByCompany']);
+    Route::patch('/users/{user}', [AdminUserController::class, 'updateUser']);
+    Route::patch('/users/{user}/role', [AdminUserController::class, 'updateUserRole']);
+    Route::patch('/users/{user}/work-mode', [AdminUserController::class, 'updateWorkMode']);
+    Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword']);
+    Route::delete('/users/{user}', [AdminUserController::class, 'deleteUser']);
 });
 
 Route::middleware('auth:api')->group(function () {

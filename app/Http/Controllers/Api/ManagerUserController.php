@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserWorkScheduleRequest;
 use App\Http\Resources\CompanyStatisticsResource;
+use App\Http\Resources\ManagerUserResource;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
-use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkScheduleResource;
 use App\Models\User;
 use App\Services\TimeEntryService;
@@ -76,13 +76,13 @@ class ManagerUserController extends Controller
         if (!$data['work_schedule']) {
             return response()->json([
                 'message' => 'User has no work schedule assigned.',
-                'user' => new UserResource($data['user']),
+                'user' => new ManagerUserResource($data['user']),
             ]);
         }
 
         return response()->json([
             'message' => 'Work schedule retrieved successfully.',
-            'user' => new UserResource($data['user']),
+            'user' => new ManagerUserResource($data['user']),
             'work_schedule' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
@@ -104,7 +104,7 @@ class ManagerUserController extends Controller
 
             return response()->json([
                 'message' => 'User already has this work schedule assigned.',
-                'user' => new UserResource($data['user']),
+                'user' => new ManagerUserResource($data['user']),
                 'work_schedule' => new WorkScheduleResource($data['work_schedule']),
             ]);
         }
@@ -114,7 +114,7 @@ class ManagerUserController extends Controller
 
         return response()->json([
             'message' => 'Work schedule updated successfully.',
-            'user' => new UserResource($data['user']),
+            'user' => new ManagerUserResource($data['user']),
             'work_schedule' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
@@ -128,7 +128,7 @@ class ManagerUserController extends Controller
             ->with(['workSchedule', 'manager'])
             ->paginate(15);
 
-        return UserResource::collection($users);
+        return ManagerUserResource::collection($users);
     }
 
     public function getUser(User $user): JsonResponse
@@ -145,7 +145,7 @@ class ManagerUserController extends Controller
 
         return response()->json([
             'message' => 'User retrieved successfully.',
-            'data' => new UserResource($user),
+            'data' => new ManagerUserResource($user),
         ]);
     }
 

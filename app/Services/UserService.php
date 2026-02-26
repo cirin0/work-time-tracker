@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Enums\WorkMode;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -58,12 +58,6 @@ class UserService
 
     public function update(User $user, array $data): array
     {
-        $authUser = Auth::user();
-
-        if (!$authUser->isAdmin()) {
-            unset($data['role']);
-        }
-        unset($data['password']);
         $user->update($data);
 
         return ['user' => $user];
@@ -123,6 +117,21 @@ class UserService
         }
 
         $user->update(['pin_code' => $newPinCode]);
+
+        return ['user' => $user];
+    }
+
+    public function updateWorkMode(User $user, WorkMode $workMode): array
+    {
+        $user->work_mode = $workMode;
+        $user->save();
+
+        return ['user' => $user];
+    }
+
+    public function resetPassword(User $user, string $password): array
+    {
+        $user->update(['password' => Hash::make($password)]);
 
         return ['user' => $user];
     }
