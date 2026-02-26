@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\User;
 use App\Repositories\CompanyRepository;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyService
@@ -32,17 +33,33 @@ class CompanyService
         return ['company' => $this->companyRepository->findByName($company)];
     }
 
-    public function update(Company $company, array $data): array
+    public function assignManagerToCompany(Company $company, int $managerId): array
     {
-        if (isset($data['logo']) && $data['logo']) {
-            if ($company->logo) {
-                Storage::disk('public')->delete($company->logo);
-            }
-            $data['logo'] = $data['logo']->store('companies_logos', 'public');
+        $manager = User::findOrFail($managerId);
+
+        if (!$manager->isManager() && !$manager->isAdmin()) {
+            return ['error' => true, 'message' => 'The specified user is not a manager or admin.'];
         }
 
+        $company->update(['manager_id' => $managerId]);
+
+        return ['company' => $company->fresh()];
+    }
+
+    public function update(Company $company, array $data): array
+    {
         $this->companyRepository->update($company, $data);
 
+        return ['company' => $company->fresh()];
+    }
+
+    public function updateLogo(Company $company, UploadedFile $logo): array
+    {
+        if ($company->logo) {
+            Storage::disk('public')->delete($company->logo);
+        }
+        $path = $logo->store('companies_logos', 'public');
+        $company->update(['logo' => $path]);
         return ['company' => $company->fresh()];
     }
 
@@ -53,39 +70,39 @@ class CompanyService
         return ['deleted' => $deleted];
     }
 
-    public function addEmployeeToCompany(Company $company, int $employeeId, int $managerId): array
+    public function addEmployeeToCompany(Company $company, int $employeeId): array
     {
-        $user = User::findOrFail($employeeId);
+        $employee = User::findOrFail($employeeId);
 
-        if ($user->company_id !== null) {
-            return ['message' => 'This user already belongs to a company.'];
+        if ($employee->company_id !== null) {
+            return ['error' => true, 'message' => 'This user already belongs to a company.'];
         }
 
-        if ($user->manager_id !== null) {
-            return ['message' => 'This user is already assigned to a manager.'];
+        if ($company->manager_id === null) {
+            return ['error' => true, 'message' => 'This company does not have a manager assigned.'];
         }
 
-        $user->update([
+        $employee->update([
             'company_id' => $company->id,
-            'manager_id' => $managerId,
+            'manager_id' => $company->manager_id,
         ]);
 
-        return ['employee' => $user->fresh()];
+        return ['employee' => $employee->fresh()];
     }
 
     public function removeEmployeeFromCompany(Company $company, int $employeeId): array
     {
-        $user = User::findOrFail($employeeId);
+        $employee = User::findOrFail($employeeId);
 
-        if ($user->company_id !== $company->id) {
-            return ['message' => 'This user does not belong to this company.'];
+        if ($employee->company_id !== $company->id) {
+            return ['error' => true, 'message' => 'This user does not belong to this company.'];
         }
 
-        $user->update([
+        $employee->update([
             'company_id' => null,
             'manager_id' => null,
         ]);
 
-        return ['employee' => $user->fresh()];
+        return ['employee' => $employee->fresh()];
     }
 }
