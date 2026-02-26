@@ -93,13 +93,14 @@ class TimeEntryStatisticsCalculator
         ];
     }
 
-    public function calculateCompanyStatistics(Collection $completedEntries, Collection $activeEntries, int $companyId): array
+    public function calculateCompanyStatistics(Collection $completedEntries, Collection $activeEntries, int $companyId, int $employeeCount): array
     {
         $totalMinutes = $this->calculateTotalMinutes($completedEntries);
         $entriesCount = $completedEntries->count();
 
         return [
             'company_id' => $companyId,
+            'employee_count' => $employeeCount,
             'total_hours' => round($totalMinutes / 60, 2),
             'total_minutes' => $totalMinutes,
             'entries_count' => $entriesCount,

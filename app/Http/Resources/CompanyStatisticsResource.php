@@ -13,6 +13,7 @@ class CompanyStatisticsResource extends JsonResource
     {
         return [
             'company_id' => $this->resource['company_id'],
+            'employee_count' => $this->resource['employee_count'],
             'total_hours' => $this->resource['total_hours'],
             'total_minutes' => $this->resource['total_minutes'],
             'entries_count' => $this->resource['entries_count'],

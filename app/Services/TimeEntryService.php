@@ -172,10 +172,13 @@ class TimeEntryService
         $completedEntries = $this->timeEntryRepository->getCompletedForCompany($companyId);
         $activeEntries = $this->timeEntryRepository->getActiveForCompany($companyId);
 
+        $employeeCount = User::query()->where('company_id', $companyId)->count();
+
         return $this->statisticsCalculator->calculateCompanyStatistics(
             $completedEntries,
             $activeEntries,
-            $companyId
+            $companyId,
+            $employeeCount
         );
     }
 }
