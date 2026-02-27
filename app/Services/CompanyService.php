@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CompanyService
 {
@@ -14,13 +15,27 @@ class CompanyService
     {
     }
 
-    public function create(array $data): array
+    public function create(array $data, ?User $creator = null): array
     {
         if (isset($data['logo']) && $data['logo']) {
             $data['logo'] = $data['logo']->store('companies_logos', 'public');
         }
 
-        return ['company' => $this->companyRepository->create($data)];
+        $qr_secret = (string)Str::uuid();
+        $data['qr_secret'] = $qr_secret;
+
+        $company = $this->companyRepository->create($data);
+
+        $creator?->update(['company_id' => $company->id]);
+
+        return ['company' => $company];
+    }
+
+    public function update(Company $company, array $data): array
+    {
+        $this->companyRepository->update($company, $data);
+
+        return ['company' => $company->fresh()];
     }
 
     public function getCompanyById(Company $company): array
@@ -43,12 +58,7 @@ class CompanyService
 
         $company->update(['manager_id' => $managerId]);
 
-        return ['company' => $company->fresh()];
-    }
-
-    public function update(Company $company, array $data): array
-    {
-        $this->companyRepository->update($company, $data);
+        $manager->update(['company_id' => $company->id]);
 
         return ['company' => $company->fresh()];
     }

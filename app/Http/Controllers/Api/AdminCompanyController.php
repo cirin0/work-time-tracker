@@ -23,11 +23,14 @@ class AdminCompanyController extends Controller
 
     public function store(StoreCompanyRequest $request): JsonResponse
     {
-        $data = $this->companyService->create($request->validated());
+        $data = $this->companyService->create(
+            $request->validated(),
+            $request->user()
+        );
 
         return response()->json([
             'message' => 'Company created successfully',
-            'company' => new CompanyStoreResource($data['company']),
+            'data' => new CompanyStoreResource($data['company']),
         ], 201);
     }
 
@@ -37,7 +40,7 @@ class AdminCompanyController extends Controller
 
         return response()->json([
             'message' => 'Company updated successfully',
-            'company' => new CompanyStoreResource($data['company']),
+            'data' => new CompanyStoreResource($data['company']),
         ]);
     }
 
@@ -85,7 +88,7 @@ class AdminCompanyController extends Controller
         );
 
         if (isset($result['error'])) {
-            return response()->json(['message' => $result['message']], 409);
+            return response()->json(['message' => $result['message']], 400);
         }
 
         return response()->json([
@@ -94,7 +97,7 @@ class AdminCompanyController extends Controller
         ]);
     }
 
-    public function removeEmployee(AdminRemoveEmployeeRequest $request, Company $company): JsonResponse
+    public function removeEmployee(AdminRemoveEmployeeRequest $request, Company $company)
     {
         $result = $this->companyService->removeEmployeeFromCompany(
             $company,
@@ -102,26 +105,11 @@ class AdminCompanyController extends Controller
         );
 
         if (isset($result['error'])) {
-            return response()->json(['message' => $result['message']], 409);
+            return response()->json([
+                'message' => $result['message']
+            ], 404);
         }
 
-        return response()->json([
-            'message' => 'Employee removed from company successfully.',
-            'employee' => new AdminUserResource($result['employee']),
-        ]);
-    }
-
-    public function removeEmployeeById(Company $company, int $employeeId): JsonResponse
-    {
-        $result = $this->companyService->removeEmployeeFromCompany($company, $employeeId);
-
-        if (isset($result['error'])) {
-            return response()->json(['message' => $result['message']], 409);
-        }
-
-        return response()->json([
-            'message' => 'Employee removed from company successfully.',
-            'employee' => new AdminUserResource($result['employee']),
-        ]);
+        return response()->noContent();
     }
 }

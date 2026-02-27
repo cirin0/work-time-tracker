@@ -75,8 +75,7 @@ Route::middleware('role:admin')->prefix('admin')->group(function () {
     Route::delete('/companies/{company}', [AdminCompanyController::class, 'destroy']);
     Route::post('/companies/{company}/assign-manager', [AdminCompanyController::class, 'assignManager']);
     Route::post('/companies/{company}/add-employee', [AdminCompanyController::class, 'addEmployee']);
-    Route::post('/companies/{company}/remove-employee', [AdminCompanyController::class, 'removeEmployee']);
-    Route::post('/companies/{company}/remove-employee/{employee_id}', [AdminCompanyController::class, 'removeEmployeeById']);
+    Route::delete('/companies/{company}/remove-employee', [AdminCompanyController::class, 'removeEmployee']);
 
     Route::get('/users', [AdminUserController::class, 'getAllUsers']);
     Route::get('/users/{user}', [AdminUserController::class, 'getUser']);

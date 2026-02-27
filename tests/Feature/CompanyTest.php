@@ -27,9 +27,15 @@ class CompanyTest extends TestCase
         $response->assertCreated();
         $company = Company::first();
 
+        $admin->refresh();
+        $this->assertEquals($company->id, $admin->company_id);
+
+        $this->assertNotNull($company->qr_secret);
+        $this->assertEquals(36, strlen($company->qr_secret));
+
         $response->assertExactJson([
             'message' => 'Company created successfully',
-            'company' => (new CompanyStoreResource($company))->resolve(),
+            'data' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 
@@ -96,7 +102,7 @@ class CompanyTest extends TestCase
 
         $response->assertExactJson([
             'message' => 'Company updated successfully',
-            'company' => (new CompanyStoreResource($company))->resolve(),
+            'data' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 

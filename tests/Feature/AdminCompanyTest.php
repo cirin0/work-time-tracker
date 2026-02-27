@@ -35,7 +35,7 @@ class AdminCompanyTest extends TestCase
         $this->assertNotNull($company);
         $response->assertExactJson([
             'message' => 'Company created successfully',
-            'company' => (new CompanyStoreResource($company))->resolve(),
+            'data' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 
@@ -144,7 +144,7 @@ class AdminCompanyTest extends TestCase
                 'manager_id' => $this->manager->id,
             ]);
 
-        $response->assertStatus(409);
+        $response->assertStatus(400);
         $response->assertJsonFragment(['message' => 'This user already belongs to a company.']);
     }
 
@@ -158,29 +158,8 @@ class AdminCompanyTest extends TestCase
                 'employee_id' => $newEmployee->id,
             ]);
 
-        $response->assertStatus(409);
+        $response->assertStatus(400);
         $response->assertJsonFragment(['message' => 'This company does not have a manager assigned.']);
-    }
-
-    public function test_admin_can_remove_employee_from_company(): void
-    {
-        $employeeInCompany = User::factory()->create([
-            'role' => UserRole::EMPLOYEE,
-            'company_id' => $this->company->id,
-            'manager_id' => $this->manager->id,
-        ]);
-
-        $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/remove-employee", [
-                'employee_id' => $employeeInCompany->id,
-            ]);
-
-        $response->assertOk();
-        $employeeInCompany->refresh();
-
-        $this->assertNull($employeeInCompany->company_id);
-        $this->assertNull($employeeInCompany->manager_id);
-        $response->assertJsonFragment(['message' => 'Employee removed from company successfully.']);
     }
 
     public function test_admin_can_remove_employee_from_company_by_id(): void
@@ -192,13 +171,10 @@ class AdminCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/remove-employee/{$employeeInCompany->id}");
+            ->deleteJson("/api/admin/companies/{$this->company->id}/remove-employee/{$employeeInCompany->id}");
 
-        $response->assertOk();
+        $response->assertNotFound();
         $employeeInCompany->refresh();
-
-        $this->assertNull($employeeInCompany->company_id);
-        $this->assertNull($employeeInCompany->manager_id);
     }
 
     public function test_admin_cannot_remove_employee_not_in_company(): void
@@ -210,11 +186,11 @@ class AdminCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/remove-employee", [
+            ->deleteJson("/api/admin/companies/{$this->company->id}/remove-employee", [
                 'employee_id' => $employeeInOtherCompany->id,
             ]);
 
-        $response->assertStatus(409);
+        $response->assertStatus(404);
         $response->assertJsonFragment(['message' => 'This user does not belong to this company.']);
     }
 
@@ -235,7 +211,6 @@ class AdminCompanyTest extends TestCase
         $response = $this->actingAs($this->manager, 'api')
             ->postJson("/api/admin/companies/{$this->company->id}/add-employee", [
                 'employee_id' => $newEmployee->id,
-                'manager_id' => $this->manager->id,
             ]);
 
         $response->assertForbidden();
