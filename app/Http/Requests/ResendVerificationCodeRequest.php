@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class VerifyEmailRequest extends FormRequest
+class ResendVerificationCodeRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,7 +15,6 @@ class VerifyEmailRequest extends FormRequest
     {
         return [
             'email' => 'required|email|exists:users,email',
-            'code' => 'required|string|size:6',
         ];
     }
 
@@ -24,10 +23,7 @@ class VerifyEmailRequest extends FormRequest
         return [
             'email.required' => 'Email is required.',
             'email.email' => 'Email must be a valid email address.',
-            'email.exists' => 'User not found.',
-            'code.required' => 'Verification code is required.',
-            'code.string' => 'Verification code must be a string.',
-            'code.size' => 'Verification code must be 6 digits.',
+            'email.exists' => 'No account found with this email.',
         ];
     }
 }

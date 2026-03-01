@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\EmailVerificationCode;
 use App\Notifications\VerificationCodeNotification;
 use App\Repositories\UserRepository;
+use Cache;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
@@ -28,9 +29,7 @@ class AuthService
         ]);
 
         if (config('app.env') === 'local') {
-            $verificationCode->update(['verified_at' => now()]);
-            $user->markEmailAsVerified();
-            return ['user' => $user, 'message' => 'Auto-verified email in local environment'];
+            return ['user' => $user, 'message' => 'Code generated for local environment: ' . $code];
         }
         $user->notify(new VerificationCodeNotification($code, 'підтвердження пошти'));
 
@@ -57,10 +56,16 @@ class AuthService
         ];
     }
 
-    public function verifyEmail(int $userId, string $code): array
+    public function verifyEmail(string $email, string $code): array
     {
+        $user = $this->repository->findByEmail($email);
+
+        if (!$user) {
+            return ['error' => true, 'message' => 'User not found'];
+        }
+
         $verificationCode = EmailVerificationCode::query()
-            ->where('user_id', $userId)
+            ->where('user_id', $user->id)
             ->where('code', $code)
             ->where('type', 'registration')
             ->whereNull('verified_at')
@@ -76,7 +81,6 @@ class AuthService
 
         $verificationCode->update(['verified_at' => now()]);
 
-        $user = $verificationCode->user;
         $user->markEmailAsVerified();
 
         return ['message' => 'Email verified successfully'];
@@ -110,5 +114,48 @@ class AuthService
             'token' => $newToken,
             'expires_in' => config('jwt.ttl', 60) * 60,
         ];
+    }
+
+    public function resendVerificationCode(string $email): array
+    {
+        $user = $this->repository->findByEmail($email);
+
+        if (!$user) {
+            return ['error' => true, 'message' => 'User not found'];
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return ['error' => true, 'message' => 'Email is already verified'];
+        }
+
+        $cacheKey = 'resend_code:' . $email;
+        if (Cache::has($cacheKey)) {
+            return ['error' => true, 'message' => 'Please wait before requesting a new code'];
+        }
+
+        EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'registration')
+            ->whereNull('verified_at')
+            ->delete();
+
+        $code = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+        EmailVerificationCode::query()->create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'type' => 'registration',
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        Cache::put($cacheKey, true, now()->addMinute());
+
+        if (config('app.env') === 'local') {
+            return ['message' => 'Verification code resent. Code for local environment: ' . $code];
+        }
+
+        $user->notify(new VerificationCodeNotification($code, 'підтвердження пошти'));
+
+        return ['message' => 'Verification code has been resent to your email'];
     }
 }
