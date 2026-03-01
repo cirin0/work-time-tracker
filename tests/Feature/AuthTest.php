@@ -46,6 +46,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->postJson('/api/auth/login', [
@@ -89,6 +90,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'logout@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $loginResponse = $this->postJson('/api/auth/login', [
@@ -203,12 +205,13 @@ class AuthTest extends TestCase
     public function test_authenticated_user_can_refresh_token()
     {
         $user = User::factory()->create([
-            'email' => 'test@example.com',
+            'email' => 'refresh-test@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $loginResponse = $this->postJson('/api/auth/login', [
-            'email' => 'test@example.com',
+            'email' => 'refresh-test@example.com',
             'password' => 'password',
         ]);
 
@@ -244,6 +247,10 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/auth/register', $userData);
 
         $response->assertStatus(201);
+
+        // Manually verify email for test
+        $user = User::query()->where('email', 'test@example.com')->first();
+        $user->markEmailAsVerified();
 
         // Verify user can login with short password
         $loginResponse = $this->postJson('/api/auth/login', [
@@ -306,6 +313,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'refresh@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $loginResponse = $this->postJson('/api/auth/login', [

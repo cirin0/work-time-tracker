@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\ChangePasswordWithCodeRequest;
 use App\Http\Requests\ChangePinCodeRequest;
 use App\Http\Requests\SetupPinCodeRequest;
 use App\Http\Requests\UpdateProfileRequest;
@@ -47,18 +47,24 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    public function requestPasswordChangeCode(): JsonResponse
     {
         $user = auth()->user();
-        $data = $this->userService->changePassword($user, $request->validated());
+        $data = $this->userService->requestPasswordChangeCode($user);
 
-        if (isset($data['message'])) {
-            return response()->json(['message' => $data['message']], 403);
+        return response()->json(['message' => $data['message']]);
+    }
+
+    public function changePasswordWithCode(ChangePasswordWithCodeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->changePasswordWithCode($user, $request->validated());
+
+        if (isset($data['error'])) {
+            return response()->json(['message' => $data['message']], 400);
         }
 
-        return response()->json([
-            'message' => 'Password changed successfully',
-        ]);
+        return response()->json(['message' => $data['message']], 200);
     }
 
     public function setupPinCode(SetupPinCodeRequest $request): JsonResponse

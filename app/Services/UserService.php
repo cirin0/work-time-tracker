@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Enums\WorkMode;
+use App\Models\EmailVerificationCode;
 use App\Models\User;
+use App\Notifications\VerificationCodeNotification;
 use App\Repositories\UserRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -88,15 +90,57 @@ class UserService
         return ['user' => $user];
     }
 
-    public function changePassword(User $user, array $data): array
+    public function requestPasswordChangeCode(User $user): array
+    {
+        $code = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+        EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'password_change')
+            ->whereNull('verified_at')
+            ->delete();
+
+        EmailVerificationCode::query()->create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'type' => 'password_change',
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        if (config('app.env') === 'local') {
+            return ['message' => 'Code generated for local environment: ' . $code];
+        }
+        $user->notify(new VerificationCodeNotification($code, 'зміни паролю'));
+
+        return ['message' => 'Verification code sent to your email'];
+    }
+
+    public function changePasswordWithCode(User $user, array $data): array
     {
         if (!Hash::check($data['current_password'], $user->password)) {
-            return ['message' => 'The current password is incorrect.'];
+            return ['error' => true, 'message' => 'The current password is incorrect.'];
         }
+
+        $verificationCode = EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('code', $data['code'])
+            ->where('type', 'password_change')
+            ->whereNull('verified_at')
+            ->first();
+
+        if (!$verificationCode) {
+            return ['error' => true, 'message' => 'Invalid verification code'];
+        }
+
+        if ($verificationCode->isExpired()) {
+            return ['error' => true, 'message' => 'Verification code has expired'];
+        }
+
+        $verificationCode->update(['verified_at' => now()]);
 
         $user->update(['password' => Hash::make($data['new_password'])]);
 
-        return ['user' => $user];
+        return ['message' => 'Password changed successfully'];
     }
 
     public function setupPinCode(User $user, string $pinCode): array
@@ -132,6 +176,7 @@ class UserService
     public function resetPassword(User $user, string $password): array
     {
         $user->update(['password' => Hash::make($password)]);
+
 
         return ['user' => $user];
     }
