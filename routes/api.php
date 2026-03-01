@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
+    Route::post('verify-email', 'verifyEmail');
     Route::post('login', 'login');
     Route::post('logout', 'logout')->middleware('auth:api');
     Route::post('refresh', 'refresh');
@@ -31,7 +32,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/me', [ProfileController::class, 'me']);
     Route::patch('/me', [ProfileController::class, 'updateProfile']);
     Route::post('/me/avatar', [ProfileController::class, 'updateAvatar']);
-    Route::post('/me/change-password', [ProfileController::class, 'changePassword']);
+    Route::post('/me/request-password-change-code', [ProfileController::class, 'requestPasswordChangeCode']);
+    Route::post('/me/change-password', [ProfileController::class, 'changePasswordWithCode']);
     Route::post('/me/pin-code', [ProfileController::class, 'setupPinCode']);
     Route::patch('/me/pin-code', [ProfileController::class, 'changePinCode']);
     Route::get('/me/work-schedule', [ProfileController::class, 'getWorkSchedule']);

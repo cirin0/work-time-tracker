@@ -25,6 +25,10 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('viewApiDocs', function (?User $user) {
+            return true;
+        });
+
         Gate::define('view-all-users', function (User $currentUser) {
             return $currentUser->isAdmin();
         });
