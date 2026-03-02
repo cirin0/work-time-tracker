@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('verify-email', 'verifyEmail');
+    Route::post('resend-verification-code', 'resendVerificationCode');
     Route::post('login', 'login');
     Route::post('logout', 'logout')->middleware('auth:api');
     Route::post('refresh', 'refresh');

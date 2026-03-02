@@ -80,6 +80,7 @@ class EmailVerificationTest extends TestCase
     public function test_user_can_verify_email_with_valid_code()
     {
         $user = User::factory()->create([
+            'email' => 'verify@example.com',
             'email_verified_at' => null,
             'company_id' => $this->company->id,
         ]);
@@ -93,7 +94,7 @@ class EmailVerificationTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/auth/verify-email', [
-            'user_id' => $user->id,
+            'email' => 'verify@example.com',
             'code' => $code,
         ]);
 
@@ -111,6 +112,7 @@ class EmailVerificationTest extends TestCase
     public function test_user_cannot_verify_email_with_invalid_code()
     {
         $user = User::factory()->create([
+            'email' => 'invalid@example.com',
             'email_verified_at' => null,
             'company_id' => $this->company->id,
         ]);
@@ -123,7 +125,7 @@ class EmailVerificationTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/auth/verify-email', [
-            'user_id' => $user->id,
+            'email' => 'invalid@example.com',
             'code' => '999999', // Wrong code
         ]);
 
@@ -137,6 +139,7 @@ class EmailVerificationTest extends TestCase
     public function test_user_cannot_verify_email_with_expired_code()
     {
         $user = User::factory()->create([
+            'email' => 'expired@example.com',
             'email_verified_at' => null,
             'company_id' => $this->company->id,
         ]);
@@ -150,7 +153,7 @@ class EmailVerificationTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/auth/verify-email', [
-            'user_id' => $user->id,
+            'email' => 'expired@example.com',
             'code' => $code,
         ]);
 

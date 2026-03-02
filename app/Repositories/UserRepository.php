@@ -15,6 +15,14 @@ class UserRepository
             ->find($id);
     }
 
+    public function findByEmail(string $email): ?User
+    {
+        return User::query()
+            ->with(['company', 'manager', 'workSchedule'])
+            ->where('email', $email)
+            ->first();
+    }
+
     public function getAll(): Collection
     {
         return User::query()
