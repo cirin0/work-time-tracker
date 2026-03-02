@@ -173,4 +173,107 @@ class TimeEntryTest extends TestCase
         $this->getJson('/api/time-entries')->assertUnauthorized();
         $this->getJson('/api/time-entries/summary/me')->assertUnauthorized();
     }
+
+    public function test_user_can_create_multiple_entries_in_same_day(): void
+    {
+        $user = User::factory()->create(['pin_code' => bcrypt('1234')]);
+
+        // Перший запис: 08:00 - 10:30
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')->assertCreated();
+        $firstEntry = TimeEntry::query()->where('user_id', $user->id)->first();
+
+        $this->actingAs($user, 'api')
+            ->patchJson('/api/time-entries/active/stop', ['pin_code' => '1234'])
+            ->assertOk();
+
+        // Другий запис: після закінчення першого
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')->assertCreated();
+        $secondEntry = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->whereNull('stop_time')
+            ->first();
+
+        $this->assertNotEquals($firstEntry->id, $secondEntry->id);
+        $this->assertEquals($firstEntry->date, $secondEntry->date);
+
+        // Перевіряємо що обидва записи за сьогодні
+        $todayEntries = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->whereDate('date', today())
+            ->get();
+
+        $this->assertCount(2, $todayEntries);
+    }
+
+    public function test_statistics_count_working_days_not_entries(): void
+    {
+        $user = User::factory()->create(['pin_code' => bcrypt('1234')]);
+        $today = now();
+
+        // Створюємо 3 записи за сьогодні (один день)
+        for ($i = 0; $i < 3; $i++) {
+            TimeEntry::factory()->create([
+                'user_id' => $user->id,
+                'date' => $today->toDateString(),
+                'start_time' => $today->copy()->addHours($i * 2),
+                'stop_time' => $today->copy()->addHours($i * 2 + 1),
+                'duration' => 3600,
+            ]);
+        }
+
+        // Створюємо 2 записи за вчора (ще один день)
+        for ($i = 0; $i < 2; $i++) {
+            TimeEntry::factory()->create([
+                'user_id' => $user->id,
+                'date' => $today->copy()->subDay()->toDateString(),
+                'start_time' => $today->copy()->subDay()->addHours($i * 2),
+                'stop_time' => $today->copy()->subDay()->addHours($i * 2 + 1),
+                'duration' => 3600,
+            ]);
+        }
+
+        $response = $this->actingAs($user, 'api')->getJson('/api/time-entries/summary/me');
+        $response->assertOk();
+
+        $data = $response->json('data');
+
+        // Має бути 2 робочих дні (сьогодні + вчора), а не 5 записів
+        $this->assertEquals(2, $data['working_days']);
+
+        // Загальний час: 5 записів * 1 година = 5 годин
+        $this->assertEquals(5, $data['total_hours']);
+
+        // Середній час: 5 годин / 2 дні = 150 хвилин на день
+        $this->assertEquals(150, $data['average_work_time']);
+    }
+
+    public function test_user_can_work_with_breaks_during_day(): void
+    {
+        $user = User::factory()->create(['pin_code' => bcrypt('1234')]);
+
+        // Сценарій: прийшов, пішов на обід, повернувся
+
+        // 1. Прийшов о 08:00
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')->assertCreated();
+
+        // 2. Пішов о 12:00 (на обід)
+        $this->actingAs($user, 'api')
+            ->patchJson('/api/time-entries/active/stop', ['pin_code' => '1234'])
+            ->assertOk();
+
+        // 3. Повернувся о 13:00
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')->assertCreated();
+
+        // Перевіряємо що є 2 записи за сьогодні
+        $entries = TimeEntry::query()
+            ->where('user_id', $user->id)
+            ->whereDate('date', today())
+            ->get();
+
+        $this->assertCount(2, $entries);
+
+        // Перший запис закритий, другий активний
+        $this->assertNotNull($entries[0]->stop_time);
+        $this->assertNull($entries[1]->stop_time);
+    }
 }

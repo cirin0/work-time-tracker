@@ -118,7 +118,7 @@ class ManagerUserTest extends TestCase
                     'user_id',
                     'total_hours',
                     'total_minutes',
-                    'entries_count',
+                    'working_days',
                     'average_work_time',
                     'summary' => ['today', 'week', 'month'],
                 ],
@@ -248,21 +248,24 @@ class ManagerUserTest extends TestCase
                     'company_id',
                     'total_hours',
                     'total_minutes',
-                    'entries_count',
+                    'total_entries_count',
+                    'total_working_days',
+                    'average_working_days_per_employee',
                     'active_entries_count',
                     'active_employees',
                     'total_employees_with_entries',
                     'summary' => [
-                        'today' => ['minutes', 'hours', 'entries'],
-                        'week' => ['minutes', 'hours', 'entries'],
-                        'month' => ['minutes', 'hours', 'entries'],
+                        'today' => ['minutes', 'hours', 'working_days'],
+                        'week' => ['minutes', 'hours', 'working_days'],
+                        'month' => ['minutes', 'hours', 'working_days'],
                     ],
                 ],
             ]);
 
         $data = $response->json('data');
         $this->assertEquals($this->company->id, $data['company_id']);
-        $this->assertGreaterThan(0, $data['entries_count']);
+        $this->assertGreaterThan(0, $data['total_entries_count']);
+        $this->assertGreaterThan(0, $data['total_working_days']);
         $this->assertEquals(1, $data['active_entries_count']);
         $this->assertEquals(1, $data['active_employees']);
     }

@@ -9,9 +9,12 @@ class TimeEntryFactory extends Factory
 {
     public function definition(): array
     {
+        $startTime = $this->faker->dateTimeBetween('-1 week', 'now');
+
         return [
             'user_id' => User::factory(),
-            'start_time' => $this->faker->dateTimeBetween('-1 week', 'now'),
+            'date' => $startTime->format('Y-m-d'),
+            'start_time' => $startTime,
             'stop_time' => null,
             'duration' => 0,
             'entry_type' => 'gps',

@@ -10,14 +10,14 @@ class TimeEntryStatisticsCalculator
     public function calculateStatistics(Collection $completedEntries, int $userId): array
     {
         $totalMinutes = $this->calculateTotalMinutes($completedEntries);
-        $entriesCount = $completedEntries->count();
+        $workingDays = $this->countUniqueDays($completedEntries);
 
         return [
             'user_id' => $userId,
             'total_hours' => (int)floor($totalMinutes / 60),
             'total_minutes' => (int)($totalMinutes % 60),
-            'entries_count' => $entriesCount,
-            'average_work_time' => $entriesCount > 0 ? (int)round($totalMinutes / $entriesCount) : 0,
+            'working_days' => $workingDays,
+            'average_work_time' => $workingDays > 0 ? (int)round($totalMinutes / $workingDays) : 0,
             'attendance' => $this->calculateAttendanceStatistics($completedEntries),
             'summary' => $this->calculatePeriodSummaries($completedEntries),
         ];
@@ -29,6 +29,14 @@ class TimeEntryStatisticsCalculator
             return Carbon::parse($entry->start_time)
                 ->diffInMinutes(Carbon::parse($entry->stop_time));
         });
+    }
+
+    private function countUniqueDays(Collection $entries): int
+    {
+        return $entries->pluck('date')
+            ->map(fn($date) => is_string($date) ? $date : $date->format('Y-m-d'))
+            ->unique()
+            ->count();
     }
 
     private function calculateAttendanceStatistics(Collection $completedEntries): array
@@ -83,11 +91,12 @@ class TimeEntryStatisticsCalculator
     private function calculatePeriodSummary(Collection $entries): array
     {
         $totalMinutes = $this->calculateTotalMinutes($entries);
+        $workingDays = $this->countUniqueDays($entries);
 
         return [
             'hours' => (int)floor($totalMinutes / 60),
             'minutes' => (int)($totalMinutes % 60),
-            'entries' => $entries->count(),
+            'working_days' => $workingDays,
             'late_count' => $entries->where('lateness_minutes', '>', 0)->count(),
             'early_count' => $entries->where('lateness_minutes', '<', 0)->count(),
         ];
@@ -96,17 +105,24 @@ class TimeEntryStatisticsCalculator
     public function calculateCompanyStatistics(Collection $completedEntries, Collection $activeEntries, int $companyId, int $employeeCount): array
     {
         $totalMinutes = $this->calculateTotalMinutes($completedEntries);
-        $entriesCount = $completedEntries->count();
+        $workingDays = $this->countUniqueDays($completedEntries);
+        $totalEntriesCount = $completedEntries->count();
+        $employeesWithEntries = $completedEntries->pluck('user_id')->unique()->count();
+        $averageWorkingDaysPerEmployee = $employeesWithEntries > 0
+            ? round($workingDays / $employeesWithEntries, 1)
+            : 0;
 
         return [
             'company_id' => $companyId,
             'employee_count' => $employeeCount,
             'total_hours' => round($totalMinutes / 60, 2),
             'total_minutes' => $totalMinutes,
-            'entries_count' => $entriesCount,
+            'total_entries_count' => $totalEntriesCount,
+            'total_working_days' => $workingDays,
+            'average_working_days_per_employee' => $averageWorkingDaysPerEmployee,
             'active_entries_count' => $activeEntries->count(),
             'active_employees' => $activeEntries->pluck('user_id')->unique()->count(),
-            'total_employees_with_entries' => $completedEntries->pluck('user_id')->unique()->count(),
+            'total_employees_with_entries' => $employeesWithEntries,
             'attendance' => $this->calculateAttendanceStatistics($completedEntries),
             'summary' => $this->calculatePeriodSummaries($completedEntries),
         ];

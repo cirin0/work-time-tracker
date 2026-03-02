@@ -24,6 +24,16 @@ class TimeEntryRepository
             ->first();
     }
 
+    public function getTodayEntriesForUser(User $user): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->where('user_id', $user->id)
+            ->whereDate('date', today())
+            ->orderBy('start_time')
+            ->get();
+    }
+
     public function getAllForUser(User $user): Collection
     {
         return TimeEntry::query()

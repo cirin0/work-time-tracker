@@ -146,6 +146,7 @@ class DemoDataSeeder extends Seeder
 
                 $entryData = [
                     'user_id' => $employee->id,
+                    'date' => $date->toDateString(),
                     'start_time' => $startTime,
                     'stop_time' => $stopTime,
                     'duration' => $startTime->diffInMinutes($stopTime),
@@ -179,6 +180,37 @@ class DemoDataSeeder extends Seeder
                 }
 
                 TimeEntry::create($entryData);
+            }
+
+            // Create multiple entries per day for first 3 employees (with breaks)
+            if ($i <= 3) {
+                $today = Carbon::now();
+
+                // Morning session: 08:00 - 12:00
+                TimeEntry::create([
+                    'user_id' => $employee->id,
+                    'date' => $today->toDateString(),
+                    'start_time' => $today->copy()->setTime(8, 0),
+                    'stop_time' => $today->copy()->setTime(12, 0),
+                    'duration' => 240,
+                    'entry_type' => EntryType::MANUAL,
+                    'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
+                    'start_comment' => 'Morning shift start',
+                    'stop_comment' => 'Going for lunch break',
+                ]);
+
+                // Afternoon session: 13:00 - 17:00
+                TimeEntry::create([
+                    'user_id' => $employee->id,
+                    'date' => $today->toDateString(),
+                    'start_time' => $today->copy()->setTime(13, 0),
+                    'stop_time' => $today->copy()->setTime(17, 0),
+                    'duration' => 240,
+                    'entry_type' => EntryType::MANUAL,
+                    'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
+                    'start_comment' => 'Back from lunch',
+                    'stop_comment' => 'End of workday',
+                ]);
             }
 
             // 7. Create 5 Leave Requests for each employee
@@ -215,6 +247,7 @@ class DemoDataSeeder extends Seeder
         $this->command->info('   - Employee 1-5: 1111, 2222, 3333, 4444, 5555');
         $this->command->info('   - Employee 6-10: (no PIN set)');
         $this->command->info(' Activity:   5 Time Entries & 5 Leave Requests per employee');
+        $this->command->info(' Multiple Entries: Employees 1-3 have 2 entries for today (with lunch break)');
         $this->command->info(' Schedule Tracking: Employees 1-3 have lateness/overtime data');
         $this->command->info('   - Employee 1: entries for today/this week (today+week summary)');
         $this->command->info('   - Employee 2: entries for this week (week summary)');

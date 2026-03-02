@@ -12,35 +12,45 @@ class TimeEntrySummaryResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'user_id' => $this->resource['user_id'],
-            'total_hours' => $this->resource['total_hours'],
-            'total_minutes' => $this->resource['total_minutes'],
-            'entries_count' => $this->resource['entries_count'],
-            'average_work_time' => $this->resource['average_work_time'],
-            'attendance' => $this->resource['attendance'],
+            'user_id' => $this->resource['user_id'] ?? null,
+            'total_hours' => $this->resource['total_hours'] ?? 0,
+            'total_minutes' => $this->resource['total_minutes'] ?? 0,
+            'working_days' => $this->resource['working_days'] ?? 0,
+            'average_work_time' => $this->resource['average_work_time'] ?? 0,
+            'attendance' => $this->resource['attendance'] ?? $this->getEmptyAttendance(),
             'summary' => [
-                'today' => [
-                    'hours' => $this->resource['summary']['today']['hours'],
-                    'minutes' => $this->resource['summary']['today']['minutes'],
-                    'entries' => $this->resource['summary']['today']['entries'],
-                    'late_count' => $this->resource['summary']['today']['late_count'],
-                    'early_count' => $this->resource['summary']['today']['early_count'],
-                ],
-                'week' => [
-                    'hours' => $this->resource['summary']['week']['hours'],
-                    'minutes' => $this->resource['summary']['week']['minutes'],
-                    'entries' => $this->resource['summary']['week']['entries'],
-                    'late_count' => $this->resource['summary']['week']['late_count'],
-                    'early_count' => $this->resource['summary']['week']['early_count'],
-                ],
-                'month' => [
-                    'hours' => $this->resource['summary']['month']['hours'],
-                    'minutes' => $this->resource['summary']['month']['minutes'],
-                    'entries' => $this->resource['summary']['month']['entries'],
-                    'late_count' => $this->resource['summary']['month']['late_count'],
-                    'early_count' => $this->resource['summary']['month']['early_count'],
-                ],
+                'today' => $this->formatPeriod($this->resource['summary']['today'] ?? []),
+                'week' => $this->formatPeriod($this->resource['summary']['week'] ?? []),
+                'month' => $this->formatPeriod($this->resource['summary']['month'] ?? []),
             ],
+        ];
+    }
+
+    private function getEmptyAttendance(): array
+    {
+        return [
+            'late_count' => 0,
+            'early_count' => 0,
+            'on_time_count' => 0,
+            'total_late_minutes' => 0,
+            'average_late_minutes' => 0,
+            'early_leave_count' => 0,
+            'total_early_leave_minutes' => 0,
+            'average_early_leave_minutes' => 0,
+            'overtime_count' => 0,
+            'total_overtime_minutes' => 0,
+            'average_overtime_minutes' => 0,
+        ];
+    }
+
+    private function formatPeriod(array $data): array
+    {
+        return [
+            'hours' => $data['hours'] ?? 0,
+            'minutes' => $data['minutes'] ?? 0,
+            'working_days' => $data['working_days'] ?? 0,
+            'late_count' => $data['late_count'] ?? 0,
+            'early_count' => $data['early_count'] ?? 0,
         ];
     }
 }
