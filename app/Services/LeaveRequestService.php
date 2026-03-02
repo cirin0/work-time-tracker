@@ -28,9 +28,9 @@ class LeaveRequestService
         return ['requests' => $requests];
     }
 
-    public function getUserLeaveRequests(User $user): array
+    public function getUserLeaveRequests(User $user, int $perPage = 15): array
     {
-        $requests = $this->leaveRequestRepository->getAllForUser($user);
+        $requests = $this->leaveRequestRepository->getAllForUser($user, $perPage);
 
         return ['requests' => $requests];
     }

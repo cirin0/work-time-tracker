@@ -111,9 +111,9 @@ class TimeEntryService
         return ['time_entry' => $activeEntry->fresh()];
     }
 
-    public function getUserTimeEntries(User $user): array
+    public function getUserTimeEntries(User $user, ?int $perPage = null): array
     {
-        $timeEntries = $this->timeEntryRepository->getAllForUser($user);
+        $timeEntries = $this->timeEntryRepository->getAllForUser($user, $perPage);
 
         return ['time_entries' => $timeEntries];
     }

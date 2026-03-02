@@ -33,11 +33,11 @@ class LeaveRequestRepository
             ->get();
     }
 
-    public function getAllForUser(User $user): LengthAwarePaginator
+    public function getAllForUser(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return $user->leaveRequests()
             ->latest()
-            ->paginate();
+            ->paginate($perPage);
     }
 
     public function getByIdWithRelations(int $id): ?LeaveRequest

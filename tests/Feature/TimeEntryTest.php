@@ -62,13 +62,13 @@ class TimeEntryTest extends TestCase
         $response = $this->actingAs($user, 'api')->getJson('/api/time-entries');
         $response->assertOk();
 
-        $entries = TimeEntry::with('user')->where('user_id', $user->id)->orderBy('start_time', 'desc')->get();
-        $expectedData = TimeEntryResource::collection($entries)->resolve();
-
-        $response->assertExactJson([
-            'message' => 'Time entries retrieved successfully.',
-            'data' => $expectedData,
+        $response->assertJsonStructure([
+            'data' => [],
+            'links',
+            'meta',
         ]);
+
+        $response->assertJsonPath('meta.total', 5);
     }
 
     public function test_user_can_get_active_time_entry(): void
@@ -275,5 +275,47 @@ class TimeEntryTest extends TestCase
         // Перший запис закритий, другий активний
         $this->assertNotNull($entries[0]->stop_time);
         $this->assertNull($entries[1]->stop_time);
+    }
+
+    public function test_user_can_view_paginated_time_entries(): void
+    {
+        $user = User::factory()->create();
+        TimeEntry::factory()->count(20)->create(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user, 'api')->getJson('/api/time-entries?per_page=10');
+        $response->assertOk();
+
+        $response->assertJsonStructure([
+            'data' => [],
+            'links' => [
+                'first',
+                'last',
+                'prev',
+                'next',
+            ],
+            'meta' => [
+                'current_page',
+                'from',
+                'last_page',
+                'per_page',
+                'to',
+                'total',
+            ],
+        ]);
+
+        $response->assertJsonPath('meta.per_page', 10);
+        $response->assertJsonPath('meta.total', 20);
+        $response->assertJsonPath('meta.last_page', 2);
+    }
+
+    public function test_time_entries_pagination_defaults_to_15_per_page(): void
+    {
+        $user = User::factory()->create();
+        TimeEntry::factory()->count(20)->create(['user_id' => $user->id]);
+
+        $response = $this->actingAs($user, 'api')->getJson('/api/time-entries');
+        $response->assertOk();
+
+        $response->assertJsonPath('meta.per_page', 15);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class TimeEntryRepository
 {
@@ -34,13 +35,13 @@ class TimeEntryRepository
             ->get();
     }
 
-    public function getAllForUser(User $user): Collection
+    public function getAllForUser(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return TimeEntry::query()
             ->with('user')
             ->where('user_id', $user->id)
             ->orderBy('start_time', 'desc')
-            ->get();
+            ->paginate($perPage);
     }
 
     public function getCompletedForUser(User $user): Collection

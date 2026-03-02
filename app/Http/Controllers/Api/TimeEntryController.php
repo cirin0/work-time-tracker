@@ -11,6 +11,7 @@ use App\Models\TimeEntry;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,14 +49,12 @@ class TimeEntryController extends Controller
         ]);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $data = $this->timeEntryService->getUserTimeEntries(Auth::user());
+        $perPage = $request->input('per_page', 15);
+        $data = $this->timeEntryService->getUserTimeEntries(Auth::user(), $perPage);
 
-        return response()->json([
-            'message' => 'Time entries retrieved successfully.',
-            'data' => TimeEntryResource::collection($data['time_entries']),
-        ]);
+        return TimeEntryResource::collection($data['time_entries']);
     }
 
     public function show(TimeEntry $timeEntry): JsonResponse
