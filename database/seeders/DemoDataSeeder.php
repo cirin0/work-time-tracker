@@ -149,7 +149,7 @@ class DemoDataSeeder extends Seeder
                     'date' => $date->toDateString(),
                     'start_time' => $startTime,
                     'stop_time' => $stopTime,
-                    'duration' => $startTime->diffInMinutes($stopTime),
+                    'duration' => $startTime->diffInSeconds($stopTime),
                     'entry_type' => EntryType::MANUAL,
                     'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
                     'start_comment' => "Clocked in on day $j",
@@ -192,7 +192,7 @@ class DemoDataSeeder extends Seeder
                     'date' => $today->toDateString(),
                     'start_time' => $today->copy()->setTime(8, 0),
                     'stop_time' => $today->copy()->setTime(12, 0),
-                    'duration' => 240,
+                    'duration' => 14400, // 4 hours in seconds
                     'entry_type' => EntryType::MANUAL,
                     'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
                     'start_comment' => 'Morning shift start',
@@ -205,7 +205,7 @@ class DemoDataSeeder extends Seeder
                     'date' => $today->toDateString(),
                     'start_time' => $today->copy()->setTime(13, 0),
                     'stop_time' => $today->copy()->setTime(17, 0),
-                    'duration' => 240,
+                    'duration' => 14400, // 4 hours in seconds
                     'entry_type' => EntryType::MANUAL,
                     'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
                     'start_comment' => 'Back from lunch',

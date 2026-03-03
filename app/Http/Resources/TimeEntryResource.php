@@ -22,7 +22,7 @@ class TimeEntryResource extends JsonResource
             'start_time' => $this->start_time,
             'stop_time' => $this->stop_time,
             'duration' => $this->duration ?? 0,
-            'entry_type' => $this->entry_type ?? 'gps',
+            'entry_type' => $this->entry_type ?? 'manual',
             'location_data' => $this->location_data,
             'start_comment' => $this->start_comment,
             'stop_comment' => $this->stop_comment,

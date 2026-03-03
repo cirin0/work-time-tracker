@@ -37,7 +37,6 @@ class TimeEntry extends Model
     protected function casts(): array
     {
         return [
-            'date' => 'date',
             'start_time' => 'datetime',
             'stop_time' => 'datetime',
             'location_data' => 'array',

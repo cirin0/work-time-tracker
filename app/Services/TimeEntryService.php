@@ -63,12 +63,13 @@ class TimeEntryService
             }
         }
 
-        $latenessData = $this->latenessCalculator->calculate($user, now());
+        $now = now();
+        $latenessData = $this->latenessCalculator->calculate($user, $now);
 
         $timeEntry = $this->timeEntryRepository->create([
             'user_id' => $user->id,
-            'date' => now()->toDateString(),
-            'start_time' => now(),
+            'date' => $now->format('Y-m-d'),
+            'start_time' => $now,
             'entry_type' => $entryType,
             'start_comment' => $data['start_comment'] ?? null,
             'lateness_minutes' => $latenessData['lateness_minutes'],
