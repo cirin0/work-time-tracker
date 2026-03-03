@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
+use App\Enums\WorkMode;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
+use App\Models\Company;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Services\TimeEntryService;
@@ -317,5 +320,116 @@ class TimeEntryTest extends TestCase
         $response->assertOk();
 
         $response->assertJsonPath('meta.per_page', 15);
+    }
+
+    public function test_admin_can_start_time_entry_without_gps_and_qr_code(): void
+    {
+        $admin = User::factory()->create([
+            'role' => UserRole::ADMIN,
+            'work_mode' => WorkMode::OFFICE,
+        ]);
+
+        $response = $this->actingAs($admin, 'api')->postJson('/api/time-entries', [
+            'start_comment' => 'Admin starting time entry without GPS',
+        ]);
+
+        $response->assertCreated();
+        $response->assertJsonStructure([
+            'message',
+            'data' => [
+                'id',
+                'user',
+                'start_time',
+                'entry_type',
+                'start_comment',
+            ],
+        ]);
+
+        $this->assertDatabaseHas('time_entries', [
+            'user_id' => $admin->id,
+            'start_comment' => 'Admin starting time entry without GPS',
+        ]);
+    }
+
+    public function test_admin_with_office_mode_bypasses_gps_radius_check(): void
+    {
+        $company = Company::factory()->create([
+            'latitude' => 50.4501,
+            'longitude' => 30.5234,
+            'radius_meters' => 100,
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => UserRole::ADMIN,
+            'work_mode' => WorkMode::OFFICE,
+            'company_id' => $company->id,
+        ]);
+
+        $response = $this->actingAs($admin, 'api')->postJson('/api/time-entries', [
+            'start_comment' => 'Admin without GPS',
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('time_entries', [
+            'user_id' => $admin->id,
+            'start_comment' => 'Admin without GPS',
+        ]);
+    }
+
+    public function test_admin_with_office_mode_bypasses_qr_code_check(): void
+    {
+        $company = Company::factory()->create();
+
+        $admin = User::factory()->create([
+            'role' => UserRole::ADMIN,
+            'work_mode' => WorkMode::OFFICE,
+            'company_id' => $company->id,
+        ]);
+
+        // Admin can start without QR code
+        $response = $this->actingAs($admin, 'api')->postJson('/api/time-entries', [
+            'start_comment' => 'Admin without QR code',
+        ]);
+
+        $response->assertCreated();
+    }
+
+    public function test_non_admin_with_office_mode_requires_gps_and_qr_code(): void
+    {
+        $company = Company::factory()->create([
+            'latitude' => 50.4501,
+            'longitude' => 30.5234,
+            'radius_meters' => 100,
+        ]);
+
+        $employee = User::factory()->create([
+            'role' => UserRole::EMPLOYEE,
+            'work_mode' => WorkMode::OFFICE,
+            'company_id' => $company->id,
+        ]);
+
+        $response = $this->actingAs($employee, 'api')->postJson('/api/time-entries', [
+            'start_comment' => 'Employee without GPS',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['latitude', 'longitude', 'qr_code']);
+    }
+
+    public function test_admin_entry_type_is_manual_when_no_gps_provided(): void
+    {
+        $admin = User::factory()->create([
+            'role' => UserRole::ADMIN,
+            'work_mode' => WorkMode::OFFICE,
+        ]);
+
+        $response = $this->actingAs($admin, 'api')->postJson('/api/time-entries', [
+            'start_comment' => 'Manual admin entry',
+        ]);
+
+        $response->assertCreated();
+
+        $entry = TimeEntry::query()->where('user_id', $admin->id)->first();
+        $this->assertEquals('manual', $entry->entry_type->value);
     }
 }

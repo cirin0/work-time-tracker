@@ -33,6 +33,14 @@ class ProfileResource extends JsonResource
             'work_schedule' => $this->whenLoaded('workSchedule', fn() => [
                 'id' => $this->workSchedule->id,
                 'name' => $this->workSchedule->name,
+                'daily_schedules' => $this->workSchedule->dailySchedules->map(fn($schedule) => [
+                    'id' => $schedule->id,
+                    'day_of_week' => $schedule->day_of_week,
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    'break_duration' => $schedule->break_duration,
+                    'is_working_day' => $schedule->is_working_day,
+                ]),
             ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

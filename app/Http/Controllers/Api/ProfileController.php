@@ -21,7 +21,7 @@ class ProfileController extends Controller
 
     public function me(): ProfileResource
     {
-        $user = auth()->user()->load(['company', 'manager', 'workSchedule']);
+        $user = auth()->user()->load(['company', 'manager', 'workSchedule.dailySchedules']);
         return new ProfileResource($user);
     }
 

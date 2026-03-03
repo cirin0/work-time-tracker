@@ -32,14 +32,19 @@ class TimeEntryService
         }
 
         $hasGpsData = isset($data['latitude']) && isset($data['longitude']);
+        $isAdmin = $user->isAdmin();
 
-        $entryType = match ($user->work_mode) {
-            WorkMode::OFFICE => EntryType::GPS_QR,
-            WorkMode::REMOTE => EntryType::REMOTE,
-            WorkMode::HYBRID => $hasGpsData ? EntryType::GPS : EntryType::MANUAL,
-        };
+        if ($isAdmin && !$hasGpsData) {
+            $entryType = EntryType::MANUAL;
+        } else {
+            $entryType = match ($user->work_mode) {
+                WorkMode::OFFICE => EntryType::GPS_QR,
+                WorkMode::REMOTE => EntryType::REMOTE,
+                WorkMode::HYBRID => $hasGpsData ? EntryType::GPS : EntryType::MANUAL,
+            };
+        }
 
-        if ($user->work_mode === WorkMode::OFFICE) {
+        if (!$isAdmin && $user->work_mode === WorkMode::OFFICE) {
             $company = $user->company;
 
             $distance = $this->gpsDistanceCalculator->calculate(
