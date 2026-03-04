@@ -119,7 +119,7 @@ class TimeEntryController extends Controller
             ], 400);
         }
 
-        $dailyToken = hash('sha256', $company->qr_secret . date('d-m-Y'));
+        $dailyToken = hash('sha256', $company->qr_secret . date('Y-m-d'));
 
         return response()->json([
             'message' => 'Daily QR code retrieved successfully.',

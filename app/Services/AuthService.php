@@ -42,7 +42,7 @@ class AuthService
             throw new UnauthorizedHttpException('', 'Invalid credentials');
         }
 
-        $user = auth()->user();
+        $user = auth('api')->setToken($token)->user();
 
         if (!$user->hasVerifiedEmail()) {
             JWTAuth::setToken($token)->invalidate();
