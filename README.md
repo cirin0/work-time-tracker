@@ -1,12 +1,11 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 # Work Time Tracker
 
-RESTful API for work time tracking built with Laravel 12, JWT authentication, and WebSocket support.
+RESTful API for work time tracking built with Laravel 12, JWT authentication, WebSocket support, GPS/QR attendance.
 
 ## Architecture
 
 The project uses the Repository-Service pattern:
+
 - **Controllers** - Handle HTTP requests
 - **Services** - Business logic
 - **Repositories** - Data access layer
@@ -16,54 +15,93 @@ The project uses the Repository-Service pattern:
 ## Key Features
 
 ### Authentication & Authorization
+
 - JWT authentication (php-open-source-saver/jwt-auth)
+- Email verification with 6-digit codes (15-minute expiry, resend with 1-minute cooldown)
 - Role-based system: Employee, Manager, Admin
 - Middleware for role-based access control
 
+### Profile & Security
+
+- View and update own profile
+- Avatar upload
+- PIN code setup and change (required for clock-out)
+- Password change via 6-digit email code
+
 ### Company Management
-- CRUD operations for companies
-- Employee assignment to companies
-- Employee management (managers only)
+
+- View company details
+- Admin: full CRUD, logo upload, assign manager
+- Manager: view employees, view company statistics
 
 ### Time Tracking
-- Clock-in/Clock-out functionality
-- Time entry history
-- Work time reports and statistics
-- Work schedule integration
+
+- Clock-in / Clock-out with GPS and/or QR code validation
+- Entry type auto-assigned: `gps`, `qr`, `gps_qr`, `remote`, `manual`
+- Active entry tracking
+- Time entry history and deletion
+- Work time summary and statistics (lateness, early leave, overtime)
+
+### GPS & QR Attendance Validation
+
+- Office/Hybrid workers validated by GPS coordinates (Haversine formula) and/or daily rotating QR token
+- Companies store `latitude`, `longitude`, `radius_meters` for geo-fencing
+- `GET /api/qr-code/daily` returns today's QR token
+
+### Work Mode
+
+- `WorkMode` enum: `office`, `remote`, `hybrid`
+- Determines clock-in validation rules
+- Admin can update per user
 
 ### Work Schedules
-- Create and manage schedules
-- Daily schedules (DailySchedule)
+
+- Create and manage schedules with daily entries (`DailySchedule`)
 - Assign schedules to users
+- Used for lateness/overtime calculation
 
 ### Leave Requests
-- Create leave requests
-- Approve/Reject functionality for managers
-- Request history
+
+- Create, view leave requests (sick, vacation, unpaid, personal)
+- Manager: view all / pending, approve/reject
 
 ### Real-time Messaging
+
 - WebSocket chat via Laravel Reverb
-- Private messages between users
-- Rate limiting (60 messages/minute)
+- Private messages between users (encrypted at rest)
+- Rate limiting: 60 messages/minute
+
+### Audit Logging
+
+- `Auditable` trait auto-logs create/update/delete on: `User`, `Company`, `TimeEntry`, `WorkSchedule`, `LeaveRequest`
+- Users see their own logs; managers see company-scoped logs; admins see all
+- `audit-logs:cleanup --days=90` artisan command
 
 ### Documentation & Monitoring
+
 - Automatic OpenAPI documentation (Scramble)
 - Laravel Telescope for debugging (development only)
-- Postman collection (laravel-postman)
+- Postman collection export (laravel-postman)
+- PHPStan static analysis (larastan)
 
 ## Tech Stack
 
 ### Core
+
 - **PHP**: ^8.2
-- **Laravel Framework**: ^12.47.0
+- **Laravel Framework**: ^12.53.0
+- **Laravel Octane**: ^2.14 (FrankenPHP)
 - **PostgreSQL**: Primary database
 
 ### Packages
-- **JWT Auth**: ^2.8.3 php-open-source-saver/jwt-auth 
-- **Reverb**: ^1.7.0 (WebSocket server)
+
+- **JWT Auth**: ^2.8.3 (php-open-source-saver/jwt-auth)
+- **Reverb**: ^1.8.0 (WebSocket server)
 - **Scramble**: ^0.12.36 (API documentation)
-- **Telescope**: ^5.16.1 (development)
-- **Pest**: ^3.8.4 (testing)
+- **Telescope**: ^5.18.0 (development)
+- **Pest**: ^3.8.5 (testing)
+- **Larastan**: ^3.9.3 (static analysis)
+- **Laravel Boost**: ^2.2.2 (dev tooling)
 
 ## Installation
 
@@ -93,16 +131,16 @@ The project uses the Repository-Service pattern:
    ```
 
 4. **Configure the database**
-   - Create PostgreSQL database `work-time-tracker` or your preferred name
-   - Update `.env` file:
-     ```env
-     DB_CONNECTION=pgsql
-     DB_HOST=127.0.0.1
-     DB_PORT=5432
-     DB_DATABASE=work-time-tracker
-     DB_USERNAME=postgres
-     DB_PASSWORD=postgres
-     ```
+    - Create PostgreSQL database `work-time-tracker` or your preferred name
+    - Update `.env` file:
+      ```env
+      DB_CONNECTION=pgsql
+      DB_HOST=127.0.0.1
+      DB_PORT=5432
+      DB_DATABASE=work-time-tracker
+      DB_USERNAME=postgres
+      DB_PASSWORD=postgres
+      ```
 
 5. **Generate JWT secret**
    ```bash
@@ -122,25 +160,25 @@ The project uses the Repository-Service pattern:
 
 8. **Start the server**
    ```bash
-   php artisan serve
+   php artisan octane:start --host=0.0.0.0 --port=8000
    ```
    For WebSocket support, run Reverb in a separate terminal:
    ```bash
    php artisan reverb:start
    ```
-   
+
    Or run both together:
    ```bash
    composer run dev
    ```
-   
+
    API will be available at: http://localhost:8000/api
 
 9. **Run tests**
-   - Create testing database `work-time-tracker_testing`
-	- Update `phpunit.xml` with testing database name
+    - Create testing database `work-time-tracker_testing`
+    - Update `phpunit.xml` with testing database name
    ```bash
-   php artisan test
+   composer test
    ```
 
 ## Useful Links
@@ -151,123 +189,172 @@ The project uses the Repository-Service pattern:
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - User registration
+
+- `POST /api/auth/register` - Register (sends verification code)
+- `POST /api/auth/verify-email` - Verify email with 6-digit code
+- `POST /api/auth/resend-verification-code` - Resend verification code
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
-- `POST /api/auth/refresh` - Refresh token
-- `GET /api/me` - Current user
+- `POST /api/auth/refresh` - Refresh JWT token
+
+### Profile (authenticated user)
+
+- `GET /api/me` - Current user profile
+- `PATCH /api/me` - Update profile
+- `POST /api/me/avatar` - Upload avatar
+- `POST /api/me/request-password-change-code` - Request password change code via email
+- `POST /api/me/change-password` - Change password (requires current password + code)
+- `POST /api/me/pin-code` - Set up PIN code
+- `PATCH /api/me/pin-code` - Change PIN code
+- `GET /api/me/work-schedule` - View own work schedule
 
 ### Users
+
 - `GET /api/users` - List users
 - `GET /api/users/{user}` - User details
-- `PUT /api/users/{user}` - Update profile
-- `POST /api/users/{user}/avatar` - Upload avatar
-- `POST /api/users/{user}/role` - Change role (Admin)
-- `DELETE /api/users/{user}` - Delete user
 
 ### Companies
+
 - `GET /api/companies/{company}` - Company details
-- `GET /api/companies/name/{company}` - Search by name
-- `POST /api/companies` - Create company
-- `PUT /api/companies/{company}` - Update
-- `DELETE /api/companies/{company}` - Delete
+- `GET /api/companies/name/{company}` - Search company by name
 
 ### Time Tracking
-- `POST /api/clock-in` - Clock in
-- `POST /api/clock-out` - Clock out
+
 - `GET /api/time-entries` - Entry history
-- `GET /api/me/time-summary` - Time summary
+- `GET /api/time-entries/active` - Current active entry
+- `GET /api/time-entries/summary/me` - Own time summary & statistics
+- `POST /api/time-entries` - Clock in (GPS/QR data optional based on work mode)
+- `PATCH /api/time-entries/active/stop` - Clock out (requires PIN)
+- `GET /api/time-entries/{timeEntry}` - Entry details
+- `DELETE /api/time-entries/{timeEntry}` - Delete entry
+- `GET /api/qr-code/daily` - Get today's QR token
 
 ### Leave Requests
+
 - `GET /api/leave-requests` - My requests
+- `GET /api/leave-requests/{leaveRequest}` - Request details
 - `POST /api/leave-requests` - Create request
-- `GET /api/manager/leave-requests` - Subordinates' requests (Manager)
-- `POST /api/manager/leave-requests/{id}/approve` - Approve (Manager)
-- `POST /api/manager/leave-requests/{id}/reject` - Reject (Manager)
 
 ### Work Schedules
+
 - `GET /api/work-schedules` - List schedules
 - `POST /api/work-schedules` - Create schedule
-- `GET /api/work-schedules/{id}` - Details
-- `PUT /api/work-schedules/{id}` - Update
-- `DELETE /api/work-schedules/{id}` - Delete
-- `GET /api/users/{user}/work-schedule` - User schedule
-- `PUT /api/users/{user}/work-schedule` - Set schedule
+- `GET /api/work-schedules/{id}` - Schedule details
+- `PUT /api/work-schedules/{id}` - Update schedule
+- `DELETE /api/work-schedules/{id}` - Delete schedule
 
 ### Messages
-- `GET /api/messages/{receiverId}` - Chat history
+
+- `GET /api/messages/{receiverId}` - Chat history with user
 - `POST /api/messages` - Send message (rate limit: 60/min)
 
-### Manager Endpoints
-- `POST /api/manager/companies/{company}/add-employee` - Add employee
-- `POST /api/manager/companies/{company}/remove-employee` - Remove employee
+### Audit Logs
+
+- `GET /api/audit-logs` - Own audit log
+- `GET /api/audit-logs/all` - All logs (Manager: company-scoped; Admin: all)
+
+### Manager Endpoints (`role: manager, admin`)
+
+- `GET /api/managers/leave-requests` - All subordinates' requests
+- `GET /api/managers/leave-requests/pending` - Pending requests
+- `POST /api/managers/leave-requests/{leaveRequest}/approve` - Approve
+- `POST /api/managers/leave-requests/{leaveRequest}/reject` - Reject
+- `GET /api/managers/users` - Company employees list
+- `GET /api/managers/users/{user}` - Employee details
+- `GET /api/managers/statistics` - Company statistics
+- `GET /api/managers/users/{user}/time-entries` - Employee time entries
+- `GET /api/managers/users/{user}/time-summary` - Employee time summary
+- `GET /api/managers/users/{user}/work-schedule` - Employee work schedule
+- `PATCH /api/managers/users/{user}/work-schedule` - Update employee work schedule
+
+### Admin Endpoints (`role: admin`)
+
+- `POST /api/admin/companies` - Create company
+- `PATCH /api/admin/companies/{company}` - Update company
+- `POST /api/admin/companies/{company}/logo` - Upload company logo
+- `DELETE /api/admin/companies/{company}` - Delete company
+- `POST /api/admin/companies/{company}/assign-manager` - Assign manager
+- `POST /api/admin/companies/{company}/add-employee` - Add employee
+- `DELETE /api/admin/companies/{company}/remove-employee` - Remove employee
+- `GET /api/admin/users` - All users
+- `GET /api/admin/users/{user}` - User details
+- `GET /api/admin/companies/{companyId}/users` - Users by company
+- `PATCH /api/admin/users/{user}` - Update user
+- `PATCH /api/admin/users/{user}/role` - Change user role
+- `PATCH /api/admin/users/{user}/work-mode` - Change work mode
+- `POST /api/admin/users/{user}/reset-password` - Reset password
+- `DELETE /api/admin/users/{user}` - Delete user
 
 ## Project Structure
 
 ```
 app/
-├── Classes/           # Helper classes
-├── Enums/            # UserRole enum
-├── Events/           # MessageSent event
+├── Console/Commands/
+│   └── CleanupAuditLogs.php   # audit-logs:cleanup --days=90
+├── Enums/
+│   ...
+├── Events/
+│   ...
 ├── Http/
-│   ├── Controllers/
-│   │   └── Api/     # API controllers
-│   │       ├── Manager/  # Manager controllers
-│   │       ├── AuthController
-│   │       ├── CompanyController
-│   │       ├── LeaveRequestController
-│   │       ├── MessageController
-│   │       ├── TimeEntryController
-│   │       ├── UserController
-│   │       └── WorkScheduleController
-│   ├── Middleware/   # Custom middleware
-│   ├── Requests/     # Form Request validation
-│   └── Resources/    # API Resources
-├── Models/           # Eloquent models
-├── Repositories/     # Data access layer
-├── Services/         # Business logic layer
-└── Providers/        # Service Providers
-
-tests/
-├── Feature/          # Feature tests
-│   ├── AuthTest.php
-│   ├── ChatTest.php
-│   ├── CompanyTest.php
-│   ├── LeaveRequestTest.php
-│   ├── TimeEntryTest.php
-│   ├── UserManagementTest.php
-│   ├── UserTest.php
-│   └── WorkScheduleTest.php
-└── Unit/             # Unit tests
+│   ├── Controllers/Api/
+│   │   ...
+│   ├── Middleware/
+│   │   └── RoleMiddleware.php
+│   ├── Requests/              # Form Request validation classes
+│   └── Resources/             # API Resource classes
+├── Models/
+│   ├── Message.php            # Encrypted message field
+│   └── User.php
+├── Notifications/
+│   └── VerificationCodeNotification.php
+├── Providers/
+│   └── AppServiceProvider.php
+├── Repositories/
+│   ...
+├── Services/
+│   ├── GpsDistanceCalculator.php       # Haversine formula
+│   └── QrCodeValidator.php             # Daily rotating SHA-256 token
+└── Traits/
+    └── Auditable.php                   # Auto-logs model events
 ```
 
 ## Data Models
 
-- **User** - Users with roles (employee/manager/admin)
-- **Company** - Companies
-- **TimeEntry** - Work time entries
+- **User** - Users with roles (employee/manager/admin) and work mode
+- **Company** - Companies with geo-fencing fields (latitude, longitude, radius_meters)
+- **TimeEntry** - Work time entries with entry type and lateness data
 - **WorkSchedule** - Work schedules
-- **DailySchedule** - Daily schedules within work schedules
-- **LeaveRequest** - Leave requests
-- **Message** - Chat messages
+- **DailySchedule** - Daily entries within work schedules
+- **LeaveRequest** - Leave requests with type and status
+- **Message** - Encrypted chat messages
+- **AuditLog** - Automatic change log for auditable models
+- **EmailVerificationCode** - 6-digit codes for email verification and password change
 
 ## Roles & Permissions
 
 ### Employee (default)
-- Manage own profile
-- Clock-in/Clock-out
-- View own time and schedules
+
+- Manage own profile (avatar, PIN, password)
+- Clock-in/Clock-out (PIN required for clock-out)
+- View own time entries, summary, and work schedule
 - Create leave requests
 - Chat with other users
+- View own audit log
 
 ### Manager
+
 - All Employee permissions
-- Manage company employees
+- View company employees and their details
+- View company statistics and time summaries
 - Approve/Reject leave requests
-- View subordinates' time
+- View company-scoped audit logs
+- Update employee work schedules
 
 ### Admin
-- All Manager permissions
-- Change user roles
-- Full access to all data
 
+- All Manager permissions
+- Full company CRUD with logo upload
+- Assign managers to companies
+- Change user roles and work modes
+- Reset user passwords
+- View all audit logs
