@@ -29,3 +29,6 @@ yarn-error.log
 **/caddy
 frankenphp
 frankenphp-worker.php
+package.json
+package-lock.json
+/.ai/*

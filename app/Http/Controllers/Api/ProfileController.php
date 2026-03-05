@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordWithCodeRequest;
 use App\Http\Requests\ChangePinCodeRequest;
 use App\Http\Requests\SetupPinCodeRequest;
+use App\Http\Requests\UpdateFcmTokenRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\ProfileResource;
@@ -118,5 +119,13 @@ class ProfileController extends Controller
             'message' => 'Work schedule retrieved successfully',
             'data' => new WorkScheduleResource($data['work_schedule']),
         ]);
+    }
+
+    public function updateFcmToken(UpdateFcmTokenRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $user->update(['fcm_token' => $request->validated('fcm_token')]);
+
+        return response()->json(['message' => 'FCM token updated successfully']);
     }
 }

@@ -6,7 +6,9 @@ use App\Enums\UserRole;
 use App\Enums\WorkMode;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use App\Notifications\VerificationCodeNotification;
+use App\Notifications\WorkScheduleUpdatedNotification;
 use App\Repositories\UserRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -86,6 +88,11 @@ class UserService
     public function updateUserWorkSchedule(User $user, int $workScheduleId): array
     {
         $user->update(['work_schedule_id' => $workScheduleId]);
+
+        $workSchedule = WorkSchedule::find($workScheduleId);
+        if ($workSchedule) {
+            $user->notify(new WorkScheduleUpdatedNotification($workSchedule));
+        }
 
         return ['user' => $user];
     }

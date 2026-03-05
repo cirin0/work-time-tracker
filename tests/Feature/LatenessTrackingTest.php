@@ -193,7 +193,7 @@ class LatenessTrackingTest extends TestCase
             'scheduled_start_time' => '09:00',
         ]);
 
-        $response = $this->actingAs($manager, 'api')->getJson('/api/managers/statistics');
+        $response = $this->actingAs($manager, 'api')->getJson('/api/managers/company/statistics');
         $response->assertOk();
 
         $response->assertJsonStructure([

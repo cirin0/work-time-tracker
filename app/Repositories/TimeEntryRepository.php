@@ -97,6 +97,15 @@ class TimeEntryRepository
             ->get();
     }
 
+    public function getCompletedForUsers(array $userIds): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->whereIn('user_id', $userIds)
+            ->whereNotNull('stop_time')
+            ->get();
+    }
+
     public function getActiveForCompany(int $companyId): Collection
     {
         return TimeEntry::query()
@@ -105,6 +114,18 @@ class TimeEntryRepository
                 $query->where('company_id', $companyId);
             })
             ->whereNull('stop_time')
+            ->get();
+    }
+
+    public function getEntriesForExport(int $userId, ?string $from = null, ?string $to = null): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->where('user_id', $userId)
+            ->when($from, fn($q) => $q->whereDate('date', '>=', $from))
+            ->when($to, fn($q) => $q->whereDate('date', '<=', $to))
+            ->orderBy('date')
+            ->orderBy('start_time')
             ->get();
     }
 }
