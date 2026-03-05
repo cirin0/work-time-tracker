@@ -38,6 +38,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/me/pin-code', [ProfileController::class, 'setupPinCode']);
     Route::patch('/me/pin-code', [ProfileController::class, 'changePinCode']);
     Route::get('/me/work-schedule', [ProfileController::class, 'getWorkSchedule']);
+    Route::patch('/me/fcm-token', [ProfileController::class, 'updateFcmToken']);
 });
 
 Route::middleware('auth:api')->prefix('/users')->group(function () {
@@ -57,13 +58,21 @@ Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admi
     Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
     Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
 
-    Route::get('/users', [ManagerUserController::class, 'getCompanyUsers']);
-    Route::get('/users/{user}', [ManagerUserController::class, 'getUser']);
-    Route::get('/statistics', [ManagerUserController::class, 'getCompanyStatistics']);
-    Route::get('/users/{user}/time-entries', [ManagerUserController::class, 'getUserTimeEntries']);
-    Route::get('/users/{user}/time-summary', [ManagerUserController::class, 'getUserTimeSummary']);
-    Route::get('/users/{user}/work-schedule', [ManagerUserController::class, 'getUserWorkSchedule']);
-    Route::patch('/users/{user}/work-schedule', [ManagerUserController::class, 'updateUserWorkSchedule']);
+    Route::group(['prefix' => 'users'], function () {
+        Route::get('/', [ManagerUserController::class, 'getCompanyUsers']);
+        Route::get('/statistics', [ManagerUserController::class, 'getUsersStatistics']);
+        Route::get('/{user}', [ManagerUserController::class, 'getUser']);
+        Route::get('/{user}/time-entries', [ManagerUserController::class, 'getUserTimeEntries']);
+        Route::get('/{user}/statistics/export', [ManagerUserController::class, 'exportUserStatistics']);
+        Route::get('/{user}/time-summary', [ManagerUserController::class, 'getUserTimeSummary']);
+        Route::get('/{user}/work-schedule', [ManagerUserController::class, 'getUserWorkSchedule']);
+        Route::patch('/{user}/work-schedule', [ManagerUserController::class, 'updateUserWorkSchedule']);
+    });
+
+    Route::group(['prefix' => 'company'], function () {
+        Route::get('/statistics', [ManagerUserController::class, 'getCompanyStatistics']);
+        Route::get('/statistics/export', [ManagerUserController::class, 'exportCompanyStatistics']);
+    });
 });
 
 Route::middleware('auth:api')->prefix('companies')->group(function () {
@@ -94,6 +103,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/time-entries', [TimeEntryController::class, 'index']);
     Route::get('/time-entries/active', [TimeEntryController::class, 'active']);
     Route::get('/time-entries/summary/me', [TimeEntryController::class, 'summary']);
+    Route::get('/time-entries/export', [TimeEntryController::class, 'export']);
     Route::post('/time-entries', [TimeEntryController::class, 'store']);
     Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive']);
     Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);

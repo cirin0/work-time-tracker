@@ -239,7 +239,7 @@ class ManagerUserTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->getJson('/api/managers/statistics');
+            ->getJson('/api/managers/company/statistics');
 
         $response->assertOk()
             ->assertJsonStructure([

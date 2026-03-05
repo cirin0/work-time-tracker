@@ -62,8 +62,9 @@ The project uses the Repository-Service pattern:
 
 ### Leave Requests
 
-- Create, view leave requests (sick, vacation, unpaid, personal)
+- Create, view leave requests (sick, vacation, unpaid, personal, business_trip)
 - Manager: view all / pending, approve/reject
+- Push notifications (Email + Firebase FCM) on status change
 
 ### Real-time Messaging
 
@@ -76,6 +77,21 @@ The project uses the Repository-Service pattern:
 - `Auditable` trait auto-logs create/update/delete on: `User`, `Company`, `TimeEntry`, `WorkSchedule`, `LeaveRequest`
 - Users see their own logs; managers see company-scoped logs; admins see all
 - `audit-logs:cleanup --days=90` artisan command
+
+### Notifications
+
+- Push notifications via Email and Firebase FCM (Cloud Messaging)
+- Triggered on: leave request approve/reject, work schedule update
+- FCM token registered per device via `PATCH /api/me/fcm-token`
+- Configure `FIREBASE_CREDENTIALS` in `.env`
+
+### Report Export
+
+- Export own time entries to Excel (.xlsx) via `GET /api/time-entries/export`
+- Optional query params: `from` and `to` (date format `Y-m-d`) to filter by date range
+- Columns: ID, Employee, Email, Date, Start/Stop Time, Duration (min), Entry Type, Lateness, Early Leave, Overtime,
+  Comments
+- Powered by `maatwebsite/excel` (PhpSpreadsheet)
 
 ### Documentation & Monitoring
 
@@ -98,6 +114,7 @@ The project uses the Repository-Service pattern:
 - **JWT Auth**: ^2.8.3 (php-open-source-saver/jwt-auth)
 - **Reverb**: ^1.8.0 (WebSocket server)
 - **Scramble**: ^0.12.36 (API documentation)
+- **Excel**: ^3.1 (maatwebsite/excel — xlsx export)
 - **Telescope**: ^5.18.0 (development)
 - **Pest**: ^3.8.5 (testing)
 - **Larastan**: ^3.9.3 (static analysis)
@@ -207,6 +224,7 @@ The project uses the Repository-Service pattern:
 - `POST /api/me/pin-code` - Set up PIN code
 - `PATCH /api/me/pin-code` - Change PIN code
 - `GET /api/me/work-schedule` - View own work schedule
+- `PATCH /api/me/fcm-token` - Register/update Firebase FCM device token
 
 ### Users
 
@@ -223,6 +241,7 @@ The project uses the Repository-Service pattern:
 - `GET /api/time-entries` - Entry history
 - `GET /api/time-entries/active` - Current active entry
 - `GET /api/time-entries/summary/me` - Own time summary & statistics
+- `GET /api/time-entries/export` - Export entries to Excel (.xlsx); optional `from` / `to` date params
 - `POST /api/time-entries` - Clock in (GPS/QR data optional based on work mode)
 - `PATCH /api/time-entries/active/stop` - Clock out (requires PIN)
 - `GET /api/time-entries/{timeEntry}` - Entry details
@@ -260,10 +279,13 @@ The project uses the Repository-Service pattern:
 - `POST /api/managers/leave-requests/{leaveRequest}/approve` - Approve
 - `POST /api/managers/leave-requests/{leaveRequest}/reject` - Reject
 - `GET /api/managers/users` - Company employees list
+- `GET /api/managers/users/statistics` - Statistics for every employee (attendance, hours, lateness)
 - `GET /api/managers/users/{user}` - Employee details
-- `GET /api/managers/statistics` - Company statistics
+- `GET /api/managers/statistics` - Company aggregate statistics
+- `GET /api/managers/statistics/export` - Export company statistics per employee to Excel (.xlsx)
 - `GET /api/managers/users/{user}/time-entries` - Employee time entries
 - `GET /api/managers/users/{user}/time-summary` - Employee time summary
+- `GET /api/managers/users/{user}/statistics/export` - Export individual employee statistics to Excel (.xlsx)
 - `GET /api/managers/users/{user}/work-schedule` - Employee work schedule
 - `PATCH /api/managers/users/{user}/work-schedule` - Update employee work schedule
 
@@ -291,10 +313,14 @@ The project uses the Repository-Service pattern:
 app/
 ├── Console/Commands/
 │   └── CleanupAuditLogs.php   # audit-logs:cleanup --days=90
+├── Channels/
+│   └── FcmChannel.php         # Custom Firebase FCM notification channel
 ├── Enums/
 │   ...
 ├── Events/
 │   ...
+├── Exports/
+│   └── TimeEntryExport.php    # Excel export (maatwebsite/excel)
 ├── Http/
 │   ├── Controllers/Api/
 │   │   ...
@@ -306,7 +332,9 @@ app/
 │   ├── Message.php            # Encrypted message field
 │   └── User.php
 ├── Notifications/
-│   └── VerificationCodeNotification.php
+│   ├── LeaveRequestStatusNotification.php  # Email + FCM on approve/reject
+│   ├── VerificationCodeNotification.php
+│   └── WorkScheduleUpdatedNotification.php # Email + FCM on schedule change
 ├── Providers/
 │   └── AppServiceProvider.php
 ├── Repositories/

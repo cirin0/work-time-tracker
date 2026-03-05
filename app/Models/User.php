@@ -28,6 +28,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'work_schedule_id',
         'work_mode',
         'pin_code',
+        'fcm_token',
     ];
 
     protected $hidden = [
@@ -35,6 +36,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'remember_token',
         'email_verified_at',
         'pin_code',
+        'fcm_token',
     ];
 
     public function getJWTIdentifier()

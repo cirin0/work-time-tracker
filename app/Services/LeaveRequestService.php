@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LeaveRequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Notifications\LeaveRequestStatusNotification;
 use App\Repositories\LeaveRequestRepository;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,6 +70,8 @@ class LeaveRequestService
             'processed_by' => Auth::id(),
         ]);
 
+        $leaveRequest->user->notify(new LeaveRequestStatusNotification($leaveRequest->fresh()));
+
         return ['leave_request' => $leaveRequest];
     }
 
@@ -83,6 +86,8 @@ class LeaveRequestService
             'processed_by' => Auth::id(),
             'manager_comment' => $managerComment,
         ]);
+
+        $leaveRequest->user->notify(new LeaveRequestStatusNotification($leaveRequest->fresh()));
 
         return ['leave_request' => $leaveRequest];
     }

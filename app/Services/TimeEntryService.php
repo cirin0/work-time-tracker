@@ -174,6 +174,45 @@ class TimeEntryService
         return $this->statisticsCalculator->calculateStatistics($completedEntries, $userId);
     }
 
+    public function getTimeEntriesForExport(User $user, ?string $from = null, ?string $to = null): array
+    {
+        $entries = $this->timeEntryRepository->getEntriesForExport($user->id, $from, $to);
+
+        return ['time_entries' => $entries];
+    }
+
+    public function getAllEmployeeStatistics(int $companyId, int $perPage = 15): array
+    {
+        $paginatedUsers = User::query()
+            ->where('company_id', $companyId)
+            ->paginate($perPage);
+
+        $userIds = $paginatedUsers->pluck('id')->toArray();
+        $entries = $this->timeEntryRepository->getCompletedForUsers($userIds);
+        $grouped = $entries->groupBy('user_id');
+
+        $stats = [];
+        foreach ($paginatedUsers as $user) {
+            $userEntries = $grouped->get($user->id, collect());
+            // Only add to statistics if there are entries, to maintain old behavior
+            if ($userEntries->isNotEmpty()) {
+                $userStats = $this->statisticsCalculator->calculateStatistics($userEntries, $user->id);
+                $userStats['user'] = $user;
+                $stats[] = $userStats;
+            }
+        }
+
+        return [
+            'statistics' => $stats,
+            'pagination' => [
+                'current_page' => $paginatedUsers->currentPage(),
+                'last_page' => $paginatedUsers->lastPage(),
+                'total' => $paginatedUsers->total(),
+                'per_page' => $paginatedUsers->perPage(),
+            ]
+        ];
+    }
+
     public function getCompanyStatistics(int $companyId): array
     {
         $completedEntries = $this->timeEntryRepository->getCompletedForCompany($companyId);
