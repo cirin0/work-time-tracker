@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
-    public function __construct(protected UserRepository $repository)
+    public function __construct(
+        protected UserRepository $repository,
+        protected CacheService   $cacheService
+    )
     {
     }
 
@@ -77,7 +80,11 @@ class UserService
 
     public function getWorkSchedule(User $user): array
     {
-        $workSchedule = $user->workSchedule?->load('dailySchedules');
+        $workSchedule = null;
+
+        if ($user->work_schedule_id) {
+            $workSchedule = $this->cacheService->getWorkSchedule($user->work_schedule_id);
+        }
 
         return [
             'user' => $user,
@@ -87,6 +94,10 @@ class UserService
 
     public function updateUserWorkSchedule(User $user, int $workScheduleId): array
     {
+        if ($user->work_schedule_id) {
+            $this->cacheService->clearWorkScheduleCache($user->work_schedule_id);
+        }
+
         $user->update(['work_schedule_id' => $workScheduleId]);
 
         $workSchedule = WorkSchedule::find($workScheduleId);

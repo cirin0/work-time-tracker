@@ -12,10 +12,8 @@ class LeaveRequestRepository
 {
     public function getAllForManager(User $manager, int $perPage = 10): LengthAwarePaginator
     {
-        $employeeIds = $manager->employees()->pluck('id');
-
         return LeaveRequest::query()
-            ->whereIn('user_id', $employeeIds)
+            ->whereHas('user', fn($query) => $query->where('manager_id', $manager->id))
             ->with('user:id,name,email')
             ->latest()
             ->paginate($perPage);
@@ -23,10 +21,8 @@ class LeaveRequestRepository
 
     public function getPendingForManager(User $manager): Collection
     {
-        $employeeIds = $manager->employees()->pluck('id');
-
         return LeaveRequest::query()
-            ->whereIn('user_id', $employeeIds)
+            ->whereHas('user', fn($query) => $query->where('manager_id', $manager->id))
             ->where('status', LeaveRequestStatus::PENDING)
             ->with('user:id,name,email')
             ->latest()

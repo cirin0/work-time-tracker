@@ -11,7 +11,10 @@ use Illuminate\Support\Str;
 
 class CompanyService
 {
-    public function __construct(protected CompanyRepository $companyRepository)
+    public function __construct(
+        protected CompanyRepository $companyRepository,
+        protected CacheService      $cacheService
+    )
     {
     }
 
@@ -34,6 +37,7 @@ class CompanyService
     public function update(Company $company, array $data): array
     {
         $this->companyRepository->update($company, $data);
+        $this->cacheService->clearCompanyCache($company->id);
 
         return ['company' => $company->fresh()];
     }
@@ -70,11 +74,14 @@ class CompanyService
         }
         $path = $logo->store('companies_logos', 'public');
         $company->update(['logo' => $path]);
+        $this->cacheService->clearCompanyCache($company->id);
+
         return ['company' => $company->fresh()];
     }
 
     public function delete(Company $company): array
     {
+        $this->cacheService->clearCompanyCache($company->id);
         $deleted = $this->companyRepository->delete($company);
 
         return ['deleted' => $deleted];

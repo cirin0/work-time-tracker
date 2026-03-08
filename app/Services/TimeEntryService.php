@@ -18,7 +18,8 @@ class TimeEntryService
         protected LatenessCalculator            $latenessCalculator,
         protected GpsDistanceCalculator         $gpsDistanceCalculator,
         protected QrCodeValidator               $qrCodeValidator,
-        protected TimeEntryStatisticsCalculator $statisticsCalculator
+        protected TimeEntryStatisticsCalculator $statisticsCalculator,
+        protected CacheService                  $cacheService
     )
     {
     }
@@ -45,7 +46,7 @@ class TimeEntryService
         }
 
         if (!$isAdmin && $user->work_mode === WorkMode::OFFICE) {
-            $company = $user->company;
+            $company = $this->cacheService->getCompany($user->company_id);
 
             $distance = $this->gpsDistanceCalculator->calculate(
                 (float)$data['latitude'],

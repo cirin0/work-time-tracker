@@ -19,7 +19,7 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('verify-email', 'verifyEmail');
     Route::post('resend-verification-code', 'resendVerificationCode');
-    Route::post('login', 'login');
+    Route::post('login', 'login')->middleware('throttle:5,1');
     Route::post('logout', 'logout')->middleware('auth:api');
     Route::post('refresh', 'refresh');
 });
@@ -49,7 +49,7 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show']);
-    Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
+    Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->middleware('throttle:10,1');
 });
 
 Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admin')->group(function () {
@@ -104,8 +104,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/time-entries/active', [TimeEntryController::class, 'active']);
     Route::get('/time-entries/summary/me', [TimeEntryController::class, 'summary']);
     Route::get('/time-entries/export', [TimeEntryController::class, 'export']);
-    Route::post('/time-entries', [TimeEntryController::class, 'store']);
-    Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive']);
+    Route::post('/time-entries', [TimeEntryController::class, 'store'])->middleware('throttle:20,1');
+    Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive'])->middleware('throttle:20,1');
     Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
     Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
     Route::get('/qr-code/daily', [TimeEntryController::class, 'getDailyQrCode']);

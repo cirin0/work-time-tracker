@@ -4,12 +4,21 @@ namespace App\Services;
 
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class LatenessCalculator
 {
-    public function calculate(User $user, Carbon $actualStartTime): array
+    public function __construct(protected CacheService $cacheService)
     {
-        $workSchedule = $user->workSchedule;
+    }
+
+    public function calculate(User $user, CarbonInterface $actualStartTime): array
+    {
+        $workSchedule = null;
+
+        if ($user->work_schedule_id) {
+            $workSchedule = $this->cacheService->getWorkSchedule($user->work_schedule_id);
+        }
 
         if (!$workSchedule) {
             return ['lateness_minutes' => null, 'scheduled_start_time' => null];
@@ -33,9 +42,13 @@ class LatenessCalculator
         ];
     }
 
-    public function calculateEarlyLeave(User $user, Carbon $actualEndTime): array
+    public function calculateEarlyLeave(User $user, CarbonInterface $actualEndTime): array
     {
-        $workSchedule = $user->workSchedule;
+        $workSchedule = null;
+
+        if ($user->work_schedule_id) {
+            $workSchedule = $this->cacheService->getWorkSchedule($user->work_schedule_id);
+        }
 
         if (!$workSchedule) {
             return ['early_leave_minutes' => null, 'scheduled_end_time' => null];

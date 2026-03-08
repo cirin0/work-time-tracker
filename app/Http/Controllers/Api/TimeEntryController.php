@@ -9,6 +9,7 @@ use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
 use App\Models\TimeEntry;
+use App\Services\CacheService;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TimeEntryController extends Controller
 {
-    public function __construct(protected TimeEntryService $timeEntryService)
+    public function __construct(
+        protected TimeEntryService $timeEntryService,
+        protected CacheService     $cacheService
+    )
     {
     }
 
@@ -136,14 +140,11 @@ class TimeEntryController extends Controller
             ], 400);
         }
 
-        $dailyToken = hash('sha256', $company->qr_secret . date('Y-m-d'));
+        $qrData = $this->cacheService->getDailyQrCode($company);
 
         return response()->json([
             'message' => 'Daily QR code retrieved successfully.',
-            'data' => [
-                'qr_data' => $dailyToken,
-                'expires_at' => now()->endOfDay()->toIso8601String(),
-            ],
+            'data' => $qrData,
         ]);
     }
 }
