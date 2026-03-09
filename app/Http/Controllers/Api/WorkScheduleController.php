@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 
 class WorkScheduleController extends Controller
 {
-    public function __construct(protected WorkScheduleService $workScheduleService) {}
+    public function __construct(protected WorkScheduleService $workScheduleService)
+    {
+    }
 
     public function index(Request $request)
     {
@@ -56,7 +58,7 @@ class WorkScheduleController extends Controller
             return response()->json(['message' => $result['message']], 404);
         }
 
-        return $result['work_schedule'];
+        return new WorkScheduleResource($result['work_schedule']);
     }
 
     public function destroy(WorkSchedule $workSchedule, Request $request)

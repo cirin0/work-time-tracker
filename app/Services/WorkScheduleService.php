@@ -56,10 +56,39 @@ class WorkScheduleService
             $this->resetDefaultWorkSchedule($data['company_id']);
         }
 
+        $dailySchedulesData = null;
+        if (isset($data['daily_schedules'])) {
+            $dailySchedulesData = $data['daily_schedules'];
+            unset($data['daily_schedules']);
+        }
+
         $this->workScheduleRepository->update($workSchedule, $data);
+
+        if ($dailySchedulesData !== null) {
+            $this->updateDailySchedules($workSchedule, $dailySchedulesData);
+        }
+
         $this->cacheService->clearWorkScheduleCache($workSchedule->id);
 
-        return ['work_schedule' => $workSchedule->fresh()];
+        return ['work_schedule' => $workSchedule->fresh(['dailySchedules'])];
+    }
+
+    private function updateDailySchedules(WorkSchedule $workSchedule, array $dailySchedulesData): void
+    {
+        foreach ($dailySchedulesData as $scheduleData) {
+            $dayOfWeek = $scheduleData['day_of_week'];
+
+            $dailySchedule = $workSchedule->dailySchedules()
+                ->where('day_of_week', $dayOfWeek)
+                ->first();
+
+            if ($dailySchedule) {
+                $dailySchedule->update($scheduleData);
+            } else {
+                $scheduleData['work_schedule_id'] = $workSchedule->id;
+                DailySchedule::query()->create($scheduleData);
+            }
+        }
     }
 
     private function extractDailySchedulesData(array $data): array

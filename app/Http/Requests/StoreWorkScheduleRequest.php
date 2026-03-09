@@ -26,6 +26,25 @@ class StoreWorkScheduleRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'The name is required.',
+            'name.max' => 'The name must not exceed 255 characters.',
+            'daily_schedules.*.day_of_week.required' => 'Day of week is required for each schedule.',
+            'daily_schedules.*.day_of_week.in' => 'Invalid day of week provided.',
+            'daily_schedules.*.start_time.required' => 'Start time is required for each schedule.',
+            'daily_schedules.*.start_time.date_format' => 'Start time must be in HH:MM format.',
+            'daily_schedules.*.end_time.required' => 'End time is required for each schedule.',
+            'daily_schedules.*.end_time.date_format' => 'End time must be in HH:MM format.',
+            'daily_schedules.*.break_duration.required' => 'Break duration is required for each schedule.',
+            'daily_schedules.*.break_duration.integer' => 'Break duration must be an integer.',
+            'daily_schedules.*.break_duration.min' => 'Break duration cannot be negative.',
+            'daily_schedules.*.is_working_day.required' => 'Working day status is required for each schedule.',
+            'daily_schedules.*.is_working_day.boolean' => 'Working day status must be true or false.',
+        ];
+    }
+
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {

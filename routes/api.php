@@ -111,8 +111,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/qr-code/daily', [TimeEntryController::class, 'getDailyQrCode']);
 });
 
-Route::middleware(['auth:api'])->group(function () {
-    Route::apiResource('work-schedules', WorkScheduleController::class);
+Route::middleware(['auth:api'])->prefix('work-schedules')->group(function () {
+    Route::get('/', [WorkScheduleController::class, 'index']);
+    Route::get('/{workSchedule}', [WorkScheduleController::class, 'show']);
+    Route::middleware('role:admin,manager')->group(function () {
+        Route::post('/', [WorkScheduleController::class, 'store'])->middleware('throttle:10,1');
+        Route::patch('/{workSchedule}', [WorkScheduleController::class, 'update']);
+        Route::delete('/{workSchedule}', [WorkScheduleController::class, 'destroy']);
+    });
 });
 
 Route::middleware('auth:api')->prefix('audit-logs')->group(function () {
