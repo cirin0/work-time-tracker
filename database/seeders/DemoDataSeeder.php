@@ -126,20 +126,90 @@ class DemoDataSeeder extends Seeder
             ]);
 
             // 6. Create 5 Time Entries for each employee
+            $employeeSchedule = $workSchedules[($i - 1) % 5];
+            $dailySchedule = $employeeSchedule->dailySchedules()->where('day_of_week', 'monday')->first();
+
+            // Different time periods for first 3 employees to populate today/week/month summaries
+            $timeOffsets = match ($i) {
+                1 => [0, 0, 1, 2, 3], // Today and recent days (for today + week)
+                2 => [1, 2, 3, 4, 5], // This week (for week)
+                3 => [7, 14, 21, 25, 28], // This month (for month)
+                default => [2, 3, 4, 5, 6], // Other employees - last week
+            };
+
             for ($j = 1; $j <= 5; $j++) {
-                $date = Carbon::now()->subDays($j + 1);
-                $startTime = (clone $date)->setTime(9, 0)->addMinutes(rand(-15, 15));
+                $daysAgo = $timeOffsets[$j - 1];
+                $date = Carbon::now()->subDays($daysAgo);
+                $randomOffset = rand(-15, 15);
+                $startTime = (clone $date)->setTime(9, 0)->addMinutes($randomOffset);
                 $stopTime = (clone $startTime)->addHours(8)->addMinutes(rand(0, 60));
 
-                TimeEntry::create([
+                $entryData = [
                     'user_id' => $employee->id,
+                    'date' => $date->toDateString(),
                     'start_time' => $startTime,
                     'stop_time' => $stopTime,
-                    'duration' => $startTime->diffInMinutes($stopTime),
+                    'duration' => $startTime->diffInSeconds($stopTime),
                     'entry_type' => EntryType::MANUAL,
                     'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
                     'start_comment' => "Clocked in on day $j",
                     'stop_comment' => "Clocked out on day $j",
+                ];
+
+                // Add schedule tracking data for first 3 employees
+                if ($i <= 3 && $dailySchedule) {
+                    $scheduledStart = Carbon::parse($dailySchedule->start_time);
+                    $scheduledEnd = Carbon::parse($dailySchedule->end_time);
+
+                    // Calculate lateness (positive = late, negative = early, 0 = on time)
+                    $scheduledStartFull = (clone $startTime)->setTimeFrom($scheduledStart);
+                    $latenessMinutes = $scheduledStartFull->diffInMinutes($startTime, false);
+
+                    // Calculate early leave (positive = left early, negative = overtime)
+                    $scheduledEndFull = (clone $stopTime)->setTimeFrom($scheduledEnd);
+                    $earlyLeaveMinutes = $stopTime->diffInMinutes($scheduledEndFull, false);
+
+                    // Calculate overtime (only if worked past scheduled end time)
+                    $overtimeMinutes = $earlyLeaveMinutes < 0 ? abs($earlyLeaveMinutes) : 0;
+
+                    $entryData['lateness_minutes'] = $latenessMinutes;
+                    $entryData['scheduled_start_time'] = $scheduledStart->format('H:i:s');
+                    $entryData['early_leave_minutes'] = $earlyLeaveMinutes > 0 ? $earlyLeaveMinutes : 0;
+                    $entryData['scheduled_end_time'] = $scheduledEnd->format('H:i:s');
+                    $entryData['overtime_minutes'] = $overtimeMinutes;
+                }
+
+                TimeEntry::create($entryData);
+            }
+
+            // Create multiple entries per day for first 3 employees (with breaks)
+            if ($i <= 3) {
+                $today = Carbon::now();
+
+                // Morning session: 08:00 - 12:00
+                TimeEntry::create([
+                    'user_id' => $employee->id,
+                    'date' => $today->toDateString(),
+                    'start_time' => $today->copy()->setTime(8, 0),
+                    'stop_time' => $today->copy()->setTime(12, 0),
+                    'duration' => 14400, // 4 hours in seconds
+                    'entry_type' => EntryType::MANUAL,
+                    'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
+                    'start_comment' => 'Morning shift start',
+                    'stop_comment' => 'Going for lunch break',
+                ]);
+
+                // Afternoon session: 13:00 - 17:00
+                TimeEntry::create([
+                    'user_id' => $employee->id,
+                    'date' => $today->toDateString(),
+                    'start_time' => $today->copy()->setTime(13, 0),
+                    'stop_time' => $today->copy()->setTime(17, 0),
+                    'duration' => 14400, // 4 hours in seconds
+                    'entry_type' => EntryType::MANUAL,
+                    'location_data' => ['lat' => 50.4501, 'lng' => 30.5234],
+                    'start_comment' => 'Back from lunch',
+                    'stop_comment' => 'End of workday',
                 ]);
             }
 
@@ -177,5 +247,11 @@ class DemoDataSeeder extends Seeder
         $this->command->info('   - Employee 1-5: 1111, 2222, 3333, 4444, 5555');
         $this->command->info('   - Employee 6-10: (no PIN set)');
         $this->command->info(' Activity:   5 Time Entries & 5 Leave Requests per employee');
+        $this->command->info(' Multiple Entries: Employees 1-3 have 2 entries for today (with lunch break)');
+        $this->command->info(' Schedule Tracking: Employees 1-3 have lateness/overtime data');
+        $this->command->info('   - Employee 1: entries for today/this week (today+week summary)');
+        $this->command->info('   - Employee 2: entries for this week (week summary)');
+        $this->command->info('   - Employee 3: entries for this month (month summary)');
+        $this->command->info('-------------------------------------------------------');
     }
 }

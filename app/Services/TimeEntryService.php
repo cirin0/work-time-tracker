@@ -4,18 +4,23 @@ namespace App\Services;
 
 use App\Enums\EntryType;
 use App\Enums\WorkMode;
-use App\Models\Company;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Repositories\TimeEntryRepository;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class TimeEntryService
 {
-    public function __construct(protected TimeEntryRepository $timeEntryRepository)
+    public function __construct(
+        protected TimeEntryRepository           $timeEntryRepository,
+        protected LatenessCalculator            $latenessCalculator,
+        protected GpsDistanceCalculator         $gpsDistanceCalculator,
+        protected QrCodeValidator               $qrCodeValidator,
+        protected TimeEntryStatisticsCalculator $statisticsCalculator,
+        protected CacheService                  $cacheService
+    )
     {
     }
 
@@ -28,17 +33,22 @@ class TimeEntryService
         }
 
         $hasGpsData = isset($data['latitude']) && isset($data['longitude']);
+        $isAdmin = $user->isAdmin();
 
-        $entryType = match ($user->work_mode) {
-            WorkMode::OFFICE => EntryType::GPS_QR,
-            WorkMode::REMOTE => EntryType::REMOTE,
-            WorkMode::HYBRID => $hasGpsData ? EntryType::GPS : EntryType::MANUAL,
-        };
+        if ($isAdmin && !$hasGpsData) {
+            $entryType = EntryType::MANUAL;
+        } else {
+            $entryType = match ($user->work_mode) {
+                WorkMode::OFFICE => EntryType::GPS_QR,
+                WorkMode::REMOTE => EntryType::REMOTE,
+                WorkMode::HYBRID => $hasGpsData ? EntryType::GPS : EntryType::MANUAL,
+            };
+        }
 
-        if ($user->work_mode === WorkMode::OFFICE) {
-            $company = $user->company;
+        if (!$isAdmin && $user->work_mode === WorkMode::OFFICE) {
+            $company = $this->cacheService->getCompany($user->company_id);
 
-            $distance = $this->calculateDistance(
+            $distance = $this->gpsDistanceCalculator->calculate(
                 (float)$data['latitude'],
                 (float)$data['longitude'],
                 (float)$company->latitude,
@@ -49,16 +59,22 @@ class TimeEntryService
                 return ['message' => 'You are not within the company radius.'];
             }
 
-            if (!isset($data['qr_code']) || !$this->verifyDynamicQrCode($company, $data['qr_code'])) {
+            if (!isset($data['qr_code']) || !$this->qrCodeValidator->verify($company, $data['qr_code'])) {
                 throw new BadRequestHttpException('Invalid or expired QR code.');
             }
         }
 
+        $now = now();
+        $latenessData = $this->latenessCalculator->calculate($user, $now);
+
         $timeEntry = $this->timeEntryRepository->create([
             'user_id' => $user->id,
-            'start_time' => now(),
+            'date' => $now->format('Y-m-d'),
+            'start_time' => $now,
             'entry_type' => $entryType,
             'start_comment' => $data['start_comment'] ?? null,
+            'lateness_minutes' => $latenessData['lateness_minutes'],
+            'scheduled_start_time' => $latenessData['scheduled_start_time'],
             'location_data' => $hasGpsData ? [
                 'latitude' => $data['latitude'],
                 'longitude' => $data['longitude'],
@@ -66,33 +82,6 @@ class TimeEntryService
         ]);
 
         return ['time_entry' => $timeEntry];
-    }
-
-    private function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
-    {
-        $earthRadius = 6371000;
-
-        $latDelta = deg2rad($lat2 - $lat1);
-        $lonDelta = deg2rad($lon2 - $lon1);
-
-        $a = sin($latDelta / 2) * sin($latDelta / 2) +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-            sin($lonDelta / 2) * sin($lonDelta / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadius * $c;
-    }
-
-    private function verifyDynamicQrCode(Company $company, string $qrCode): bool
-    {
-        if (!$company->qr_secret) {
-            return false;
-        }
-
-        $expectedCode = hash('sha256', $company->qr_secret . date('d-m-Y'));
-
-        return hash_equals($expectedCode, $qrCode);
     }
 
     public function stopActiveTimeEntry(User $user, array $data): array
@@ -111,9 +100,13 @@ class TimeEntryService
         $stopTime = now();
         $duration = abs((int)$stopTime->diffInSeconds($startTime));
 
+        $earlyLeaveData = $this->latenessCalculator->calculateEarlyLeave($user, $stopTime);
+
         $updateData = [
             'stop_time' => $stopTime,
             'duration' => $duration,
+            'early_leave_minutes' => $earlyLeaveData['early_leave_minutes'],
+            'scheduled_end_time' => $earlyLeaveData['scheduled_end_time'],
         ];
 
         if (isset($data['stop_comment'])) {
@@ -125,9 +118,9 @@ class TimeEntryService
         return ['time_entry' => $activeEntry->fresh()];
     }
 
-    public function getUserTimeEntries(User $user): array
+    public function getUserTimeEntries(User $user, ?int $perPage = null): array
     {
-        $timeEntries = $this->timeEntryRepository->getAllForUser($user);
+        $timeEntries = $this->timeEntryRepository->getAllForUser($user, $perPage);
 
         return ['time_entries' => $timeEntries];
     }
@@ -154,36 +147,7 @@ class TimeEntryService
     {
         $completedEntries = $this->timeEntryRepository->getCompletedForUser($user);
 
-        $totalMinutes = $completedEntries->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
-        });
-
-        $totalHours = round($totalMinutes / 60, 2);
-        $entriesCount = $completedEntries->count();
-        $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
-
-        return [
-            'user_id' => $user->id,
-            'total_hours' => $totalHours,
-            'total_minutes' => $totalMinutes,
-            'entries_count' => $entriesCount,
-            'average_work_time' => $averageWorkTime,
-            'summary' => [
-                'today' => $completedEntries->where('start_time', '>=', Carbon::today())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'week' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'month' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-            ],
-        ];
+        return $this->statisticsCalculator->calculateStatistics($completedEntries, $user->id);
     }
 
     public function deleteTimeEntry(User $user, TimeEntry $timeEntry): array
@@ -208,35 +172,45 @@ class TimeEntryService
     {
         $completedEntries = $this->timeEntryRepository->getCompletedForUserById($userId);
 
-        $totalMinutes = $completedEntries->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
-        });
+        return $this->statisticsCalculator->calculateStatistics($completedEntries, $userId);
+    }
 
-        $totalHours = round($totalMinutes / 60, 2);
-        $entriesCount = $completedEntries->count();
-        $averageWorkTime = $entriesCount > 0 ? round($totalMinutes / $entriesCount, 2) : 0;
+    public function getTimeEntriesForExport(User $user, ?string $from = null, ?string $to = null): array
+    {
+        $entries = $this->timeEntryRepository->getEntriesForExport($user->id, $from, $to);
+
+        return ['time_entries' => $entries];
+    }
+
+    public function getAllEmployeeStatistics(int $companyId, int $perPage = 15): array
+    {
+        $paginatedUsers = User::query()
+            ->where('company_id', $companyId)
+            ->paginate($perPage);
+
+        $userIds = $paginatedUsers->pluck('id')->toArray();
+        $entries = $this->timeEntryRepository->getCompletedForUsers($userIds);
+        $grouped = $entries->groupBy('user_id');
+
+        $stats = [];
+        foreach ($paginatedUsers as $user) {
+            $userEntries = $grouped->get($user->id, collect());
+            // Only add to statistics if there are entries, to maintain old behavior
+            if ($userEntries->isNotEmpty()) {
+                $userStats = $this->statisticsCalculator->calculateStatistics($userEntries, $user->id);
+                $userStats['user'] = $user;
+                $stats[] = $userStats;
+            }
+        }
 
         return [
-            'user_id' => $userId,
-            'total_hours' => $totalHours,
-            'total_minutes' => $totalMinutes,
-            'entries_count' => $entriesCount,
-            'average_work_time' => $averageWorkTime,
-            'summary' => [
-                'today' => $completedEntries->where('start_time', '>=', Carbon::today())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'week' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-                'month' => $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth())->sum(function ($entry) {
-                    return Carbon::parse($entry->start_time)
-                        ->diffInMinutes(Carbon::parse($entry->stop_time));
-                }),
-            ],
+            'statistics' => $stats,
+            'pagination' => [
+                'current_page' => $paginatedUsers->currentPage(),
+                'last_page' => $paginatedUsers->lastPage(),
+                'total' => $paginatedUsers->total(),
+                'per_page' => $paginatedUsers->perPage(),
+            ]
         ];
     }
 
@@ -245,63 +219,13 @@ class TimeEntryService
         $completedEntries = $this->timeEntryRepository->getCompletedForCompany($companyId);
         $activeEntries = $this->timeEntryRepository->getActiveForCompany($companyId);
 
-        $totalMinutes = $completedEntries->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
-        });
+        $employeeCount = User::query()->where('company_id', $companyId)->count();
 
-        $totalHours = round($totalMinutes / 60, 2);
-        $entriesCount = $completedEntries->count();
-
-        // Статистика по періодам
-        $today = $completedEntries->where('start_time', '>=', Carbon::today());
-        $week = $completedEntries->where('start_time', '>=', Carbon::now()->startOfWeek());
-        $month = $completedEntries->where('start_time', '>=', Carbon::now()->startOfMonth());
-
-        $todayMinutes = $today->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
-        });
-
-        $weekMinutes = $week->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
-        });
-
-        $monthMinutes = $month->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
-        });
-
-        // Статистика по працівниках
-        $activeEmployees = $activeEntries->pluck('user_id')->unique()->count();
-        $totalEmployees = $completedEntries->pluck('user_id')->unique()->count();
-
-        return [
-            'company_id' => $companyId,
-            'total_hours' => $totalHours,
-            'total_minutes' => $totalMinutes,
-            'entries_count' => $entriesCount,
-            'active_entries_count' => $activeEntries->count(),
-            'active_employees' => $activeEmployees,
-            'total_employees_with_entries' => $totalEmployees,
-            'summary' => [
-                'today' => [
-                    'minutes' => $todayMinutes,
-                    'hours' => round($todayMinutes / 60, 2),
-                    'entries' => $today->count(),
-                ],
-                'week' => [
-                    'minutes' => $weekMinutes,
-                    'hours' => round($weekMinutes / 60, 2),
-                    'entries' => $week->count(),
-                ],
-                'month' => [
-                    'minutes' => $monthMinutes,
-                    'hours' => round($monthMinutes / 60, 2),
-                    'entries' => $month->count(),
-                ],
-            ],
-        ];
+        return $this->statisticsCalculator->calculateCompanyStatistics(
+            $completedEntries,
+            $activeEntries,
+            $companyId,
+            $employeeCount
+        );
     }
 }

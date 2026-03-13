@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\TimeEntry;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class TimeEntryRepository
 {
@@ -24,13 +25,23 @@ class TimeEntryRepository
             ->first();
     }
 
-    public function getAllForUser(User $user): Collection
+    public function getTodayEntriesForUser(User $user): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->where('user_id', $user->id)
+            ->whereDate('date', today())
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    public function getAllForUser(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return TimeEntry::query()
             ->with('user')
             ->where('user_id', $user->id)
             ->orderBy('start_time', 'desc')
-            ->get();
+            ->paginate($perPage);
     }
 
     public function getCompletedForUser(User $user): Collection
@@ -86,6 +97,15 @@ class TimeEntryRepository
             ->get();
     }
 
+    public function getCompletedForUsers(array $userIds): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->whereIn('user_id', $userIds)
+            ->whereNotNull('stop_time')
+            ->get();
+    }
+
     public function getActiveForCompany(int $companyId): Collection
     {
         return TimeEntry::query()
@@ -94,6 +114,18 @@ class TimeEntryRepository
                 $query->where('company_id', $companyId);
             })
             ->whereNull('stop_time')
+            ->get();
+    }
+
+    public function getEntriesForExport(int $userId, ?string $from = null, ?string $to = null): Collection
+    {
+        return TimeEntry::query()
+            ->with('user')
+            ->where('user_id', $userId)
+            ->when($from, fn($q) => $q->whereDate('date', '>=', $from))
+            ->when($to, fn($q) => $q->whereDate('date', '<=', $to))
+            ->orderBy('date')
+            ->orderBy('start_time')
             ->get();
     }
 }

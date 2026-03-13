@@ -45,17 +45,14 @@ class UserListingTest extends TestCase
                     'name',
                     'email',
                     'avatar',
-                    'work_mode',
-                    'created_at',
-                    'updated_at',
                 ],
             ],
         ]);
 
-        // Manager should not see role and has_pin_code
         $firstUser = $response->json('data.0');
         $this->assertArrayNotHasKey('role', $firstUser);
         $this->assertArrayNotHasKey('has_pin_code', $firstUser);
+        $this->assertArrayNotHasKey('work_mode', $firstUser);
     }
 
     public function test_admin_sees_full_user_info()
@@ -73,13 +70,13 @@ class UserListingTest extends TestCase
                     'name',
                     'email',
                     'avatar',
-                    'work_mode',
-                    'role',
-                    'has_pin_code',
-                    'created_at',
-                    'updated_at',
                 ],
             ],
         ]);
+
+        // Admin should use /api/admin/users for full info, /api/users returns basic UserResource
+        $firstUser = $response->json('data.0');
+        $this->assertArrayNotHasKey('role', $firstUser);
+        $this->assertArrayNotHasKey('work_mode', $firstUser);
     }
 }

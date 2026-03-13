@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Company;
+use App\Models\EmailVerificationCode;
 use App\Models\User;
 use App\Models\WorkSchedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,8 +31,7 @@ class AuthTest extends TestCase
                 'user' => [
                     'id',
                     'name',
-                    'email',
-                    'role',
+                    'email'
                 ]
             ]);
 
@@ -46,6 +46,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'test@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $response = $this->postJson('/api/auth/login', [
@@ -60,8 +61,7 @@ class AuthTest extends TestCase
                 'user' => [
                     'id',
                     'name',
-                    'email',
-                    'role',
+                    'email'
                 ]
             ]);
     }
@@ -89,6 +89,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'logout@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $loginResponse = $this->postJson('/api/auth/login', [
@@ -203,12 +204,13 @@ class AuthTest extends TestCase
     public function test_authenticated_user_can_refresh_token()
     {
         $user = User::factory()->create([
-            'email' => 'test@example.com',
+            'email' => 'refresh-test@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $loginResponse = $this->postJson('/api/auth/login', [
-            'email' => 'test@example.com',
+            'email' => 'refresh-test@example.com',
             'password' => 'password',
         ]);
 
@@ -225,8 +227,7 @@ class AuthTest extends TestCase
                 'user' => [
                     'id',
                     'name',
-                    'email',
-                    'role',
+                    'email'
                 ]
             ]);
 
@@ -245,6 +246,10 @@ class AuthTest extends TestCase
 
         $response->assertStatus(201);
 
+        // Manually verify email for test
+        $user = User::query()->where('email', 'test@example.com')->first();
+        $user->markEmailAsVerified();
+
         // Verify user can login with short password
         $loginResponse = $this->postJson('/api/auth/login', [
             'email' => 'test@example.com',
@@ -262,26 +267,6 @@ class AuthTest extends TestCase
         ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_user_registration_can_set_specific_role()
-    {
-        $userData = [
-            'name' => 'Test Manager',
-            'email' => 'manager@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-            'role' => 'manager',
-        ];
-
-        $response = $this->postJson('/api/auth/register', $userData);
-
-        $response->assertStatus(201);
-
-        $this->assertDatabaseHas('users', [
-            'email' => 'manager@example.com',
-            'role' => 'manager',
-        ]);
     }
 
     public function test_registration_with_long_name()
@@ -306,6 +291,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create([
             'email' => 'refresh@example.com',
             'password' => bcrypt('password'),
+            'email_verified_at' => now(),
         ]);
 
         $loginResponse = $this->postJson('/api/auth/login', [
@@ -327,7 +313,6 @@ class AuthTest extends TestCase
                     'id',
                     'name',
                     'email',
-                    'role',
                 ]
             ]);
 
@@ -365,5 +350,128 @@ class AuthTest extends TestCase
             'name' => '12345',
             'email' => 'numeric@example.com',
         ]);
+    }
+
+    public function test_user_can_resend_verification_code()
+    {
+        $userData = [
+            'name' => 'Test User',
+            'email' => 'resend@example.com',
+            'password' => 'password',
+        ];
+
+        $this->postJson('/api/auth/register', $userData);
+
+        $response = $this->postJson('/api/auth/resend-verification-code', [
+            'email' => 'resend@example.com',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Verification code has been resent to your email',
+            ]);
+
+        $this->assertDatabaseHas('email_verification_codes', [
+            'type' => 'registration',
+        ]);
+    }
+
+    public function test_resend_verification_code_deletes_old_codes()
+    {
+        $userData = [
+            'name' => 'Test User',
+            'email' => 'resend2@example.com',
+            'password' => 'password',
+        ];
+
+        $this->postJson('/api/auth/register', $userData);
+
+        // First code exists
+        $this->assertDatabaseCount('email_verification_codes', 1);
+
+        // Request new code
+        $this->postJson('/api/auth/resend-verification-code', [
+            'email' => 'resend2@example.com',
+        ]);
+
+        // Still only one code (old one deleted, new one created)
+        $this->assertDatabaseCount('email_verification_codes', 1);
+    }
+
+    public function test_cannot_resend_verification_code_for_verified_user()
+    {
+        $user = User::factory()->create([
+            'email' => 'verified@example.com',
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/auth/resend-verification-code', [
+            'email' => 'verified@example.com',
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'message' => 'Email is already verified',
+            ]);
+    }
+
+    public function test_resend_verification_code_requires_valid_email()
+    {
+        $response = $this->postJson('/api/auth/resend-verification-code', [
+            'email' => 'nonexistent@example.com',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_resend_verification_code_rate_limiting()
+    {
+        $userData = [
+            'name' => 'Test User',
+            'email' => 'ratelimit@example.com',
+            'password' => 'password',
+        ];
+
+        $this->postJson('/api/auth/register', $userData);
+
+        // First request should succeed
+        $response1 = $this->postJson('/api/auth/resend-verification-code', [
+            'email' => 'ratelimit@example.com',
+        ]);
+        $response1->assertStatus(200);
+
+        // Immediate second request should be rate limited
+        $response2 = $this->postJson('/api/auth/resend-verification-code', [
+            'email' => 'ratelimit@example.com',
+        ]);
+        $response2->assertStatus(400)
+            ->assertJson([
+                'message' => 'Please wait before requesting a new code',
+            ]);
+    }
+
+    public function test_expired_verification_code_returns_error()
+    {
+        $user = User::factory()->create([
+            'email' => 'expired@example.com',
+        ]);
+
+        $expiredCode = EmailVerificationCode::query()->create([
+            'user_id' => $user->id,
+            'code' => '123456',
+            'type' => 'registration',
+            'expires_at' => now()->subMinutes(20),
+        ]);
+
+        $response = $this->postJson('/api/auth/verify-email', [
+            'email' => 'expired@example.com',
+            'code' => '123456',
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'message' => 'Verification code has expired',
+            ]);
     }
 }

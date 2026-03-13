@@ -3,16 +3,18 @@
 namespace App\Models;
 
 use App\Enums\EntryType;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimeEntry extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'user_id',
+        'date',
         'start_time',
         'stop_time',
         'duration',
@@ -20,6 +22,11 @@ class TimeEntry extends Model
         'location_data',
         'start_comment',
         'stop_comment',
+        'lateness_minutes',
+        'scheduled_start_time',
+        'early_leave_minutes',
+        'scheduled_end_time',
+        'overtime_minutes',
     ];
 
     public function user(): BelongsTo

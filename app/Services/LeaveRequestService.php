@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LeaveRequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Notifications\LeaveRequestStatusNotification;
 use App\Repositories\LeaveRequestRepository;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,9 +29,9 @@ class LeaveRequestService
         return ['requests' => $requests];
     }
 
-    public function getUserLeaveRequests(User $user): array
+    public function getUserLeaveRequests(User $user, int $perPage = 15): array
     {
-        $requests = $this->leaveRequestRepository->getAllForUser($user);
+        $requests = $this->leaveRequestRepository->getAllForUser($user, $perPage);
 
         return ['requests' => $requests];
     }
@@ -53,7 +54,9 @@ class LeaveRequestService
             return ['message' => 'You are not authorized to view this leave request.'];
         }
 
-        return ['leave_request' => $leaveRequest];
+        $leaveRequestWithRelations = $this->leaveRequestRepository->getByIdWithRelations($leaveRequest->id);
+
+        return ['leave_request' => $leaveRequestWithRelations];
     }
 
     public function approve(LeaveRequest $leaveRequest): array
@@ -66,6 +69,8 @@ class LeaveRequestService
             'status' => LeaveRequestStatus::APPROVED,
             'processed_by' => Auth::id(),
         ]);
+
+        $leaveRequest->user->notify(new LeaveRequestStatusNotification($leaveRequest->fresh()));
 
         return ['leave_request' => $leaveRequest];
     }
@@ -81,6 +86,8 @@ class LeaveRequestService
             'processed_by' => Auth::id(),
             'manager_comment' => $managerComment,
         ]);
+
+        $leaveRequest->user->notify(new LeaveRequestStatusNotification($leaveRequest->fresh()));
 
         return ['leave_request' => $leaveRequest];
     }

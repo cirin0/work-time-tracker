@@ -8,7 +8,10 @@ use App\Repositories\WorkScheduleRepository;
 
 class WorkScheduleService
 {
-    public function __construct(protected WorkScheduleRepository $workScheduleRepository)
+    public function __construct(
+        protected WorkScheduleRepository $workScheduleRepository,
+        protected CacheService           $cacheService
+    )
     {
     }
 
@@ -41,6 +44,51 @@ class WorkScheduleService
             ->where('company_id', $companyId)
             ->where('is_default', true)
             ->update(['is_default' => false]);
+    }
+
+    public function update(WorkSchedule $workSchedule, mixed $data, ?int $companyId = null): array
+    {
+        if ($companyId !== null && $workSchedule->company_id !== $companyId) {
+            return ['message' => 'Work schedule not found'];
+        }
+
+        if (isset($data['is_default']) && $data['is_default'] ?? false) {
+            $this->resetDefaultWorkSchedule($data['company_id']);
+        }
+
+        $dailySchedulesData = null;
+        if (isset($data['daily_schedules'])) {
+            $dailySchedulesData = $data['daily_schedules'];
+            unset($data['daily_schedules']);
+        }
+
+        $this->workScheduleRepository->update($workSchedule, $data);
+
+        if ($dailySchedulesData !== null) {
+            $this->updateDailySchedules($workSchedule, $dailySchedulesData);
+        }
+
+        $this->cacheService->clearWorkScheduleCache($workSchedule->id);
+
+        return ['work_schedule' => $workSchedule->fresh(['dailySchedules'])];
+    }
+
+    private function updateDailySchedules(WorkSchedule $workSchedule, array $dailySchedulesData): void
+    {
+        foreach ($dailySchedulesData as $scheduleData) {
+            $dayOfWeek = $scheduleData['day_of_week'];
+
+            $dailySchedule = $workSchedule->dailySchedules()
+                ->where('day_of_week', $dayOfWeek)
+                ->first();
+
+            if ($dailySchedule) {
+                $dailySchedule->update($scheduleData);
+            } else {
+                $scheduleData['work_schedule_id'] = $workSchedule->id;
+                DailySchedule::query()->create($scheduleData);
+            }
+        }
     }
 
     private function extractDailySchedulesData(array $data): array
@@ -97,30 +145,16 @@ class WorkScheduleService
             return ['message' => 'Work schedule not found'];
         }
 
+        $this->cacheService->clearWorkScheduleCache($workSchedule->id);
         $deleted = $this->workScheduleRepository->delete($workSchedule);
 
         return ['deleted' => $deleted];
     }
 
-    public function update(WorkSchedule $workSchedule, mixed $data, ?int $companyId = null): array
-    {
-        if ($companyId !== null && $workSchedule->company_id !== $companyId) {
-            return ['message' => 'Work schedule not found'];
-        }
-
-        if (isset($data['is_default']) && $data['is_default'] ?? false) {
-            $this->resetDefaultWorkSchedule($data['company_id']);
-        }
-
-        $this->workScheduleRepository->update($workSchedule, $data);
-
-        return ['work_schedule' => $workSchedule->fresh()];
-    }
-
     public function getWorkScheduleById(string $id, ?int $companyId = null): array
     {
         $workSchedule = $this->workScheduleRepository->find($id);
-        if (! $workSchedule) {
+        if (!$workSchedule) {
             return ['message' => 'Work schedule not found'];
         }
 

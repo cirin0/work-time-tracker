@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\ChangePasswordWithCodeRequest;
 use App\Http\Requests\ChangePinCodeRequest;
 use App\Http\Requests\SetupPinCodeRequest;
+use App\Http\Requests\UpdateFcmTokenRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\ProfileResource;
@@ -21,7 +22,7 @@ class ProfileController extends Controller
 
     public function me(): ProfileResource
     {
-        $user = auth()->user()->load(['company', 'manager', 'workSchedule']);
+        $user = auth()->user()->load(['company', 'manager', 'workSchedule.dailySchedules']);
         return new ProfileResource($user);
     }
 
@@ -47,18 +48,24 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    public function requestPasswordChangeCode(): JsonResponse
     {
         $user = auth()->user();
-        $data = $this->userService->changePassword($user, $request->validated());
+        $data = $this->userService->requestPasswordChangeCode($user);
 
-        if (isset($data['message'])) {
-            return response()->json(['message' => $data['message']], 403);
+        return response()->json(['message' => $data['message']]);
+    }
+
+    public function changePasswordWithCode(ChangePasswordWithCodeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->userService->changePasswordWithCode($user, $request->validated());
+
+        if (isset($data['error'])) {
+            return response()->json(['message' => $data['message']], 400);
         }
 
-        return response()->json([
-            'message' => 'Password changed successfully',
-        ]);
+        return response()->json(['message' => $data['message']], 200);
     }
 
     public function setupPinCode(SetupPinCodeRequest $request): JsonResponse
@@ -104,14 +111,21 @@ class ProfileController extends Controller
         if (!$data['work_schedule']) {
             return response()->json([
                 'message' => 'You have no work schedule assigned',
-                'user' => new ProfileResource($data['user']),
+                'data' => null,
             ]);
         }
 
         return response()->json([
             'message' => 'Work schedule retrieved successfully',
-            'user' => new ProfileResource($data['user']),
-            'work_schedule' => new WorkScheduleResource($data['work_schedule']),
+            'data' => new WorkScheduleResource($data['work_schedule']),
         ]);
+    }
+
+    public function updateFcmToken(UpdateFcmTokenRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $user->update(['fcm_token' => $request->validated('fcm_token')]);
+
+        return response()->json(['message' => 'FCM token updated successfully']);
     }
 }

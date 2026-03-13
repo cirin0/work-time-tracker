@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class CompanyFactory extends Factory
 {
@@ -22,7 +23,7 @@ class CompanyFactory extends Factory
             'latitude' => $this->faker->latitude,
             'longitude' => $this->faker->longitude,
             'radius_meters' => $this->faker->numberBetween(50, 500),
-            'qr_secret' => $this->faker->uuid,
+            'qr_secret' => Str::uuid(),
         ];
     }
 }

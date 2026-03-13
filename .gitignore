@@ -25,3 +25,10 @@ npm-debug.log
 Thumbs.db
 yarn-error.log
 /build/phpstan/
+
+**/caddy
+frankenphp
+frankenphp-worker.php
+package.json
+package-lock.json
+/.ai/*

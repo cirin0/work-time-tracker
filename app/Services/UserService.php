@@ -3,16 +3,23 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Enums\WorkMode;
+use App\Models\EmailVerificationCode;
 use App\Models\User;
+use App\Models\WorkSchedule;
+use App\Notifications\VerificationCodeNotification;
+use App\Notifications\WorkScheduleUpdatedNotification;
 use App\Repositories\UserRepository;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
-    public function __construct(protected UserRepository $repository)
+    public function __construct(
+        protected UserRepository $repository,
+        protected CacheService   $cacheService
+    )
     {
     }
 
@@ -58,12 +65,6 @@ class UserService
 
     public function update(User $user, array $data): array
     {
-        $authUser = Auth::user();
-
-        if (!$authUser->isAdmin()) {
-            unset($data['role']);
-        }
-        unset($data['password']);
         $user->update($data);
 
         return ['user' => $user];
@@ -79,7 +80,11 @@ class UserService
 
     public function getWorkSchedule(User $user): array
     {
-        $workSchedule = $user->workSchedule?->load('dailySchedules');
+        $workSchedule = null;
+
+        if ($user->work_schedule_id) {
+            $workSchedule = $this->cacheService->getWorkSchedule($user->work_schedule_id);
+        }
 
         return [
             'user' => $user,
@@ -89,20 +94,71 @@ class UserService
 
     public function updateUserWorkSchedule(User $user, int $workScheduleId): array
     {
+        if ($user->work_schedule_id) {
+            $this->cacheService->clearWorkScheduleCache($user->work_schedule_id);
+        }
+
         $user->update(['work_schedule_id' => $workScheduleId]);
+
+        $workSchedule = WorkSchedule::find($workScheduleId);
+        if ($workSchedule) {
+            $user->notify(new WorkScheduleUpdatedNotification($workSchedule));
+        }
 
         return ['user' => $user];
     }
 
-    public function changePassword(User $user, array $data): array
+    public function requestPasswordChangeCode(User $user): array
+    {
+        $code = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+        EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'password_change')
+            ->whereNull('verified_at')
+            ->delete();
+
+        EmailVerificationCode::query()->create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'type' => 'password_change',
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        if (config('app.env') === 'local') {
+            return ['message' => 'Code generated for local environment: ' . $code];
+        }
+        $user->notify(new VerificationCodeNotification($code, 'зміни паролю'));
+
+        return ['message' => 'Verification code sent to your email'];
+    }
+
+    public function changePasswordWithCode(User $user, array $data): array
     {
         if (!Hash::check($data['current_password'], $user->password)) {
-            return ['message' => 'The current password is incorrect.'];
+            return ['error' => true, 'message' => 'The current password is incorrect.'];
         }
+
+        $verificationCode = EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('code', $data['code'])
+            ->where('type', 'password_change')
+            ->whereNull('verified_at')
+            ->first();
+
+        if (!$verificationCode) {
+            return ['error' => true, 'message' => 'Invalid verification code'];
+        }
+
+        if ($verificationCode->isExpired()) {
+            return ['error' => true, 'message' => 'Verification code has expired'];
+        }
+
+        $verificationCode->update(['verified_at' => now()]);
 
         $user->update(['password' => Hash::make($data['new_password'])]);
 
-        return ['user' => $user];
+        return ['message' => 'Password changed successfully'];
     }
 
     public function setupPinCode(User $user, string $pinCode): array
@@ -123,6 +179,22 @@ class UserService
         }
 
         $user->update(['pin_code' => $newPinCode]);
+
+        return ['user' => $user];
+    }
+
+    public function updateWorkMode(User $user, WorkMode $workMode): array
+    {
+        $user->work_mode = $workMode;
+        $user->save();
+
+        return ['user' => $user];
+    }
+
+    public function resetPassword(User $user, string $password): array
+    {
+        $user->update(['password' => Hash::make($password)]);
+
 
         return ['user' => $user];
     }

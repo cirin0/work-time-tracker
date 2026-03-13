@@ -8,4 +8,5 @@ enum LeaveRequestType: string
     case VACATION = 'vacation';
     case UNPAID = 'unpaid';
     case PERSONAL = 'personal';
+    case BUSINESS_TRIP = 'business_trip';
 }

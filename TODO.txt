@@ -1,8 +1,1 @@
 // комaнда для локального хоста php artisan serve --host=0.0.0.0 --port=8000
-
-
-// TODO: виправити всі помилки phpstan в майбутньому
-// phpstan запускається командою: php -d memory_limit=512M vendor\bin\phpstan analyse
-
-
-// в resources/ts/api/generated.d.ts є актуальні типи  але вони не докінця правильно приписані в Data

@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\CompanyStatisticsExport;
+use App\Exports\EmployeeStatisticsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateUserWorkScheduleRequest;
+use App\Http\Resources\CompanyStatisticsResource;
+use App\Http\Resources\ManagerUserResource;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
-use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkScheduleResource;
 use App\Models\User;
 use App\Services\TimeEntryService;
@@ -14,6 +17,8 @@ use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ManagerUserController extends Controller
 {
@@ -75,13 +80,13 @@ class ManagerUserController extends Controller
         if (!$data['work_schedule']) {
             return response()->json([
                 'message' => 'User has no work schedule assigned.',
-                'user' => new UserResource($data['user']),
+                'user' => new ManagerUserResource($data['user']),
             ]);
         }
 
         return response()->json([
             'message' => 'Work schedule retrieved successfully.',
-            'user' => new UserResource($data['user']),
+            'user' => new ManagerUserResource($data['user']),
             'work_schedule' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
@@ -103,7 +108,7 @@ class ManagerUserController extends Controller
 
             return response()->json([
                 'message' => 'User already has this work schedule assigned.',
-                'user' => new UserResource($data['user']),
+                'user' => new ManagerUserResource($data['user']),
                 'work_schedule' => new WorkScheduleResource($data['work_schedule']),
             ]);
         }
@@ -113,7 +118,7 @@ class ManagerUserController extends Controller
 
         return response()->json([
             'message' => 'Work schedule updated successfully.',
-            'user' => new UserResource($data['user']),
+            'user' => new ManagerUserResource($data['user']),
             'work_schedule' => new WorkScheduleResource($data['work_schedule']),
         ]);
     }
@@ -127,7 +132,7 @@ class ManagerUserController extends Controller
             ->with(['workSchedule', 'manager'])
             ->paginate(15);
 
-        return UserResource::collection($users);
+        return ManagerUserResource::collection($users);
     }
 
     public function getUser(User $user): JsonResponse
@@ -144,7 +149,7 @@ class ManagerUserController extends Controller
 
         return response()->json([
             'message' => 'User retrieved successfully.',
-            'data' => new UserResource($user),
+            'data' => new ManagerUserResource($user),
         ]);
     }
 
@@ -155,7 +160,49 @@ class ManagerUserController extends Controller
 
         return response()->json([
             'message' => 'Company statistics retrieved successfully.',
-            'data' => $data,
+            'data' => new CompanyStatisticsResource($data),
         ]);
+    }
+
+    public function getUsersStatistics(): JsonResponse
+    {
+        $manager = Auth::user();
+        $perPage = request()->get('per_page', 15);
+        $data = $this->timeEntryService->getAllEmployeeStatistics($manager->company_id, (int)$perPage);
+
+        return response()->json([
+            'message' => 'Employee statistics retrieved successfully.',
+            'data' => $data['statistics'],
+            'pagination' => $data['pagination'],
+        ]);
+    }
+
+    public function exportCompanyStatistics(): BinaryFileResponse
+    {
+        $manager = Auth::user();
+        $data = $this->timeEntryService->getAllEmployeeStatistics($manager->company_id);
+        $collection = collect($data['statistics']);
+
+        $filename = 'company-statistics-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new CompanyStatisticsExport($collection), $filename);
+    }
+
+    public function exportUserStatistics(User $user): BinaryFileResponse|JsonResponse
+    {
+        $manager = Auth::user();
+
+        if ($user->company_id !== $manager->company_id) {
+            return response()->json([
+                'message' => 'You do not have permission to export this user\'s statistics.',
+            ], 403);
+        }
+
+        $stats = $this->timeEntryService->getTimeSummaryById($user->id);
+        $stats['user'] = $user;
+
+        $filename = 'employee-statistics-' . $user->id . '-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new EmployeeStatisticsExport($stats), $filename);
     }
 }

@@ -15,14 +15,17 @@ class CompanyStoreResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'address' => $this->address,
             'email' => $this->email,
             'phone' => $this->phone,
+            'address' => $this->address,
             'description' => $this->description,
             'logo' => $this->logo ? Storage::url($this->logo) : null,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'radius_meters' => $this->radius_meters,
             'manager_id' => $this->manager_id,
-            'created_at' => $this->created_at->format('d-m-Y H:i:s'),
-            'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

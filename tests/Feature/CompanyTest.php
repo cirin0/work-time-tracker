@@ -18,7 +18,7 @@ class CompanyTest extends TestCase
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
 
-        $response = $this->actingAs($admin, 'api')->postJson('/api/companies', [
+        $response = $this->actingAs($admin, 'api')->postJson('/api/admin/companies', [
             'name' => 'Test Company',
             'email' => 'company@test.com',
             'phone' => '1234567890',
@@ -27,9 +27,15 @@ class CompanyTest extends TestCase
         $response->assertCreated();
         $company = Company::first();
 
+        $admin->refresh();
+        $this->assertEquals($company->id, $admin->company_id);
+
+        $this->assertNotNull($company->qr_secret);
+        $this->assertEquals(36, strlen($company->qr_secret));
+
         $response->assertExactJson([
             'message' => 'Company created successfully',
-            'company' => (new CompanyStoreResource($company))->resolve(),
+            'data' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 
@@ -37,7 +43,7 @@ class CompanyTest extends TestCase
     {
         $employee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
 
-        $response = $this->actingAs($employee, 'api')->postJson('/api/companies', [
+        $response = $this->actingAs($employee, 'api')->postJson('/api/admin/companies', [
             'name' => 'Test Company',
             'email' => 'company@test.com',
             'phone' => '1234567890',
@@ -48,7 +54,7 @@ class CompanyTest extends TestCase
 
     public function test_unauthenticated_user_cannot_create_company(): void
     {
-        $response = $this->postJson('/api/companies', [
+        $response = $this->postJson('/api/admin/companies', [
             'name' => 'Test Company',
         ]);
 
@@ -59,7 +65,7 @@ class CompanyTest extends TestCase
     {
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
 
-        $response = $this->actingAs($admin, 'api')->postJson('/api/companies', [
+        $response = $this->actingAs($admin, 'api')->postJson('/api/admin/companies', [
             'email' => 'company@test.com',
         ]);
 
@@ -86,7 +92,7 @@ class CompanyTest extends TestCase
         $company = Company::factory()->create();
 
         $response = $this->actingAs($admin, 'api')
-            ->patchJson("/api/companies/{$company->id}", [
+            ->patchJson("/api/admin/companies/{$company->id}", [
                 'name' => 'Updated Name',
                 'email' => 'updated@test.com',
             ]);
@@ -96,7 +102,7 @@ class CompanyTest extends TestCase
 
         $response->assertExactJson([
             'message' => 'Company updated successfully',
-            'company' => (new CompanyStoreResource($company))->resolve(),
+            'data' => (new CompanyStoreResource($company))->resolve(),
         ]);
     }
 
@@ -106,7 +112,7 @@ class CompanyTest extends TestCase
         $company = Company::factory()->create();
 
         $response = $this->actingAs($employee, 'api')
-            ->patchJson("/api/companies/{$company->id}", [
+            ->patchJson("/api/admin/companies/{$company->id}", [
                 'name' => 'Updated Name',
             ]);
 
@@ -118,7 +124,7 @@ class CompanyTest extends TestCase
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
         $company = Company::factory()->create();
 
-        $response = $this->actingAs($admin, 'api')->deleteJson("/api/companies/{$company->id}");
+        $response = $this->actingAs($admin, 'api')->deleteJson("/api/admin/companies/{$company->id}");
 
         $response->assertNoContent();
         $this->assertDatabaseMissing('companies', ['id' => $company->id]);
@@ -129,7 +135,7 @@ class CompanyTest extends TestCase
         $manager = User::factory()->create(['role' => UserRole::MANAGER]);
         $company = Company::factory()->create();
 
-        $response = $this->actingAs($manager, 'api')->deleteJson("/api/companies/{$company->id}");
+        $response = $this->actingAs($manager, 'api')->deleteJson("/api/admin/companies/{$company->id}");
 
         $response->assertForbidden();
         $this->assertDatabaseHas('companies', ['id' => $company->id]);

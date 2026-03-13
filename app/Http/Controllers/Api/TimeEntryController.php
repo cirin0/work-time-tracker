@@ -2,21 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\TimeEntryExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StopTimeEntryRequest;
 use App\Http\Requests\StoreTimeEntryRequest;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
 use App\Models\TimeEntry;
+use App\Services\CacheService;
 use App\Services\TimeEntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TimeEntryController extends Controller
 {
-    public function __construct(protected TimeEntryService $timeEntryService)
+    public function __construct(
+        protected TimeEntryService $timeEntryService,
+        protected CacheService     $cacheService
+    )
     {
     }
 
@@ -48,14 +56,12 @@ class TimeEntryController extends Controller
         ]);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $data = $this->timeEntryService->getUserTimeEntries(Auth::user());
+        $perPage = $request->input('per_page', 15);
+        $data = $this->timeEntryService->getUserTimeEntries(Auth::user(), $perPage);
 
-        return response()->json([
-            'message' => 'Time entries retrieved successfully.',
-            'data' => TimeEntryResource::collection($data['time_entries']),
-        ]);
+        return TimeEntryResource::collection($data['time_entries']);
     }
 
     public function show(TimeEntry $timeEntry): JsonResponse
@@ -109,6 +115,20 @@ class TimeEntryController extends Controller
         return response()->noContent();
     }
 
+    public function export(Request $request): BinaryFileResponse
+    {
+        $user = Auth::user();
+        $from = $request->input('from');
+        $to = $request->input('to');
+
+        $entries = $this->timeEntryService->getTimeEntriesForExport($user, $from, $to);
+        $collection = collect($entries['time_entries']);
+
+        $filename = 'time-entries-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new TimeEntryExport($collection), $filename);
+    }
+
     public function getDailyQrCode(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -120,14 +140,11 @@ class TimeEntryController extends Controller
             ], 400);
         }
 
-        $dailyToken = hash('sha256', $company->qr_secret . date('d-m-Y'));
+        $qrData = $this->cacheService->getDailyQrCode($company);
 
         return response()->json([
             'message' => 'Daily QR code retrieved successfully.',
-            'data' => [
-                'qr_data' => $dailyToken,
-                'expires_at' => now()->endOfDay()->toIso8601String(),
-            ],
+            'data' => $qrData,
         ]);
     }
 }

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginUserRequest;
+use App\Http\Requests\ResendVerificationCodeRequest;
 use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\VerifyEmailRequest;
 use App\Http\Resources\AuthResource;
 use App\Services\AuthService;
 use Dedoc\Scramble\Attributes\BodyParameter;
@@ -21,9 +23,36 @@ class AuthController extends Controller
         $data = $this->authService->register($request->validated());
 
         return response()->json([
-            'message' => 'User registered successfully',
+            'message' => $data['message'],
             'user' => new AuthResource($data['user']),
         ], 201);
+    }
+
+    public function verifyEmail(VerifyEmailRequest $request): JsonResponse
+    {
+        $data = $this->authService->verifyEmail(
+            $request->validated('email'),
+            $request->validated('code')
+        );
+
+        if (isset($data['error'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json(['message' => $data['message']]);
+    }
+
+    public function resendVerificationCode(ResendVerificationCodeRequest $request): JsonResponse
+    {
+        $data = $this->authService->resendVerificationCode(
+            $request->validated('email')
+        );
+
+        if (isset($data['error'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json(['message' => $data['message']]);
     }
 
     #[BodyParameter(name: 'email', description: 'The email of the user', example: 'manager@demotech.com')]

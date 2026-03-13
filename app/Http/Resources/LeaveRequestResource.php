@@ -12,28 +12,36 @@ class LeaveRequestResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        return [
+        $baseData = [
             'id' => $this->id,
-            'user' => $this->whenLoaded('user', fn() => [
+            'type' => $this->type,
+            'start_date' => $this->start_date->format('Y-m-d'),
+            'end_date' => $this->end_date->format('Y-m-d'),
+            'status' => $this->status,
+            'created_at' => $this->created_at,
+        ];
+
+        if ($this->relationLoaded('user')) {
+            $baseData['user'] = [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
                 'avatar' => $this->user->avatar ? Storage::url($this->user->avatar) : null,
-            ]),
-            'type' => $this->type,
-            'start_date' => $this->start_date->format('d-m-Y'),
-            'end_date' => $this->end_date->format('d-m-Y'),
-            'reason' => $this->reason,
-            'status' => $this->status,
-            'processor' => $this->whenLoaded('processor', fn() => [
+            ];
+            $baseData['reason'] = $this->reason;
+            $baseData['manager_comment'] = $this->manager_comment;
+            $baseData['updated_at'] = $this->updated_at;
+        }
+
+        if ($this->relationLoaded('processor') && $this->processor) {
+            $baseData['processor'] = [
                 'id' => $this->processor->id,
                 'name' => $this->processor->name,
                 'email' => $this->processor->email,
                 'avatar' => $this->processor->avatar ? Storage::url($this->processor->avatar) : null,
-            ]),
-            'manager_comment' => $this->manager_comment,
-            'created_at' => $this->created_at->format('d-m-Y H:i:s'),
-            'updated_at' => $this->updated_at->format('d-m-Y H:i:s'),
-        ];
+            ];
+        }
+
+        return $baseData;
     }
 }

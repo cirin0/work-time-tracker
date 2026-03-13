@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveRequest extends Model
 {
-    use hasFactory, Auditable;
+    use Auditable, hasFactory;
 
     protected $fillable = [
         'user_id',

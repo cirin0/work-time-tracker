@@ -14,7 +14,16 @@ class UploadAvatarRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'avatar.image' => 'The avatar must be an image file.',
+            'avatar.mimes' => 'The avatar must be a file of type: jpeg, png, jpg, svg.',
+            'avatar.max' => 'The avatar size must not exceed 2MB.',
         ];
     }
 }
