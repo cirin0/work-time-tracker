@@ -10,11 +10,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "ably/ably-php": "^1.1",
         "dedoc/scramble": "^0.12.36",
         "kreait/laravel-firebase": "^7.0",
         "laravel/framework": "^12.53.0",
         "laravel/octane": "^2.14",
-        "laravel/reverb": "^1.8.0",
         "laravel/sanctum": "^4.3.1",
         "laravel/tinker": "^2.11.1",
         "maatwebsite/excel": "^3.1.67",
@@ -64,7 +64,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \" php artisan octane:start --host=0.0.0.0 --port=8000\" \"php artisan reverb:start\" --names='server,reverb'"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \" php artisan octane:start --host=0.0.0.0 --port=8000\" --names='server'"
         ],
         "test": [
             "@php artisan config:clear --ansi",
