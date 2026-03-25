@@ -61,6 +61,14 @@ class AuthController extends Controller
     {
         $data = $this->authService->login($request->validated());
 
+        if (isset($data['email_not_verified'])) {
+            return response()->json([
+                'message' => 'Please verify your email before logging in',
+                'email_not_verified' => true,
+                'email' => $data['email'],
+            ], 403);
+        }
+
         return response()->json([
             'access_token' => $data['token'],
             'expires_in' => $data['expires_in'],

@@ -46,7 +46,11 @@ class AuthService
 
         if (!$user->hasVerifiedEmail()) {
             JWTAuth::setToken($token)->invalidate();
-            throw new UnauthorizedHttpException('', 'Please verify your email before logging in');
+
+            return [
+                'email_not_verified' => true,
+                'email' => $credentials['email'],
+            ];
         }
 
         return [
