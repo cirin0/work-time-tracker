@@ -43,7 +43,7 @@ class AppUpdateController extends Controller
             'versionCode' => $latestRelease->version_code,
             'versionName' => $latestRelease->version_name,
             'downloadUrl' => $isUpdateAvailable
-                ? url(Storage::url($latestRelease->apk_path))
+                ? secure_url(Storage::url($latestRelease->apk_path))
                 : '',
             'changelog' => $isUpdateAvailable ? $latestRelease->changelog : null,
         ]);
@@ -77,11 +77,10 @@ class AppUpdateController extends Controller
                 'channel' => $release->channel,
                 'version_code' => $release->version_code,
                 'version_name' => $release->version_name,
-                'download_url' => url(Storage::url($release->apk_path)),
+                'download_url' => secure_url(Storage::url($release->apk_path)),
                 'changelog' => $release->changelog,
                 'is_active' => $release->is_active,
             ],
         ], 201);
     }
 }
-
