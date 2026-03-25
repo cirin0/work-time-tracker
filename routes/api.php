@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AdminCompanyController;
 use App\Http\Controllers\Api\AdminUserController;
+use App\Http\Controllers\Api\AppUpdateController;
 use App\Http\Controllers\Api\AuditLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CompanyController;
@@ -23,6 +24,10 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('logout', 'logout')->middleware('auth:api');
     Route::post('refresh', 'refresh');
 });
+
+Route::get('/app/update-check', [AppUpdateController::class, 'check']);
+Route::post('/ci/app-releases', [AppUpdateController::class, 'store'])
+    ->middleware(['ci.upload', 'throttle:10,1']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/messages/{receiverId}', [MessageController::class, 'index']);
