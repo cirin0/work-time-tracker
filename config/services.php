@@ -34,5 +34,7 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
+    'app_release' => [
+        'ci_upload_token' => env('APP_RELEASE_CI_UPLOAD_TOKEN'),
+    ],
 ];
