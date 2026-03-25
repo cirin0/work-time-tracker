@@ -9,6 +9,7 @@ use App\Models\AppRelease;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AppUpdateController extends Controller
 {
@@ -43,7 +44,7 @@ class AppUpdateController extends Controller
             'versionCode' => $latestRelease->version_code,
             'versionName' => $latestRelease->version_name,
             'downloadUrl' => $isUpdateAvailable
-                ? secure_url(Storage::url($latestRelease->apk_path))
+                ? url('/api/app/download')
                 : '',
             'changelog' => $isUpdateAvailable ? $latestRelease->changelog : null,
         ]);
@@ -77,10 +78,31 @@ class AppUpdateController extends Controller
                 'channel' => $release->channel,
                 'version_code' => $release->version_code,
                 'version_name' => $release->version_name,
-                'download_url' => secure_url(Storage::url($release->apk_path)),
+                'download_url' => Storage::url($release->apk_path),
                 'changelog' => $release->changelog,
                 'is_active' => $release->is_active,
             ],
         ], 201);
+    }
+
+    public function download(): BinaryFileResponse|JsonResponse
+    {
+        $latestRelease = AppRelease::query()
+            ->where('platform', 'android')
+            ->where('channel', 'stable')
+            ->where('is_active', true)
+            ->orderByDesc('version_code')
+            ->first();
+
+        if (!$latestRelease || !Storage::disk('public')->exists($latestRelease->apk_path)) {
+            return response()->json(['message' => 'No release found'], 404);
+        }
+
+        $filePath = Storage::disk('public')->path($latestRelease->apk_path);
+        $fileName = "work-time-tracker-v{$latestRelease->version_name}.apk";
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => 'application/vnd.android.package-archive',
+        ]);
     }
 }
