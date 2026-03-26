@@ -38,14 +38,22 @@ class AppUpdateController extends Controller
         }
 
         $isUpdateAvailable = $latestRelease->version_code > $currentVersionCode;
+        $downloadUrl = '';
+
+        if ($isUpdateAvailable) {
+            $downloadUrl = url('/api/app/download');
+            $downloadHost = parse_url($downloadUrl, PHP_URL_HOST);
+
+            if (is_string($downloadHost) && str_contains($downloadHost, 'azurewebsites.net')) {
+                $downloadUrl = preg_replace('/^http:/', 'https:', $downloadUrl) ?? $downloadUrl;
+            }
+        }
 
         return response()->json([
             'updateAvailable' => $isUpdateAvailable,
             'versionCode' => $latestRelease->version_code,
             'versionName' => $latestRelease->version_name,
-            'downloadUrl' => $isUpdateAvailable
-                ? url('/api/app/download')
-                : '',
+            'downloadUrl' => $downloadUrl,
             'changelog' => $isUpdateAvailable ? $latestRelease->changelog : null,
         ]);
     }
