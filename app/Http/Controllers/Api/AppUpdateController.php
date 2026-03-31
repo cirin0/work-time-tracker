@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckAppUpdateRequest;
 use App\Http\Requests\StoreAppReleaseRequest;
 use App\Models\AppRelease;
-use Illuminate\Database\QueryException;
+use App\Services\AppReleaseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AppUpdateController extends Controller
 {
+    public function __construct(protected AppReleaseService $appReleaseService)
+    {
+    }
+
     public function check(CheckAppUpdateRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -38,16 +42,7 @@ class AppUpdateController extends Controller
         }
 
         $isUpdateAvailable = $latestRelease->version_code > $currentVersionCode;
-        $downloadUrl = '';
-
-        if ($isUpdateAvailable) {
-            $downloadUrl = url('/api/app/download');
-            $downloadHost = parse_url($downloadUrl, PHP_URL_HOST);
-
-            if (is_string($downloadHost) && str_contains($downloadHost, 'azurewebsites.net')) {
-                $downloadUrl = preg_replace('/^http:/', 'https:', $downloadUrl) ?? $downloadUrl;
-            }
-        }
+        $downloadUrl = $isUpdateAvailable ? $this->appReleaseService->buildDownloadUrl() : '';
 
         return response()->json([
             'updateAvailable' => $isUpdateAvailable,
@@ -60,23 +55,15 @@ class AppUpdateController extends Controller
 
     public function store(StoreAppReleaseRequest $request): JsonResponse
     {
-        $validated = $request->validated();
+        $result = $this->appReleaseService->createRelease($request->validated(), $request->file('apk'));
 
-        try {
-            $release = AppRelease::query()->create([
-                'platform' => $validated['platform'] ?? 'android',
-                'channel' => $validated['channel'] ?? 'stable',
-                'version_code' => $validated['version_code'],
-                'version_name' => $validated['version_name'],
-                'apk_path' => $request->file('apk')->store('app_releases', 'public'),
-                'changelog' => $validated['changelog'] ?? null,
-                'is_active' => $validated['is_active'] ?? true,
-            ]);
-        } catch (QueryException $e) {
+        if (isset($result['error'])) {
             return response()->json([
-                'message' => 'Release with this version already exists.',
-            ], 409);
+                'message' => $result['message'],
+            ], $result['status'] ?? 400);
         }
+
+        $release = $result['release'];
 
         return response()->json([
             'message' => 'App release uploaded successfully',
