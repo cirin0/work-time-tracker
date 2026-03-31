@@ -135,6 +135,18 @@ class ManagerUserController extends Controller
         return ManagerUserResource::collection($users);
     }
 
+    public function getActiveTimeEntries(): JsonResponse
+    {
+        $manager = Auth::user();
+
+        $data = $this->timeEntryService->getActiveCompanyEntries($manager->company_id);
+
+        return response()->json([
+            'message' => 'Active time entries retrieved successfully.',
+            'data' => TimeEntryResource::collection($data['time_entries']),
+        ]);
+    }
+
     public function getUser(User $user): JsonResponse
     {
         $manager = Auth::user();

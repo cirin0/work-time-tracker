@@ -228,4 +228,11 @@ class TimeEntryService
             $employeeCount
         );
     }
+
+    public function getActiveCompanyEntries(int $companyId): array
+    {
+        $entries = $this->timeEntryRepository->getActiveForCompany($companyId);
+
+        return ['time_entries' => $entries];
+    }
 }

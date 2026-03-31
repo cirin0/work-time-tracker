@@ -64,6 +64,8 @@ Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admi
     Route::post('/leave-requests/{leaveRequest}/approve', [ManagerLeaveRequestController::class, 'approve']);
     Route::post('/leave-requests/{leaveRequest}/reject', [ManagerLeaveRequestController::class, 'reject']);
 
+    Route::get('/time-entries/active', [ManagerUserController::class, 'getActiveTimeEntries']);
+
     Route::group(['prefix' => 'users'], function () {
         Route::get('/', [ManagerUserController::class, 'getCompanyUsers']);
         Route::get('/statistics', [ManagerUserController::class, 'getUsersStatistics']);
