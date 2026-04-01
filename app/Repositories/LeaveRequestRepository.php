@@ -48,6 +48,22 @@ class LeaveRequestRepository
         return LeaveRequest::query()->create($data);
     }
 
+    public function hasOverlappingRequest(User $user, string $startDate, string $endDate): bool
+    {
+        return LeaveRequest::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', [LeaveRequestStatus::PENDING, LeaveRequestStatus::APPROVED])
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        $q->where('start_date', '<=', $startDate)
+                            ->where('end_date', '>=', $endDate);
+                    });
+            })
+            ->exists();
+    }
+
     public function update(LeaveRequest $leaveRequest, array $data): bool
     {
         return $leaveRequest->update($data);

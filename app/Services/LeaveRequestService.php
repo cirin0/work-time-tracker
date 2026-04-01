@@ -6,6 +6,7 @@ use App\Enums\LeaveRequestStatus;
 use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Notifications\LeaveRequestStatusNotification;
+use App\Notifications\NewLeaveRequestNotification;
 use App\Repositories\LeaveRequestRepository;
 use Illuminate\Support\Facades\Auth;
 
@@ -38,10 +39,18 @@ class LeaveRequestService
 
     public function createLeaveRequest(User $user, array $data): array
     {
+        if ($this->leaveRequestRepository->hasOverlappingRequest($user, $data['start_date'], $data['end_date'])) {
+            return ['error' => true, 'message' => 'You already have a pending or approved leave request for these dates.'];
+        }
+
         $data['status'] = LeaveRequestStatus::PENDING;
         $data['user_id'] = $user->id;
 
         $leaveRequest = $this->leaveRequestRepository->create($data);
+
+        if ($user->manager) {
+            $user->manager->notify(new NewLeaveRequestNotification($leaveRequest->load('user')));
+        }
 
         return ['leave_request' => $leaveRequest];
     }
@@ -59,7 +68,7 @@ class LeaveRequestService
         return ['leave_request' => $leaveRequestWithRelations];
     }
 
-    public function approve(LeaveRequest $leaveRequest): array
+    public function approve(LeaveRequest $leaveRequest, ?string $managerComment = null): array
     {
         if ($leaveRequest->user->manager_id !== Auth::id()) {
             return ['message' => 'You are not authorized to approve this leave request.'];
@@ -68,6 +77,7 @@ class LeaveRequestService
         $leaveRequest->update([
             'status' => LeaveRequestStatus::APPROVED,
             'processed_by' => Auth::id(),
+            'manager_comment' => $managerComment,
         ]);
 
         $leaveRequest->user->notify(new LeaveRequestStatusNotification($leaveRequest->fresh()));

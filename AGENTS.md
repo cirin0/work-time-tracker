@@ -273,6 +273,9 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 
 # Laravel Pint Code Formatter
 
+- Never execute `vendor/bin/pint` by default.
+- Run `vendor/bin/pint` only after explicit user request (for example, "run pint" or "format code").
+- If style issues are detected, report them and ask whether formatting should be run.
 - If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to
   ensure your code matches the project's expected style.
 - Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting

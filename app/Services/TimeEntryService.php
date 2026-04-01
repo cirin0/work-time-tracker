@@ -26,6 +26,14 @@ class TimeEntryService
 
     public function startTimeEntry(User $user, array $data): array
     {
+        if (empty($user->pin_code)) {
+            throw new BadRequestHttpException('You must set up a PIN code before starting work.');
+        }
+
+        if (!$user->isAdmin() && empty($user->company_id)) {
+            throw new BadRequestHttpException('You must be assigned to a company before starting work.');
+        }
+
         $activeEntry = $this->timeEntryRepository->getActiveEntryForUser($user);
 
         if ($activeEntry) {

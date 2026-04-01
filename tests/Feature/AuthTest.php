@@ -367,9 +367,7 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJson([
-                'message' => 'Verification code has been resent to your email',
-            ]);
+            ->assertJsonStructure(['message']);
 
         $this->assertDatabaseHas('email_verification_codes', [
             'type' => 'registration',

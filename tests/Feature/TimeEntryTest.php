@@ -41,6 +41,32 @@ class TimeEntryTest extends TestCase
         ]);
     }
 
+    public function test_user_cannot_start_time_entry_without_pin_code(): void
+    {
+        $user = User::factory()->create(['pin_code' => null]);
+
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')
+            ->assertStatus(400)
+            ->assertJson([
+                'message' => 'You must set up a PIN code before starting work.',
+            ]);
+    }
+
+    public function test_user_cannot_start_time_entry_without_company(): void
+    {
+        $user = User::factory()->create([
+            'pin_code' => bcrypt('1234'),
+            'company_id' => null,
+            'role' => UserRole::EMPLOYEE,
+        ]);
+
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')
+            ->assertStatus(400)
+            ->assertJson([
+                'message' => 'You must be assigned to a company before starting work.',
+            ]);
+    }
+
     public function test_user_cannot_start_time_entry_if_already_active(): void
     {
         $user = User::factory()->create();
