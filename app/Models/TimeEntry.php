@@ -27,6 +27,7 @@ class TimeEntry extends Model
         'early_leave_minutes',
         'scheduled_end_time',
         'overtime_minutes',
+        'auto_closed'
     ];
 
     public function user(): BelongsTo

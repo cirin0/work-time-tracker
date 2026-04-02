@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminCompanyController;
+use App\Http\Controllers\Api\AdminSchedulerController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AppUpdateController;
 use App\Http\Controllers\Api\AuditLogController;
@@ -106,6 +107,13 @@ Route::middleware('auth:api')->prefix('admin')->middleware('role:admin')->group(
     Route::patch('/users/{user}/work-mode', [AdminUserController::class, 'updateWorkMode']);
     Route::post('/users/{user}/reset-password', [AdminUserController::class, 'resetPassword']);
     Route::delete('/users/{user}', [AdminUserController::class, 'deleteUser']);
+
+    Route::prefix('scheduler')->group(function () {
+        Route::get('/status', [AdminSchedulerController::class, 'getStatus']);
+        Route::post('/send-warnings', [AdminSchedulerController::class, 'sendWarnings']);
+        Route::post('/auto-close-sessions', [AdminSchedulerController::class, 'autoCloseSessions']);
+        Route::post('/cleanup-audit-logs', [AdminSchedulerController::class, 'cleanupAuditLogs']);
+    });
 });
 
 Route::middleware('auth:api')->group(function () {
