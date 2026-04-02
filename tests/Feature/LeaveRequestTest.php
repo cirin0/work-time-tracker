@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Notifications\NewLeaveRequestNotification;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Notification;
 use Tests\TestCase;
 
 class LeaveRequestTest extends TestCase
@@ -15,7 +17,10 @@ class LeaveRequestTest extends TestCase
 
     public function test_user_can_create_leave_request()
     {
-        $user = User::factory()->create();
+        $manager = User::factory()->create(['role' => 'manager']);
+        $user = User::factory()->create(['manager_id' => $manager->id]);
+
+        Notification::fake();
 
         $response = $this->actingAs($user, 'api')->postJson('/api/leave-requests', [
             'type' => 'vacation',
@@ -25,12 +30,79 @@ class LeaveRequestTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $leaveRequest = LeaveRequest::first();
+        $leaveRequest = LeaveRequest::with('user')->first();
 
         $response->assertExactJson([
             'message' => 'Leave request created successfully.',
             'data' => (new LeaveRequestResource($leaveRequest))->resolve(),
         ]);
+
+        Notification::assertSentTo($manager, NewLeaveRequestNotification::class);
+    }
+
+    public function test_user_cannot_create_overlapping_leave_request_with_pending()
+    {
+        $user = User::factory()->create();
+
+        LeaveRequest::factory()->create([
+            'user_id' => $user->id,
+            'status' => 'pending',
+            'start_date' => Carbon::now()->addDays(10),
+            'end_date' => Carbon::now()->addDays(15),
+        ]);
+
+        $response = $this->actingAs($user, 'api')->postJson('/api/leave-requests', [
+            'type' => 'vacation',
+            'start_date' => Carbon::now()->addDays(12)->format('Y-m-d'),
+            'end_date' => Carbon::now()->addDays(17)->format('Y-m-d'),
+            'reason' => 'Overlapping vacation'
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson(['message' => 'You already have a pending or approved leave request for these dates.']);
+    }
+
+    public function test_user_cannot_create_overlapping_leave_request_with_approved()
+    {
+        $user = User::factory()->create();
+
+        LeaveRequest::factory()->create([
+            'user_id' => $user->id,
+            'status' => 'approved',
+            'start_date' => Carbon::now()->addDays(10),
+            'end_date' => Carbon::now()->addDays(15),
+        ]);
+
+        $response = $this->actingAs($user, 'api')->postJson('/api/leave-requests', [
+            'type' => 'vacation',
+            'start_date' => Carbon::now()->addDays(8)->format('Y-m-d'),
+            'end_date' => Carbon::now()->addDays(12)->format('Y-m-d'),
+            'reason' => 'Overlapping vacation'
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson(['message' => 'You already have a pending or approved leave request for these dates.']);
+    }
+
+    public function test_user_can_create_leave_request_after_rejected()
+    {
+        $user = User::factory()->create();
+
+        LeaveRequest::factory()->create([
+            'user_id' => $user->id,
+            'status' => 'rejected',
+            'start_date' => Carbon::now()->addDays(10),
+            'end_date' => Carbon::now()->addDays(15),
+        ]);
+
+        $response = $this->actingAs($user, 'api')->postJson('/api/leave-requests', [
+            'type' => 'vacation',
+            'start_date' => Carbon::now()->addDays(10)->format('Y-m-d'),
+            'end_date' => Carbon::now()->addDays(15)->format('Y-m-d'),
+            'reason' => 'Resubmitting after rejection'
+        ]);
+
+        $response->assertStatus(201);
     }
 
     public function test_leave_request_creation_requires_valid_data()

@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Resources\CompanyStoreResource;
 use App\Models\Company;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -115,6 +116,11 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_add_employee_to_company_with_manager(): void
     {
+        $defaultSchedule = WorkSchedule::factory()->create([
+            'company_id' => $this->company->id,
+            'is_default' => true,
+        ]);
+
         $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
 
         $response = $this->actingAs($this->admin, 'api')
@@ -127,6 +133,7 @@ class AdminCompanyTest extends TestCase
 
         $this->assertEquals($this->company->id, $newEmployee->company_id);
         $this->assertEquals($this->manager->id, $newEmployee->manager_id);
+        $this->assertEquals($defaultSchedule->id, $newEmployee->work_schedule_id);
         $response->assertJsonFragment(['message' => 'Employee added to company successfully.']);
     }
 

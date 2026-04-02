@@ -178,8 +178,8 @@ class EmailVerificationTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $response->assertStatus(401)
-            ->assertJson(['error' => 'Please verify your email before logging in']);
+        $response->assertStatus(403)
+            ->assertJson(['message' => 'Please verify your email before logging in']);
     }
 
     public function test_verified_user_can_login()

@@ -169,6 +169,10 @@ php artisan test --compact --filter=test_name
 
 ### Code Quality
 
+- Do not run formatting tools automatically.
+- Specifically, do not run `vendor/bin/pint` unless the user explicitly asks to format code.
+- If formatting is recommended, ask for confirmation first.
+
 ```bash
 # Auto-fix code style (Laravel Pint)
 vendor/bin/pint --dirty

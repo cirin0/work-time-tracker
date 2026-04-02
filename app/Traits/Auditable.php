@@ -41,7 +41,7 @@ trait Auditable
                 model: $model,
                 oldValues: $oldValues,
                 newValues: $newValues,
-                ipAddress: $request?->ip(),
+                ipAddress: self::getClientIp($request),
                 userAgent: $request?->userAgent()
             );
         } catch (Exception $e) {
@@ -51,5 +51,32 @@ trait Auditable
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    protected static function getClientIp($request): ?string
+    {
+        if (!$request) {
+            return null;
+        }
+
+        // Check for X-Forwarded-For header (used by most proxies/load balancers)
+        if ($request->header('X-Forwarded-For')) {
+            $ips = explode(',', $request->header('X-Forwarded-For'));
+            // Get the first IP (original client IP)
+            return trim($ips[0]);
+        }
+
+        // Check for X-Real-IP header (used by some proxies like nginx)
+        if ($request->header('X-Real-IP')) {
+            return $request->header('X-Real-IP');
+        }
+
+        // Check for CF-Connecting-IP (Cloudflare)
+        if ($request->header('CF-Connecting-IP')) {
+            return $request->header('CF-Connecting-IP');
+        }
+
+        // Fallback to Laravel's ip() method
+        return $request->ip();
     }
 }

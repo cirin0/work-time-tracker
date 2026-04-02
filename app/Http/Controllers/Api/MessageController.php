@@ -8,6 +8,7 @@ use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class MessageController extends Controller
 {
@@ -38,7 +39,7 @@ class MessageController extends Controller
 
         $user = Auth::user();
 
-        if ((int) $data['receiver_id'] === (int) $user->id) {
+        if ((int)$data['receiver_id'] === (int)$user->id) {
             return response()->json([
                 'message' => 'You cannot send a message to yourself.',
             ], 422);
@@ -52,7 +53,7 @@ class MessageController extends Controller
                     'message' => $data['message'],
                 ]);
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Failed to send message.',
                 'error' => $e->getMessage(),

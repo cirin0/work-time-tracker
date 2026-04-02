@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ApproveLeaveRequestRequest;
 use App\Http\Requests\RejectLeaveRequestRequest;
 use App\Http\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
@@ -33,9 +34,29 @@ class ManagerLeaveRequestController extends Controller
         return LeaveRequestResource::collection($result['requests']);
     }
 
-    public function approve(LeaveRequest $leaveRequest): JsonResponse
+    public function show(LeaveRequest $leaveRequest): JsonResponse
     {
-        $result = $this->leaveRequestService->approve($leaveRequest);
+        $user = Auth::user();
+
+        if ($user->company_id !== $leaveRequest->user->company_id) {
+            return response()->json([
+                'message' => 'You are not authorized to view this leave request.',
+            ], 403);
+        }
+
+        $leaveRequest->load(['user', 'processor']);
+
+        return response()->json([
+            'data' => new LeaveRequestResource($leaveRequest),
+        ]);
+    }
+
+    public function approve(ApproveLeaveRequestRequest $request, LeaveRequest $leaveRequest): JsonResponse
+    {
+        $result = $this->leaveRequestService->approve(
+            $leaveRequest,
+            $request->validated('manager_comment')
+        );
 
         if (isset($result['message'])) {
             return response()->json(['message' => $result['message']], 403);

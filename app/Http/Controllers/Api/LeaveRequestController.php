@@ -33,9 +33,13 @@ class LeaveRequestController extends Controller
             $request->validated()
         );
 
+        if (isset($result['error'])) {
+            return response()->json(['message' => $result['message']], 400);
+        }
+
         return response()->json([
             'message' => 'Leave request created successfully.',
-            'data' => new LeaveRequestResource($result['leave_request']),
+            'data' => new LeaveRequestResource($result['leave_request']->load('user')),
         ], 201);
     }
 

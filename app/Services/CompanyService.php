@@ -99,9 +99,12 @@ class CompanyService
             return ['error' => true, 'message' => 'This company does not have a manager assigned.'];
         }
 
+        $defaultSchedule = $company->defaultWorkSchedule();
+
         $employee->update([
             'company_id' => $company->id,
             'manager_id' => $company->manager_id,
+            'work_schedule_id' => $defaultSchedule?->id,
         ]);
 
         return ['employee' => $employee->fresh()];

@@ -220,6 +220,7 @@ class DemoDataSeeder extends Seeder
             for ($k = 1; $k <= 5; $k++) {
                 $startDate = Carbon::now()->addWeeks($k + 1)->startOfWeek();
                 $endDate = (clone $startDate)->addDays(rand(1, 4));
+                $status = $statuses[array_rand($statuses)];
 
                 LeaveRequest::create([
                     'user_id' => $employee->id,
@@ -227,9 +228,9 @@ class DemoDataSeeder extends Seeder
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                     'reason' => "Request $k for employee $i",
-                    'status' => $statuses[array_rand($statuses)],
+                    'status' => $status,
                     'processed_by' => $k % 2 === 0 ? $manager->id : null,
-                    'manager_comment' => $k % 2 === 0 ? 'Processed by manager' : null,
+                    'manager_comment' => $status === 'pending' ? null : ($k % 2 === 0 ? 'Processed by manager' : null),
                 ]);
             }
         }
