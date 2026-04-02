@@ -16,7 +16,7 @@ class CompanyTest extends TestCase
 
     public function test_admin_can_create_company(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+        $admin = User::factory()->create(['role' => UserRole::ADMIN, 'company_id' => null]);
 
         $response = $this->actingAs($admin, 'api')->postJson('/api/admin/companies', [
             'name' => 'Test Company',
@@ -25,7 +25,7 @@ class CompanyTest extends TestCase
         ]);
 
         $response->assertCreated();
-        $company = Company::first();
+        $company = Company::latest()->first();
 
         $admin->refresh();
         $this->assertEquals($company->id, $admin->company_id);

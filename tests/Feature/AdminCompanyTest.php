@@ -121,7 +121,7 @@ class AdminCompanyTest extends TestCase
             'is_default' => true,
         ]);
 
-        $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
+        $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE, 'company_id' => null]);
 
         $response = $this->actingAs($this->admin, 'api')
             ->postJson("/api/admin/companies/{$this->company->id}/add-employee", [
@@ -158,7 +158,7 @@ class AdminCompanyTest extends TestCase
     public function test_admin_cannot_add_employee_with_invalid_manager(): void
     {
         $companyWithoutManager = Company::factory()->create(['manager_id' => null]);
-        $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
+        $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE, 'company_id' => null]);
 
         $response = $this->actingAs($this->admin, 'api')
             ->postJson("/api/admin/companies/{$companyWithoutManager->id}/add-employee", [

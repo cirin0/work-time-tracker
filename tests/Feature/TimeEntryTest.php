@@ -7,9 +7,12 @@ use App\Enums\WorkMode;
 use App\Http\Resources\TimeEntryResource;
 use App\Http\Resources\TimeEntrySummaryResource;
 use App\Models\Company;
+use App\Models\DailySchedule;
 use App\Models\TimeEntry;
 use App\Models\User;
+use App\Models\WorkSchedule;
 use App\Services\TimeEntryService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -457,5 +460,98 @@ class TimeEntryTest extends TestCase
 
         $entry = TimeEntry::query()->where('user_id', $admin->id)->first();
         $this->assertEquals('manual', $entry->entry_type->value);
+    }
+
+    public function test_overtime_is_calculated_when_employee_works_past_scheduled_time(): void
+    {
+        $company = Company::factory()->create();
+
+        $workSchedule = WorkSchedule::factory()->create([
+            'company_id' => $company->id,
+            'is_default' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'company_id' => $company->id,
+            'work_schedule_id' => $workSchedule->id,
+            'pin_code' => bcrypt('1234'),
+            'work_mode' => WorkMode::REMOTE,
+        ]);
+
+        // Set work schedule for today (e.g., 09:00 - 17:00)
+        $today = strtolower(now()->format('l'));
+        DailySchedule::query()
+            ->where('work_schedule_id', $workSchedule->id)
+            ->where('day_of_week', $today)
+            ->update([
+                'start_time' => '09:00',
+                'end_time' => '17:00',
+                'is_working_day' => true,
+            ]);
+
+        // Start work at 09:00
+        Carbon::setTestNow(Carbon::today()->setTime(9, 0));
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')->assertCreated();
+
+        // Stop work at 18:30 (1 hour 30 minutes overtime)
+        Carbon::setTestNow(Carbon::today()->setTime(18, 30));
+        $response = $this->actingAs($user, 'api')
+            ->patchJson('/api/time-entries/active/stop', ['pin_code' => '1234']);
+
+        $response->assertOk();
+
+        $entry = TimeEntry::query()->where('user_id', $user->id)->first();
+
+        // Should have 90 minutes of overtime
+        $this->assertEquals(90, $entry->overtime_minutes);
+        $this->assertEquals('17:00:00', $entry->scheduled_end_time);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_no_overtime_when_employee_leaves_before_scheduled_end_time(): void
+    {
+        $company = Company::factory()->create();
+
+        $workSchedule = WorkSchedule::factory()->create([
+            'company_id' => $company->id,
+            'is_default' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'company_id' => $company->id,
+            'work_schedule_id' => $workSchedule->id,
+            'pin_code' => bcrypt('1234'),
+            'work_mode' => WorkMode::REMOTE,
+        ]);
+
+        // Set work schedule for today (09:00 - 17:00)
+        $today = strtolower(now()->format('l'));
+        DailySchedule::query()
+            ->where('work_schedule_id', $workSchedule->id)
+            ->where('day_of_week', $today)
+            ->update([
+                'start_time' => '09:00',
+                'end_time' => '17:00',
+                'is_working_day' => true,
+            ]);
+
+        // Start work at 09:00
+        Carbon::setTestNow(Carbon::today()->setTime(9, 0));
+        $this->actingAs($user, 'api')->postJson('/api/time-entries')->assertCreated();
+
+        // Stop work at 16:00 (1 hour early)
+        Carbon::setTestNow(Carbon::today()->setTime(16, 0));
+        $response = $this->actingAs($user, 'api')
+            ->patchJson('/api/time-entries/active/stop', ['pin_code' => '1234']);
+
+        $response->assertOk();
+
+        $entry = TimeEntry::query()->where('user_id', $user->id)->first();
+
+        // Should have 0 overtime
+        $this->assertEquals(0, $entry->overtime_minutes);
+
+        Carbon::setTestNow();
     }
 }
