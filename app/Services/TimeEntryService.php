@@ -109,12 +109,14 @@ class TimeEntryService
         $duration = abs((int)$stopTime->diffInSeconds($startTime));
 
         $earlyLeaveData = $this->latenessCalculator->calculateEarlyLeave($user, $stopTime);
+        $overtimeData = $this->latenessCalculator->calculateOvertime($user, $stopTime);
 
         $updateData = [
             'stop_time' => $stopTime,
             'duration' => $duration,
             'early_leave_minutes' => $earlyLeaveData['early_leave_minutes'],
             'scheduled_end_time' => $earlyLeaveData['scheduled_end_time'],
+            'overtime_minutes' => $overtimeData['overtime_minutes'],
         ];
 
         if (isset($data['stop_comment'])) {
@@ -160,7 +162,7 @@ class TimeEntryService
 
     public function deleteTimeEntry(User $user, TimeEntry $timeEntry): array
     {
-        if ($timeEntry->user_id !== $user->id) {
+        if (!$user->isAdmin() && $timeEntry->user_id !== $user->id) {
             throw new AccessDeniedHttpException('You do not have permission to delete this time entry.');
         }
 

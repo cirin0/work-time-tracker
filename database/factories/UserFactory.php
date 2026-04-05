@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\UserRole;
 use App\Enums\WorkMode;
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -32,6 +33,7 @@ class UserFactory extends Factory
             'role' => UserRole::EMPLOYEE,
             'pin_code' => '1234',
             'work_mode' => WorkMode::REMOTE,
+            'company_id' => Company::factory(),
         ];
     }
 

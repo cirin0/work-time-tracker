@@ -18,7 +18,7 @@ class WorkScheduleController extends Controller
 
     public function index(Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->isAdmin() ? null : $request->user()->company_id;
         $data = $this->workScheduleService->getAllWorkSchedulesById($companyId);
 
         return WorkScheduleResource::collection($data['schedules']);
@@ -26,7 +26,7 @@ class WorkScheduleController extends Controller
 
     public function show(string $id, Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->isAdmin() ? null : $request->user()->company_id;
         $data = $this->workScheduleService->getWorkScheduleById($id, $companyId);
 
         if (isset($data['message'])) {
@@ -49,8 +49,8 @@ class WorkScheduleController extends Controller
     public function update(WorkSchedule $workSchedule, UpdateWorkScheduleRequest $request)
     {
         $data = $request->validated();
-        $companyId = $request->user()->company_id;
-        $data['company_id'] = $companyId;
+        $companyId = $request->user()->isAdmin() ? null : $request->user()->company_id;
+        $data['company_id'] = $companyId ?? $workSchedule->company_id;
 
         $result = $this->workScheduleService->update($workSchedule, $data, $companyId);
 
@@ -63,7 +63,7 @@ class WorkScheduleController extends Controller
 
     public function destroy(WorkSchedule $workSchedule, Request $request)
     {
-        $companyId = $request->user()->company_id;
+        $companyId = $request->user()->isAdmin() ? null : $request->user()->company_id;
         $result = $this->workScheduleService->delete($workSchedule, $companyId);
 
         if (isset($result['message'])) {

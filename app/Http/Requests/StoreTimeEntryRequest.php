@@ -14,28 +14,20 @@ class StoreTimeEntryRequest extends FormRequest
 
     public function rules(): array
     {
-        $user = $this->user();
+        $user = auth('api')->user();
         $isAdmin = $user && $user->isAdmin();
         $isOffice = $user && $user->work_mode === WorkMode::OFFICE;
 
         $requireGpsAndQr = $isOffice && !$isAdmin;
+        $gpsRule = $requireGpsAndQr ? 'required|numeric|between:-90,90' : 'nullable|numeric|between:-90,90';
+        $lonRule = $requireGpsAndQr ? 'required|numeric|between:-180,180' : 'nullable|numeric|between:-180,180';
+        $qrRule = $requireGpsAndQr ? 'required|string' : 'nullable|string';
 
         return [
             'start_comment' => 'nullable|string|max:255',
-            'latitude' => [
-                $requireGpsAndQr ? 'required' : 'nullable',
-                'numeric',
-                'between:-90,90',
-            ],
-            'longitude' => [
-                $requireGpsAndQr ? 'required' : 'nullable',
-                'numeric',
-                'between:-180,180',
-            ],
-            'qr_code' => [
-                $requireGpsAndQr ? 'required' : 'nullable',
-                'string',
-            ],
+            'latitude' => $gpsRule,
+            'longitude' => $lonRule,
+            'qr_code' => $qrRule,
         ];
     }
 

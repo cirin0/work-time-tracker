@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -85,4 +86,20 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withBroadcasting(Broadcast::class, attributes: [
         'guards' => ['api'],
     ])
+    ->withSchedule(function (Schedule $schedule) {
+        // Send warnings 30 minutes before auto-close
+        $schedule->command('work-sessions:send-warnings --warning-minutes=30')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping();
+
+        // Auto-close sessions after 5 hours
+        $schedule->command('work-sessions:auto-close --hours=5')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping();
+
+        // Cleanup old audit logs (existing)
+        $schedule->command('audit-logs:cleanup --days=90')
+            ->daily()
+            ->at('02:00');
+    })
     ->create();

@@ -71,4 +71,38 @@ class LatenessCalculator
             'scheduled_end_time' => $scheduledEndTime,
         ];
     }
+
+    public function calculateOvertime(User $user, CarbonInterface $actualEndTime): array
+    {
+        $workSchedule = null;
+
+        if ($user->work_schedule_id) {
+            $workSchedule = $this->cacheService->getWorkSchedule($user->work_schedule_id);
+        }
+
+        if (!$workSchedule) {
+            return ['overtime_minutes' => null, 'scheduled_end_time' => null];
+        }
+
+        $dayOfWeek = strtolower($actualEndTime->format('l'));
+        $dailySchedule = $workSchedule->getDailySchedule($dayOfWeek);
+
+        if (!$dailySchedule || !$dailySchedule->is_working_day || !$dailySchedule->end_time) {
+            return ['overtime_minutes' => null, 'scheduled_end_time' => null];
+        }
+
+        $scheduledEndTime = Carbon::parse($dailySchedule->end_time);
+        $scheduledEnd = $actualEndTime->copy()->setTimeFromTimeString($scheduledEndTime);
+
+        $overtimeMinutes = $scheduledEnd->diffInMinutes($actualEndTime, false);
+
+        if ($overtimeMinutes <= 0) {
+            return ['overtime_minutes' => 0, 'scheduled_end_time' => $scheduledEndTime];
+        }
+
+        return [
+            'overtime_minutes' => (int)$overtimeMinutes,
+            'scheduled_end_time' => $scheduledEndTime,
+        ];
+    }
 }
