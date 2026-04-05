@@ -162,4 +162,73 @@ class AuthService
 
         return ['message' => 'Verification code has been resent to your email'];
     }
+
+    public function forgotPassword(string $email): array
+    {
+        $user = $this->repository->findByEmail($email);
+
+        if (!$user) {
+            return ['error' => true, 'message' => 'User not found'];
+        }
+
+        $cacheKey = 'password_reset:' . $email;
+        if (Cache::has($cacheKey)) {
+            return ['error' => true, 'message' => 'Please wait before requesting a new code'];
+        }
+
+        EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'password_reset')
+            ->whereNull('verified_at')
+            ->delete();
+
+        $code = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+        EmailVerificationCode::query()->create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'type' => 'password_reset',
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        Cache::put($cacheKey, true, now()->addMinute());
+
+        if (config('app.env') === 'local') {
+            return ['message' => 'Password reset code sent. Code for local environment: ' . $code];
+        }
+
+        $user->notify(new VerificationCodeNotification($code, 'скидання пароля'));
+
+        return ['message' => 'Password reset code has been sent to your email'];
+    }
+
+    public function resetPassword(string $email, string $code, string $password): array
+    {
+        $user = $this->repository->findByEmail($email);
+
+        if (!$user) {
+            return ['error' => true, 'message' => 'User not found'];
+        }
+
+        $verificationCode = EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('code', $code)
+            ->where('type', 'password_reset')
+            ->whereNull('verified_at')
+            ->first();
+
+        if (!$verificationCode) {
+            return ['error' => true, 'message' => 'Invalid verification code'];
+        }
+
+        if ($verificationCode->isExpired()) {
+            return ['error' => true, 'message' => 'Verification code has expired'];
+        }
+
+        $verificationCode->update(['verified_at' => now()]);
+
+        $user->update(['password' => bcrypt($password)]);
+
+        return ['message' => 'Password has been reset successfully'];
+    }
 }

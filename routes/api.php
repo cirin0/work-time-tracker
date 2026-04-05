@@ -24,6 +24,8 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('login', 'login')->middleware('throttle:5,1');
     Route::post('logout', 'logout')->middleware('auth:api');
     Route::post('refresh', 'refresh');
+    Route::post('forgot-password', 'forgotPassword')->middleware('throttle:3,1');
+    Route::post('reset-password', 'resetPassword')->middleware('throttle:3,1');
 });
 
 Route::get('/app/update-check', [AppUpdateController::class, 'check']);
