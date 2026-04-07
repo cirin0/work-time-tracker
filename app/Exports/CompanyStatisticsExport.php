@@ -26,24 +26,24 @@ class CompanyStatisticsExport implements FromCollection, WithHeadings, WithMappi
 
     public function title(): string
     {
-        return 'Company Statistics';
+        return 'Статистика компанії';
     }
 
     public function headings(): array
     {
         return [
-            'Employee',
+            'Співробітник',
             'Email',
-            'Working Days',
-            'Total Hours',
-            'Total Minutes (rem.)',
-            'Avg Work Time (min)',
-            'Late Count',
-            'Total Late (min)',
-            'Early Leave Count',
-            'Total Early Leave (min)',
-            'Overtime Count',
-            'Total Overtime (min)',
+            'Робочих днів',
+            'Всього годин',
+            'Всього хвилин (зал.)',
+            'Серед. робочий час (хв)',
+            'Кількість запізнень',
+            'Всього запізнень (хв)',
+            'Кількість ранніх виходів',
+            'Всього ранніх виходів (хв)',
+            'Кількість понаднормових',
+            'Всього понаднормових (хв)',
         ];
     }
 
