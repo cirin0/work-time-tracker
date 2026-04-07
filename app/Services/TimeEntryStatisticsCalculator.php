@@ -3,10 +3,17 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Collection;
 
 class TimeEntryStatisticsCalculator
 {
+    public function __construct(
+        protected CacheService $cacheService
+    )
+    {
+    }
+
     public function calculateStatistics(Collection $completedEntries, int $userId): array
     {
         $totalMinutes = $this->calculateTotalMinutes($completedEntries);
@@ -25,10 +32,55 @@ class TimeEntryStatisticsCalculator
 
     private function calculateTotalMinutes(Collection $entries): int
     {
-        return $entries->sum(function ($entry) {
-            return Carbon::parse($entry->start_time)
-                ->diffInMinutes(Carbon::parse($entry->stop_time));
+        $grouped = $entries->groupBy(function ($entry) {
+            $userId = $entry->user_id;
+            $date = is_string($entry->date) ? $entry->date : $entry->date->format('Y-m-d');
+            return "{$userId}_{$date}";
         });
+
+        $totalMinutes = 0;
+
+        foreach ($grouped as $dayEntries) {
+            $dayWorkedMinutes = $dayEntries->sum(function ($entry) {
+                return round($entry->duration / 60);
+            });
+
+            $breakMinutes = $this->getBreakDurationForEntry($dayEntries->first());
+
+            if ($dayWorkedMinutes > $breakMinutes) {
+                $totalMinutes += $dayWorkedMinutes - $breakMinutes;
+            } else {
+                $totalMinutes += $dayWorkedMinutes;
+            }
+        }
+
+        return $totalMinutes;
+    }
+
+    private function getBreakDurationForEntry($entry): int
+    {
+        if (!$entry->user || !$entry->user->work_schedule_id) {
+            return 0;
+        }
+
+        try {
+            $workSchedule = $this->cacheService->getWorkSchedule($entry->user->work_schedule_id);
+
+            if (!$workSchedule) {
+                return 0;
+            }
+
+            $dayOfWeek = strtolower(Carbon::parse($entry->date)->format('l'));
+            $dailySchedule = $workSchedule->getDailySchedule($dayOfWeek);
+
+            if (!$dailySchedule || !$dailySchedule->is_working_day) {
+                return 0;
+            }
+
+            return $dailySchedule->break_duration ?? 0;
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 
     private function countUniqueDays(Collection $entries): int
@@ -95,7 +147,7 @@ class TimeEntryStatisticsCalculator
 
         return [
             'hours' => (int)floor($totalMinutes / 60),
-            'minutes' => (int)($totalMinutes % 60),
+            'minutes' => $totalMinutes % 60,
             'working_days' => $workingDays,
             'late_count' => $entries->where('lateness_minutes', '>', 0)->count(),
             'early_count' => $entries->where('lateness_minutes', '<', 0)->count(),
