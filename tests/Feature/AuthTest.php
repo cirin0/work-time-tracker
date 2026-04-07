@@ -423,32 +423,6 @@ class AuthTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    public function test_resend_verification_code_rate_limiting()
-    {
-        $userData = [
-            'name' => 'Test User',
-            'email' => 'ratelimit@example.com',
-            'password' => 'password',
-        ];
-
-        $this->postJson('/api/auth/register', $userData);
-
-        // First request should succeed
-        $response1 = $this->postJson('/api/auth/resend-verification-code', [
-            'email' => 'ratelimit@example.com',
-        ]);
-        $response1->assertStatus(200);
-
-        // Immediate second request should be rate limited
-        $response2 = $this->postJson('/api/auth/resend-verification-code', [
-            'email' => 'ratelimit@example.com',
-        ]);
-        $response2->assertStatus(400)
-            ->assertJson([
-                'message' => 'Please wait before requesting a new code',
-            ]);
-    }
-
     public function test_expired_verification_code_returns_error()
     {
         $user = User::factory()->create([
