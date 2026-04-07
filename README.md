@@ -1,6 +1,7 @@
 # Work Time Tracker
 
-RESTful API for work time tracking built with Laravel 12, JWT authentication, WebSocket support, GPS/QR attendance.
+RESTful API for work time tracking built with Laravel 12, JWT authentication, real-time messaging, GPS/QR attendance,
+and Firebase push notifications.
 
 ## Architecture
 
@@ -68,9 +69,10 @@ The project uses the Repository-Service pattern:
 
 ### Real-time Messaging
 
-- WebSocket chat via Laravel Reverb
+- Real-time chat via Laravel Broadcasting (Ably)
 - Private messages between users (encrypted at rest)
 - Rate limiting: 60 messages/minute
+- WebSocket support for instant message delivery
 
 ### Audit Logging
 
@@ -78,19 +80,53 @@ The project uses the Repository-Service pattern:
 - Users see their own logs; managers see company-scoped logs; admins see all
 - `audit-logs:cleanup --days=90` artisan command
 
-### Notifications
+### Push Notifications (Firebase Cloud Messaging)
 
-- Push notifications via Email and Firebase FCM (Cloud Messaging)
-- Triggered on: leave request approve/reject, work schedule update
+- Push notifications via Email and Firebase FCM
+- Triggered on: leave request approve/reject, work schedule update, new app releases
 - FCM token registered per device via `PATCH /api/me/fcm-token`
-- Configure `FIREBASE_CREDENTIALS` in `.env`
+- Supports multiple devices per user
+- Custom notification channel implementation (`FcmChannel`)
+
+**Firebase Setup:**
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Generate a service account key (Project Settings → Service Accounts → Generate New Private Key)
+3. Save the JSON file to `storage/app/firebase-credentials.json`
+4. Update `.env`:
+   ```env
+   FIREBASE_CREDENTIALS=storage/app/firebase-credentials.json
+   FIREBASE_PROJECT_ID=your-project-id
+   ```
+
+### Real-time Broadcasting (Optional)
+
+The application uses Laravel Broadcasting with Ably for real-time features:
+
+- Private chat channels for instant message delivery
+- Event broadcasting for real-time updates
+- WebSocket connections via Ably
+
+**Ably Setup (Optional - for real-time chat):**
+
+1. Sign up at [Ably](https://ably.com/)
+2. Create an app and get API keys
+3. Update `.env`:
+   ```env
+   BROADCAST_CONNECTION=ably
+   ABLY_KEY=your-ably-key
+   ABLY_PUBLIC_KEY=your-ably-public-key
+   ```
+
+If you don't need real-time features, set `BROADCAST_CONNECTION=log` in `.env`.
 
 ### Report Export
 
 - Export own time entries to Excel (.xlsx) via `GET /api/time-entries/export`
 - Optional query params: `from` and `to` (date format `Y-m-d`) to filter by date range
-- Columns: ID, Employee, Email, Date, Start/Stop Time, Duration (min), Entry Type, Lateness, Early Leave, Overtime,
-  Comments
+- All reports are in Ukrainian language
+- Columns: ID, Співробітник, Email, Дата, Час початку, Час завершення, Тривалість (хв), Тип запису, Запізнення (хв),
+  Ранній вихід (хв), Понаднормові (хв), Коментарі
 - Powered by `maatwebsite/excel` (PhpSpreadsheet)
 
 ### Documentation & Monitoring
@@ -112,7 +148,8 @@ The project uses the Repository-Service pattern:
 ### Packages
 
 - **JWT Auth**: ^2.8.3 (php-open-source-saver/jwt-auth)
-- **Reverb**: ^1.8.0 (WebSocket server)
+- **Firebase**: ^7.0 (kreait/laravel-firebase — push notifications)
+- **Ably**: ^1.1 (ably/ably-php — real-time broadcasting)
 - **Scramble**: ^0.12.36 (API documentation)
 - **Excel**: ^3.1 (maatwebsite/excel — xlsx export)
 - **Telescope**: ^5.18.0 (development)
@@ -164,34 +201,60 @@ The project uses the Repository-Service pattern:
    php artisan jwt:secret
    ```
 
-6. **Configure Reverb (WebSocket)**
-   ```bash
-   php artisan reverb:install
-   ```
+6. **Configure Firebase (Optional - for push notifications)**
+    - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+    - Download service account credentials JSON
+    - Save to `storage/app/firebase-credentials.json`
+    - Update `.env`:
+      ```env
+      FIREBASE_CREDENTIALS=storage/app/firebase-credentials.json
+      FIREBASE_PROJECT_ID=your-project-id
+      ```
 
-7. **Run migrations and seed data**
+7. **Configure Broadcasting (Optional - for real-time chat)**
+    - Sign up for [Ably](https://ably.com/) and get API keys
+    - Update `.env`:
+      ```env
+      BROADCAST_CONNECTION=ably
+      ABLY_KEY=your-ably-key
+      ABLY_PUBLIC_KEY=your-ably-public-key
+      ```
+
+8. **Run migrations and seed data**
    ```bash
    php artisan migrate
    php artisan db:seed
    ```
 
-8. **Start the server**
+   This will create the first admin user with the following credentials:
+    - Email: `admin@example.com`
+    - Password: `password`
+    - Role: `Admin`
+
+   **IMPORTANT**: Change the password immediately after first login!
+
+   For development/testing, you can also seed demo data (1 admin, 1 manager, 10 employees with time entries and leave
+   requests):
+   ```bash
+   php artisan db:seed --class=DemoDataSeeder
+   ```
+
+9. **Start the server**
    ```bash
    php artisan octane:start --host=0.0.0.0 --port=8000
    ```
-   For WebSocket support, run Reverb in a separate terminal:
-   ```bash
-   php artisan reverb:start
-   ```
 
-   Or run both together:
+   Or use the dev script:
    ```bash
    composer run dev
    ```
 
-   API will be available at: http://localhost:8000/api
+   The application will be available at: http://localhost:8000
+    - Root path (/) redirects to API documentation
+    - API endpoints: http://localhost:8000/api
+    - API Documentation: http://localhost:8000/docs/api
 
-9. **Run tests**
+10. **Run tests**
     - Create testing database `work-time-tracker_testing`
     - Update `phpunit.xml` with testing database name
    ```bash
@@ -200,8 +263,47 @@ The project uses the Repository-Service pattern:
 
 ## Useful Links
 
+- **Application Root**: http://localhost:8000 (redirects to API docs)
 - **API Documentation**: http://localhost:8000/docs/api
+- **API Endpoints**: http://localhost:8000/api
+- **Health Check**: http://localhost:8000/up
 - **Telescope (dev)**: http://localhost:8000/telescope
+
+## Initial Setup
+
+After running migrations and seeders, the system creates the first admin user automatically:
+
+- **Email**: `admin@example.com`
+- **Password**: `password`
+- **Role**: Admin
+
+**Security Note**: Change the default password immediately after first login using the password change endpoint.
+
+### Demo Data (Optional)
+
+For development and testing purposes, you can seed demo data:
+
+```bash
+php artisan db:seed --class=DemoDataSeeder
+```
+
+This creates:
+
+- 1 Company (Demo Tech Corp)
+- 5 Work Schedules
+- 1 Admin User (admin@demotech.com)
+- 1 Manager User (manager@demotech.com)
+- 10 Employee Users (employee1@demotech.com - employee10@demotech.com)
+- Time entries and leave requests for all employees
+
+All demo users have password: `password`
+
+PIN codes for demo users:
+
+- Admin: `1111`
+- Manager: `2222`
+- Employees 1-5: `1111`, `2222`, `3333`, `4444`, `5555`
+- Employees 6-10: No PIN set
 
 ## API Endpoints
 
