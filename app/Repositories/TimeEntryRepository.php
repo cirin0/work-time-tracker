@@ -128,4 +128,22 @@ class TimeEntryRepository
             ->orderBy('start_time')
             ->get();
     }
+
+    public function hasEntryForDate(int $userId, string $date): bool
+    {
+        return TimeEntry::query()
+            ->where('user_id', $userId)
+            ->whereDate('date', $date)
+            ->exists();
+    }
+
+    public function getActiveEntriesForDate(int $userId, string $date, ?int $excludeEntryId = null): Collection
+    {
+        return TimeEntry::query()
+            ->where('user_id', $userId)
+            ->whereDate('date', $date)
+            ->whereNull('stop_time')
+            ->when($excludeEntryId, fn($q) => $q->where('id', '!=', $excludeEntryId))
+            ->get();
+    }
 }

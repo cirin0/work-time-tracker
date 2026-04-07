@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Enums\EntryType;
+use App\Enums\LeaveRequestStatus;
+use App\Enums\LeaveRequestType;
 use App\Enums\WorkMode;
+use App\Models\LeaveRequest;
 use App\Models\TimeEntry;
 use App\Models\User;
 use App\Repositories\TimeEntryRepository;
@@ -40,11 +43,38 @@ class TimeEntryService
             throw new BadRequestHttpException('An active time entry already exists. Please stop it before starting a new one.');
         }
 
+        $today = now()->format('Y-m-d');
+        $approvedLeave = LeaveRequest::query()
+            ->where('user_id', $user->id)
+            ->where('status', LeaveRequestStatus::APPROVED)
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->first();
+
+        $isOnBusinessTrip = false;
+
+        if ($approvedLeave) {
+            if (in_array($approvedLeave->type, [
+                LeaveRequestType::SICK,
+                LeaveRequestType::VACATION,
+                LeaveRequestType::UNPAID,
+                LeaveRequestType::PERSONAL,
+            ])) {
+                throw new BadRequestHttpException('You cannot clock in during approved leave.');
+            }
+
+            if ($approvedLeave->type === LeaveRequestType::BUSINESS_TRIP) {
+                $isOnBusinessTrip = true;
+            }
+        }
+
         $hasGpsData = isset($data['latitude']) && isset($data['longitude']);
         $isAdmin = $user->isAdmin();
 
         if ($isAdmin && !$hasGpsData) {
             $entryType = EntryType::MANUAL;
+        } elseif ($isOnBusinessTrip) {
+            $entryType = $hasGpsData ? EntryType::REMOTE : EntryType::MANUAL;
         } else {
             $entryType = match ($user->work_mode) {
                 WorkMode::OFFICE => EntryType::GPS_QR,
@@ -53,7 +83,7 @@ class TimeEntryService
             };
         }
 
-        if (!$isAdmin && $user->work_mode === WorkMode::OFFICE) {
+        if (!$isAdmin && $user->work_mode === WorkMode::OFFICE && !$isOnBusinessTrip) {
             $company = $this->cacheService->getCompany($user->company_id);
 
             $distance = $this->gpsDistanceCalculator->calculate(
@@ -73,7 +103,24 @@ class TimeEntryService
         }
 
         $now = now();
-        $latenessData = $this->latenessCalculator->calculate($user, $now);
+
+        $isFirstEntryOfDay = !$this->timeEntryRepository->hasEntryForDate($user->id, $now->format('Y-m-d'));
+
+        $latenessData = $isFirstEntryOfDay
+            ? $this->latenessCalculator->calculate($user, $now)
+            : ['lateness_minutes' => null, 'scheduled_start_time' => null];
+
+        if (!$isFirstEntryOfDay) {
+            TimeEntry::query()
+                ->where('user_id', $user->id)
+                ->whereDate('date', $now->format('Y-m-d'))
+                ->whereNotNull('stop_time')
+                ->update([
+                    'early_leave_minutes' => null,
+                    'overtime_minutes' => null,
+                    'scheduled_end_time' => null,
+                ]);
+        }
 
         $timeEntry = $this->timeEntryRepository->create([
             'user_id' => $user->id,

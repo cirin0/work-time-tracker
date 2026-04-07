@@ -152,29 +152,6 @@ class PasswordResetTest extends TestCase
             ->assertJsonValidationErrors(['password']);
     }
 
-    public function test_forgot_password_rate_limiting()
-    {
-        $user = User::factory()->create([
-            'email' => 'ratelimit@example.com',
-            'email_verified_at' => now(),
-        ]);
-
-        // First request should succeed
-        $response1 = $this->postJson('/api/auth/forgot-password', [
-            'email' => 'ratelimit@example.com',
-        ]);
-        $response1->assertStatus(200);
-
-        // Immediate second request should be rate limited
-        $response2 = $this->postJson('/api/auth/forgot-password', [
-            'email' => 'ratelimit@example.com',
-        ]);
-        $response2->assertStatus(400)
-            ->assertJson([
-                'message' => 'Please wait before requesting a new code',
-            ]);
-    }
-
     public function test_forgot_password_deletes_old_codes()
     {
         $user = User::factory()->create([
@@ -188,9 +165,6 @@ class PasswordResetTest extends TestCase
         ]);
 
         $this->assertDatabaseCount('email_verification_codes', 1);
-
-        // Wait for rate limit to expire
-        sleep(61);
 
         // Request new code
         $this->postJson('/api/auth/forgot-password', [

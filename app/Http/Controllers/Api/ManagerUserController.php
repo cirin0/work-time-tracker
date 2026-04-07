@@ -126,10 +126,17 @@ class ManagerUserController extends Controller
     public function getCompanyUsers(): AnonymousResourceCollection
     {
         $manager = Auth::user();
+        $search = request()->query('search');
 
         $users = User::query()
             ->where('company_id', $manager->company_id)
             ->with(['workSchedule', 'manager'])
+            ->when(!empty($search), function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('email', 'ilike', "%{$search}%");
+                });
+            })
             ->paginate(15);
 
         return ManagerUserResource::collection($users);

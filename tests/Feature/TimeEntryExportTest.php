@@ -166,11 +166,11 @@ class TimeEntryExportTest extends TestCase
             function (TimeEntryExport $export) {
                 $headings = $export->headings();
 
-                return in_array('Date', $headings)
-                    && in_array('Start Time', $headings)
-                    && in_array('Stop Time', $headings)
-                    && in_array('Duration (min)', $headings)
-                    && in_array('Entry Type', $headings);
+                return in_array('Дата', $headings)
+                    && in_array('Час початку', $headings)
+                    && in_array('Час завершення', $headings)
+                    && in_array('Тривалість (хв)', $headings)
+                    && in_array('Тип запису', $headings);
             }
         );
     }

@@ -27,8 +27,16 @@ class AdminUserController extends Controller
 
     public function getAllUsers(): AnonymousResourceCollection
     {
+        $search = request()->query('search');
+
         $users = User::query()
             ->with(['company', 'workSchedule', 'manager'])
+            ->when(!empty($search), function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('email', 'ilike', "%{$search}%");
+                });
+            })
             ->paginate(15);
 
         return AdminUserResource::collection($users);
@@ -46,9 +54,17 @@ class AdminUserController extends Controller
 
     public function getUsersByCompany(int $companyId): AnonymousResourceCollection
     {
+        $search = request()->query('search');
+
         $users = User::query()
             ->where('company_id', $companyId)
             ->with(['company', 'workSchedule', 'manager'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('email', 'ilike', "%{$search}%");
+                });
+            })
             ->paginate(15);
 
         return AdminUserResource::collection($users);

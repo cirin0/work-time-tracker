@@ -27,18 +27,18 @@ class TimeEntryExport implements FromCollection, WithHeadings, WithMapping, Shou
     {
         return [
             'ID',
-            'Employee',
+            'Співробітник',
             'Email',
-            'Date',
-            'Start Time',
-            'Stop Time',
-            'Duration (min)',
-            'Entry Type',
-            'Lateness (min)',
-            'Early Leave (min)',
-            'Overtime (min)',
-            'Start Comment',
-            'Stop Comment',
+            'Дата',
+            'Час початку',
+            'Час завершення',
+            'Тривалість (хв)',
+            'Тип запису',
+            'Запізнення (хв)',
+            'Ранній вихід (хв)',
+            'Понаднормові (хв)',
+            'Коментар початку',
+            'Коментар завершення',
         ];
     }
 
@@ -54,13 +54,25 @@ class TimeEntryExport implements FromCollection, WithHeadings, WithMapping, Shou
             $entry->start_time?->format('H:i:s'),
             $entry->stop_time?->format('H:i:s'),
             $durationMinutes,
-            $entry->entry_type?->value ?? 'manual',
+            $this->translateEntryType($entry->entry_type?->value ?? 'manual'),
             $entry->lateness_minutes ?? 0,
             $entry->early_leave_minutes ?? 0,
             $entry->overtime_minutes ?? 0,
             $entry->start_comment ?? '',
             $entry->stop_comment ?? '',
         ];
+    }
+
+    protected function translateEntryType(string $type): string
+    {
+        return match ($type) {
+            'gps' => 'GPS',
+            'qr' => 'QR-код',
+            'gps_qr' => 'GPS + QR-код',
+            'remote' => 'Віддалено',
+            'manual' => 'Вручну',
+            default => $type,
+        };
     }
 
     public function styles(Worksheet $sheet): array

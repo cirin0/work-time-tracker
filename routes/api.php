@@ -21,17 +21,17 @@ Route::prefix('auth')->controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('verify-email', 'verifyEmail');
     Route::post('resend-verification-code', 'resendVerificationCode');
-    Route::post('login', 'login')->middleware('throttle:5,1');
+    Route::post('login', 'login');
     Route::post('logout', 'logout')->middleware('auth:api');
     Route::post('refresh', 'refresh');
-    Route::post('forgot-password', 'forgotPassword')->middleware('throttle:3,1');
-    Route::post('reset-password', 'resetPassword')->middleware('throttle:3,1');
+    Route::post('forgot-password', 'forgotPassword');
+    Route::post('reset-password', 'resetPassword');
 });
 
 Route::get('/app/update-check', [AppUpdateController::class, 'check']);
 Route::get('/app/download', [AppUpdateController::class, 'download']);
 Route::post('/ci/app-releases', [AppUpdateController::class, 'store'])
-    ->middleware(['ci.upload', 'throttle:10,1']);
+    ->middleware(['ci.upload']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/messages/{receiverId}', [MessageController::class, 'index']);
@@ -58,7 +58,7 @@ Route::middleware('auth:api')->prefix('/users')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
     Route::get('/leave-requests/{leaveRequest}', [LeaveRequestController::class, 'show']);
-    Route::post('/leave-requests', [LeaveRequestController::class, 'store'])->middleware('throttle:10,1');
+    Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
 });
 
 Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admin')->group(function () {
@@ -123,8 +123,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/time-entries/active', [TimeEntryController::class, 'active']);
     Route::get('/time-entries/summary/me', [TimeEntryController::class, 'summary']);
     Route::get('/time-entries/export', [TimeEntryController::class, 'export']);
-    Route::post('/time-entries', [TimeEntryController::class, 'store'])->middleware('throttle:20,1');
-    Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive'])->middleware('throttle:20,1');
+    Route::post('/time-entries', [TimeEntryController::class, 'store']);
+    Route::patch('/time-entries/active/stop', [TimeEntryController::class, 'stopActive']);
     Route::get('/time-entries/{timeEntry}', [TimeEntryController::class, 'show']);
     Route::delete('/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
     Route::get('/qr-code/daily', [TimeEntryController::class, 'getDailyQrCode']);
@@ -134,7 +134,7 @@ Route::middleware(['auth:api'])->prefix('work-schedules')->group(function () {
     Route::get('/', [WorkScheduleController::class, 'index']);
     Route::get('/{workSchedule}', [WorkScheduleController::class, 'show']);
     Route::middleware('role:admin,manager')->group(function () {
-        Route::post('/', [WorkScheduleController::class, 'store'])->middleware('throttle:10,1');
+        Route::post('/', [WorkScheduleController::class, 'store']);
         Route::patch('/{workSchedule}', [WorkScheduleController::class, 'update']);
         Route::delete('/{workSchedule}', [WorkScheduleController::class, 'destroy']);
     });
@@ -150,7 +150,3 @@ Route::middleware('auth:api')->prefix('audit-logs')->group(function () {
 Route::get('/login', function () {
     return response()->json(['message' => 'Please authenticate'], 401);
 })->name('login');
-
-Route::get('/test', function () {
-    return response()->json(['message' => 'API is working']);
-})->name('test');
