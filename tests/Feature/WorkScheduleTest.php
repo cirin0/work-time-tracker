@@ -179,7 +179,7 @@ class WorkScheduleTest extends TestCase
         $scheduleData = [
             'name' => '', // Invalid name
             'daily_schedules' => [
-                ['day_of_week' => 'monday', 'start_time' => '17:00', 'end_time' => '09:00', 'break_duration' => 60, 'is_working_day' => true],
+                ['day_of_week' => 'monday', 'start_time' => '09:00', 'end_time' => '09:00', 'break_duration' => 60, 'is_working_day' => true],
             ]
         ];
 

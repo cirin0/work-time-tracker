@@ -55,10 +55,10 @@ class StoreWorkScheduleRequest extends FormRequest
                     $startTime = $schedule['start_time'] ?? null;
                     $endTime = $schedule['end_time'] ?? null;
 
-                    if ($startTime && $endTime && $startTime >= $endTime) {
+                    if ($startTime && $endTime && $startTime === $endTime) {
                         $validator->errors()->add(
                             "daily_schedules.{$index}.end_time",
-                            'Час закінчення повинен бути пізніше часу початку для робочих днів.'
+                            'Час початку та завершення не можуть співпадати для робочих днів.'
                         );
                     }
                 }

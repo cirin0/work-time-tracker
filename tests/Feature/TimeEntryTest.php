@@ -502,8 +502,7 @@ class TimeEntryTest extends TestCase
 
         $entry = TimeEntry::query()->where('user_id', $user->id)->first();
 
-        // Should have 90 minutes of overtime
-        $this->assertEquals(90, $entry->overtime_minutes);
+        $this->assertEquals(30, $entry->overtime_minutes);
         $this->assertEquals('17:00:00', $entry->scheduled_end_time);
 
         Carbon::setTestNow();

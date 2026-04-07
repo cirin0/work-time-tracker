@@ -174,11 +174,11 @@ class ManagerStatisticsTest extends TestCase
             function (CompanyStatisticsExport $export) {
                 $headings = $export->headings();
 
-                return in_array('Employee', $headings)
+                return in_array('Співробітник', $headings)
                     && in_array('Email', $headings)
-                    && in_array('Working Days', $headings)
-                    && in_array('Total Hours', $headings)
-                    && in_array('Late Count', $headings);
+                    && in_array('Робочих днів', $headings)
+                    && in_array('Всього годин', $headings)
+                    && in_array('Кількість запізнень', $headings);
             }
         );
     }
@@ -270,8 +270,8 @@ class ManagerStatisticsTest extends TestCase
 
         Excel::assertDownloaded($expectedFilename, function (EmployeeStatisticsExport $export) {
             $rows = $export->array();
-            // First row is ['Employee', name]
-            return $rows[0][0] === 'Employee'
+            // First row is ['Співробітник', name]
+            return $rows[0][0] === 'Співробітник'
                 && $rows[0][1] === $this->employee->name;
         });
     }
