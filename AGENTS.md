@@ -25,6 +25,8 @@ expert with them all. Ensure you abide by these specific packages & versions.
 - laravel/telescope (TELESCOPE) - v5
 - pestphp/pest (PEST) - v3
 - phpunit/phpunit (PHPUNIT) - v11
+- php-open-source-saver/jwt-auth (JWT-AUTH) - v2
+- maatwebsite/excel (EXCEL) - v3
 
 ## Conventions
 
@@ -42,6 +44,12 @@ expert with them all. Ensure you abide by these specific packages & versions.
 
 - Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
+- This codebase primarily follows a Controller -> Service -> Repository flow for API features (example:
+  `app/Http/Controllers/Api/TimeEntryController.php` -> `app/Services/TimeEntryService.php` ->
+  `app/Repositories/TimeEntryRepository.php`).
+- Keep validation in Form Requests where already established (for example `StoreTimeEntryRequest`,
+  `StopTimeEntryRequest`),
+  and keep API response shaping in Resources under `app/Http/Resources/`.
 
 ## Frontend Bundling
 
@@ -179,6 +187,8 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 - When creating new models, create useful factories and seeders for them too. Ask the user if they need any other
   things, using `php artisan make:model --help` to check the available options.
+- Follow existing API conventions in `routes/api.php`: non-versioned `/api/*` routes with JWT guard `auth:api`, and use
+  Resources where that pattern already exists.
 
 ### APIs & Eloquent Resources
 
@@ -187,6 +197,10 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 ## Controllers & Validation
 
+- This API authenticates with JWT (`config/auth.php` guard `api` uses `driver => jwt`) and protects routes with
+  `auth:api`.
+- Use the existing role middleware alias (`role`) declared in `bootstrap/app.php` for role checks such as `role:admin`
+  and `role:manager,admin`.
 - Always create Form Request classes for validation rather than inline validation in controllers. Include both
   validation rules and custom error messages.
 - Check sibling Form Requests to see if the application uses array or string based validation rules.
@@ -205,6 +219,8 @@ protected function isAccessible(User $user, ?string $path = null): bool
 
 ## Configuration
 
+- Existing tests in `tests/Feature/` are primarily class-based PHPUnit-style test classes running through Pest; follow
+  the same style in neighboring files.
 - Use environment variables only in configuration files - never use the `env()` function directly outside of config
   files. Always use `config('app.name')`, not `env('APP_NAME')`.
 
@@ -225,6 +241,9 @@ protected function isAccessible(User $user, ?string $path = null): bool
 === laravel/v12 rules ===
 
 # Laravel 12
+
+- Task scheduling is configured in `bootstrap/app.php` via `withSchedule()` (for example `work-sessions:send-warnings`,
+  `work-sessions:auto-close`, `audit-logs:cleanup`).
 
 - CRITICAL: ALWAYS use `search-docs` tool for version-specific Laravel documentation and updated code examples.
 - Since Laravel 11, Laravel has a new streamlined file structure which this project uses.
