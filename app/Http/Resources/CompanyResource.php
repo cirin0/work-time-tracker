@@ -40,6 +40,13 @@ class CompanyResource extends JsonResource
                 ];
             })),
             'employee_count' => $this->employees_count,
+            'work_schedules' => $this->whenLoaded('workSchedules', fn() => $this->workSchedules->map(function ($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'name' => $schedule->name,
+                    'is_default' => $schedule->is_default,
+                ];
+            })),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

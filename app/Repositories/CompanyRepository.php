@@ -10,7 +10,7 @@ class CompanyRepository
     public function find(int $id): ?Company
     {
         return Company::query()
-            ->with(['manager', 'employees'])
+            ->with(['manager', 'employees', 'workSchedules'])
             ->withCount('employees')
             ->find($id);
     }
