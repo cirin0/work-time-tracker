@@ -87,23 +87,21 @@ Route::middleware('auth:api')->prefix('managers')->middleware('role:manager,admi
     });
 });
 
-Route::middleware('auth:api')->prefix('companies')->group(function () {
-    Route::get('/{company}', [CompanyController::class, 'show']);
-    Route::get('/name/{company}', [CompanyController::class, 'showByName']);
+Route::middleware('auth:api')->group(function () {
+    Route::get('/company', [CompanyController::class, 'show']);
 });
 
 Route::middleware('auth:api')->prefix('admin')->middleware('role:admin')->group(function () {
-    Route::post('/companies', [AdminCompanyController::class, 'store']);
-    Route::patch('/companies/{company}', [AdminCompanyController::class, 'update']);
-    Route::post('/companies/{company}/logo', [AdminCompanyController::class, 'updateLogo']);
-    Route::delete('/companies/{company}', [AdminCompanyController::class, 'destroy']);
-    Route::post('/companies/{company}/assign-manager', [AdminCompanyController::class, 'assignManager']);
-    Route::post('/companies/{company}/add-employee', [AdminCompanyController::class, 'addEmployee']);
-    Route::delete('/companies/{company}/remove-employee', [AdminCompanyController::class, 'removeEmployee']);
+    Route::post('/company', [AdminCompanyController::class, 'store']);
+    Route::patch('/company', [AdminCompanyController::class, 'update']);
+    Route::post('/company/logo', [AdminCompanyController::class, 'updateLogo']);
+    Route::delete('/company', [AdminCompanyController::class, 'destroy']);
+    Route::post('/company/assign-manager', [AdminCompanyController::class, 'assignManager']);
+    Route::post('/company/add-employee', [AdminCompanyController::class, 'addEmployee']);
+    Route::delete('/company/remove-employee', [AdminCompanyController::class, 'removeEmployee']);
 
     Route::get('/users', [AdminUserController::class, 'getAllUsers']);
     Route::get('/users/{user}', [AdminUserController::class, 'getUser']);
-    Route::get('/companies/{companyId}/users', [AdminUserController::class, 'getUsersByCompany']);
     Route::patch('/users/{user}', [AdminUserController::class, 'updateUser']);
     Route::patch('/users/{user}/role', [AdminUserController::class, 'updateUserRole']);
     Route::patch('/users/{user}/work-mode', [AdminUserController::class, 'updateWorkMode']);

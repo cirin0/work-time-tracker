@@ -34,7 +34,16 @@ class LatenessCalculator
         $scheduledStartTime = Carbon::parse($dailySchedule->start_time);
         $scheduledStart = $actualStartTime->copy()->setTimeFromTimeString($scheduledStartTime);
 
-        $latenessMinutes = $scheduledStart->diffInMinutes($actualStartTime, false);
+        // Get grace period from company settings
+        $graceMinutes = $user->company->lateness_grace_minutes ?? 0;
+        $scheduledStartWithGrace = $scheduledStart->copy()->addMinutes($graceMinutes);
+
+        $latenessMinutes = $scheduledStartWithGrace->diffInMinutes($actualStartTime, false);
+
+        // Only count as late if after grace period
+        if ($latenessMinutes < 0) {
+            $latenessMinutes = 0;
+        }
 
         return [
             'lateness_minutes' => (int)$latenessMinutes,
@@ -133,6 +142,15 @@ class LatenessCalculator
         $overtimeMinutes = $resolved['scheduled_end']->diffInMinutes($actualEndTime, false);
 
         if ($overtimeMinutes <= 0) {
+            return ['overtime_minutes' => 0, 'scheduled_end_time' => $resolved['scheduled_end_time']];
+        }
+
+        // Get overtime threshold from company settings (in hours, convert to minutes)
+        $thresholdHours = $user->company->overtime_threshold_hours ?? 0;
+        $thresholdMinutes = $thresholdHours * 60;
+
+        // Only count as overtime if exceeds threshold
+        if ($overtimeMinutes < $thresholdMinutes) {
             return ['overtime_minutes' => 0, 'scheduled_end_time' => $resolved['scheduled_end_time']];
         }
 

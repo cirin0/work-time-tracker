@@ -24,10 +24,16 @@ class Company extends Model
         'longitude',
         'radius_meters',
         'qr_secret',
+        'lateness_grace_minutes',
+        'overtime_threshold_hours',
     ];
 
     protected $hidden = [
         'qr_secret',
+    ];
+
+    protected $casts = [
+        'overtime_threshold_hours' => 'decimal:2',
     ];
 
     public function manager(): BelongsTo

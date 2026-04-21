@@ -18,6 +18,11 @@ class CompanyService
     {
     }
 
+    public function getCompany(): array
+    {
+        return ['company' => $this->companyRepository->first()];
+    }
+
     public function create(array $data, ?User $creator = null): array
     {
         if (isset($data['logo']) && $data['logo']) {
@@ -26,6 +31,9 @@ class CompanyService
 
         $qr_secret = (string)Str::uuid();
         $data['qr_secret'] = $qr_secret;
+
+        $data['lateness_grace_minutes'] = $data['lateness_grace_minutes'] ?? 0;
+        $data['overtime_threshold_hours'] = $data['overtime_threshold_hours'] ?? 0;
 
         $company = $this->companyRepository->create($data);
 
@@ -40,16 +48,6 @@ class CompanyService
         $this->cacheService->clearCompanyCache($company->id);
 
         return ['company' => $company->fresh()];
-    }
-
-    public function getCompanyById(Company $company): array
-    {
-        return ['company' => $this->companyRepository->find($company->id)];
-    }
-
-    public function getCompanyByName(string $company): array
-    {
-        return ['company' => $this->companyRepository->findByName($company)];
     }
 
     public function assignManagerToCompany(Company $company, int $managerId): array

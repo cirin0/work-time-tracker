@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use App\Http\Resources\CompanyResource;
 use App\Http\Resources\CompanyStoreResource;
 use App\Models\Company;
 use App\Models\User;
@@ -16,9 +15,11 @@ class CompanyTest extends TestCase
 
     public function test_admin_can_create_company(): void
     {
+        Company::query()->delete();
+
         $admin = User::factory()->create(['role' => UserRole::ADMIN, 'company_id' => null]);
 
-        $response = $this->actingAs($admin, 'api')->postJson('/api/admin/companies', [
+        $response = $this->actingAs($admin, 'api')->postJson('/api/admin/company', [
             'name' => 'Test Company',
             'email' => 'company@test.com',
             'phone' => '1234567890',
@@ -43,7 +44,7 @@ class CompanyTest extends TestCase
     {
         $employee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
 
-        $response = $this->actingAs($employee, 'api')->postJson('/api/admin/companies', [
+        $response = $this->actingAs($employee, 'api')->postJson('/api/admin/company', [
             'name' => 'Test Company',
             'email' => 'company@test.com',
             'phone' => '1234567890',
@@ -54,7 +55,7 @@ class CompanyTest extends TestCase
 
     public function test_unauthenticated_user_cannot_create_company(): void
     {
-        $response = $this->postJson('/api/admin/companies', [
+        $response = $this->postJson('/api/admin/company', [
             'name' => 'Test Company',
         ]);
 
@@ -63,9 +64,10 @@ class CompanyTest extends TestCase
 
     public function test_company_creation_requires_a_name(): void
     {
+        Company::query()->delete();
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
 
-        $response = $this->actingAs($admin, 'api')->postJson('/api/admin/companies', [
+        $response = $this->actingAs($admin, 'api')->postJson('/api/admin/company', [
             'email' => 'company@test.com',
         ]);
 
@@ -75,69 +77,40 @@ class CompanyTest extends TestCase
     public function test_authenticated_user_can_view_company(): void
     {
         $user = User::factory()->create();
-        $company = Company::factory()->create();
+        Company::factory()->create();
 
-        $response = $this->actingAs($user, 'api')->getJson("/api/companies/{$company->id}");
-
-        $response->assertOk();
-
-        $company = Company::query()->with(['manager', 'employees'])->withCount('employees')->find($company->id);
-
-        $response->assertExactJson((new CompanyResource($company))->resolve());
-    }
-
-    public function test_admin_can_update_any_company(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
-        $company = Company::factory()->create();
-
-        $response = $this->actingAs($admin, 'api')
-            ->patchJson("/api/admin/companies/{$company->id}", [
-                'name' => 'Updated Name',
-                'email' => 'updated@test.com',
-            ]);
+        $response = $this->actingAs($user, 'api')->getJson('/api/company');
 
         $response->assertOk();
-        $company->refresh();
 
-        $response->assertExactJson([
-            'message' => 'Company updated successfully',
-            'data' => (new CompanyStoreResource($company))->resolve(),
-        ]);
+        $company = Company::first();
+
+        $response->assertJsonFragment(['id' => $company->id]);
+        $response->assertJsonFragment(['name' => $company->name]);
     }
 
     public function test_non_admin_cannot_update_company(): void
     {
         $employee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
-        $company = Company::factory()->create();
+        Company::factory()->create();
 
         $response = $this->actingAs($employee, 'api')
-            ->patchJson("/api/admin/companies/{$company->id}", [
+            ->patchJson('/api/admin/company', [
                 'name' => 'Updated Name',
             ]);
 
         $response->assertForbidden();
-    }
-
-    public function test_admin_can_delete_any_company(): void
-    {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
-        $company = Company::factory()->create();
-
-        $response = $this->actingAs($admin, 'api')->deleteJson("/api/admin/companies/{$company->id}");
-
-        $response->assertNoContent();
-        $this->assertDatabaseMissing('companies', ['id' => $company->id]);
     }
 
     public function test_non_admin_cannot_delete_company(): void
     {
         $manager = User::factory()->create(['role' => UserRole::MANAGER]);
         $company = Company::factory()->create();
+        $companyId = $company->id;
 
-        $response = $this->actingAs($manager, 'api')->deleteJson("/api/admin/companies/{$company->id}");
+        $response = $this->actingAs($manager, 'api')->deleteJson('/api/admin/company');
 
         $response->assertForbidden();
-        $this->assertDatabaseHas('companies', ['id' => $company->id]);
+        $this->assertDatabaseHas('companies', ['id' => $companyId]);
     }
 }

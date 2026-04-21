@@ -35,8 +35,8 @@ class MultipleEntriesPerDayTest extends TestCase
 
         $entry = TimeEntry::where('user_id', $user->id)->first();
 
-        // Should have lateness calculated
-        $this->assertEquals(30, $entry->lateness_minutes);
+        // Should have lateness calculated (30 min late - 5 min grace = 25 min)
+        $this->assertEquals(25, $entry->lateness_minutes);
         $this->assertEquals('09:00:00', $entry->scheduled_start_time);
     }
 
@@ -245,7 +245,7 @@ class MultipleEntriesPerDayTest extends TestCase
         $entry = TimeEntry::where('user_id', $user->id)->first();
 
         // Should have all calculations (first and last entry)
-        $this->assertEquals(30, $entry->lateness_minutes); // 30 min late
+        $this->assertEquals(25, $entry->lateness_minutes); // 30 min late - 5 min grace = 25 min
         $this->assertEquals('09:00:00', $entry->scheduled_start_time);
         $this->assertEquals(60, $entry->overtime_minutes); // 1 hour overtime (20:00 - 19:00)
         $this->assertEquals('18:00:00', $entry->scheduled_end_time);

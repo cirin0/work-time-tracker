@@ -29,6 +29,8 @@ class CompanyResource extends JsonResource
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'radius_meters' => $this->radius_meters,
+            'lateness_grace_minutes' => $this->lateness_grace_minutes,
+            'overtime_threshold_hours' => $this->overtime_threshold_hours,
             'employees' => $this->whenLoaded('employees', fn() => $this->employees->filter(function ($user) {
                 return $user->role->value !== 'manager';
             })->map(function ($employee) {

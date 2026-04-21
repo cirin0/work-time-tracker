@@ -23,6 +23,12 @@ class AdminCompanyController extends Controller
 
     public function store(StoreCompanyRequest $request): JsonResponse
     {
+        if (Company::count() > 0) {
+            return response()->json([
+                'message' => 'Company already exists. Only one company per instance is allowed.',
+            ], 400);
+        }
+
         $data = $this->companyService->create(
             $request->validated(),
             $request->user()
@@ -34,8 +40,9 @@ class AdminCompanyController extends Controller
         ], 201);
     }
 
-    public function update(UpdateCompanyRequest $request, Company $company): JsonResponse
+    public function update(UpdateCompanyRequest $request): JsonResponse
     {
+        $company = Company::firstOrFail();
         $data = $this->companyService->update($company, $request->validated());
 
         return response()->json([
@@ -44,8 +51,9 @@ class AdminCompanyController extends Controller
         ]);
     }
 
-    public function updateLogo(UploadLogoRequest $request, Company $company): JsonResponse
+    public function updateLogo(UploadLogoRequest $request): JsonResponse
     {
+        $company = Company::firstOrFail();
         $data = $this->companyService->updateLogo($company, $request->validated('logo'));
 
         return response()->json([
@@ -54,8 +62,9 @@ class AdminCompanyController extends Controller
         ]);
     }
 
-    public function destroy(Company $company): JsonResponse
+    public function destroy(): JsonResponse
     {
+        $company = Company::firstOrFail();
         $this->companyService->delete($company);
 
         return response()->json([
@@ -63,8 +72,9 @@ class AdminCompanyController extends Controller
         ], 204);
     }
 
-    public function assignManager(AssignManagerToCompanyRequest $request, Company $company): JsonResponse
+    public function assignManager(AssignManagerToCompanyRequest $request): JsonResponse
     {
+        $company = Company::firstOrFail();
         $result = $this->companyService->assignManagerToCompany(
             $company,
             $request->validated('manager_id')
@@ -80,8 +90,9 @@ class AdminCompanyController extends Controller
         ]);
     }
 
-    public function addEmployee(AdminAddEmployeeRequest $request, Company $company): JsonResponse
+    public function addEmployee(AdminAddEmployeeRequest $request): JsonResponse
     {
+        $company = Company::firstOrFail();
         $result = $this->companyService->addEmployeeToCompany(
             $company,
             $request->validated('employee_id')
@@ -97,8 +108,9 @@ class AdminCompanyController extends Controller
         ]);
     }
 
-    public function removeEmployee(AdminRemoveEmployeeRequest $request, Company $company)
+    public function removeEmployee(AdminRemoveEmployeeRequest $request)
     {
+        $company = Company::firstOrFail();
         $result = $this->companyService->removeEmployeeFromCompany(
             $company,
             $request->validated('employee_id')

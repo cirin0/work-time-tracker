@@ -23,6 +23,8 @@ class StoreCompanyRequest extends FormRequest
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'radius_meters' => 'nullable|integer|min:1',
+            'lateness_grace_minutes' => 'nullable|integer|min:0|max:60',
+            'overtime_threshold_hours' => 'nullable|numeric|min:0|max:24',
         ];
     }
 

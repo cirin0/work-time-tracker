@@ -83,28 +83,6 @@ test('admin search is case insensitive', function () {
         ->assertJsonFragment(['name' => 'John Doe']);
 });
 
-test('admin can search users by company', function () {
-    $company2 = Company::factory()->create();
-
-    User::factory()->create([
-        'name' => 'Company1 User',
-        'email' => 'user1@company1.com',
-        'company_id' => $this->company->id,
-    ]);
-
-    User::factory()->create([
-        'name' => 'Company2 User',
-        'email' => 'user2@company2.com',
-        'company_id' => $company2->id,
-    ]);
-
-    actingAs($this->admin, 'api')
-        ->getJson("/api/admin/companies/{$this->company->id}/users?search=Company1")
-        ->assertOk()
-        ->assertJsonFragment(['name' => 'Company1 User'])
-        ->assertJsonMissing(['name' => 'Company2 User']);
-});
-
 test('admin gets all users when no search query provided', function () {
     User::factory()->count(3)->create(['company_id' => $this->company->id]);
 

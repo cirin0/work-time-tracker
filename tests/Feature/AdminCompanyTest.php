@@ -24,7 +24,9 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_create_company(): void
     {
-        $response = $this->actingAs($this->admin, 'api')->postJson('/api/admin/companies', [
+        Company::query()->delete();
+
+        $response = $this->actingAs($this->admin, 'api')->postJson('/api/admin/company', [
             'name' => 'New Test Company',
             'email' => 'newcompany@test.com',
             'phone' => '1234567890',
@@ -42,7 +44,9 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_create_company_with_manager(): void
     {
-        $response = $this->actingAs($this->admin, 'api')->postJson('/api/admin/companies', [
+        Company::query()->delete();
+
+        $response = $this->actingAs($this->admin, 'api')->postJson('/api/admin/company', [
             'name' => 'Company With Manager',
             'email' => 'company@test.com',
             'manager_id' => $this->manager->id,
@@ -57,7 +61,7 @@ class AdminCompanyTest extends TestCase
 
     public function test_non_admin_cannot_create_company(): void
     {
-        $response = $this->actingAs($this->employee, 'api')->postJson('/api/admin/companies', [
+        $response = $this->actingAs($this->employee, 'api')->postJson('/api/admin/company', [
             'name' => 'Test Company',
             'email' => 'company@test.com',
         ]);
@@ -67,8 +71,10 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_update_company(): void
     {
+        Company::where('id', '!=', $this->company->id)->delete();
+
         $response = $this->actingAs($this->admin, 'api')
-            ->patchJson("/api/admin/companies/{$this->company->id}", [
+            ->patchJson('/api/admin/company', [
                 'name' => 'Updated Company Name',
                 'email' => 'updated@test.com',
             ]);
@@ -82,8 +88,10 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_delete_company(): void
     {
+        Company::where('id', '!=', $this->company->id)->delete();
+
         $response = $this->actingAs($this->admin, 'api')
-            ->deleteJson("/api/admin/companies/{$this->company->id}");
+            ->deleteJson('/api/admin/company');
 
         $response->assertNoContent();
         $this->assertDatabaseMissing('companies', ['id' => $this->company->id]);
@@ -92,7 +100,7 @@ class AdminCompanyTest extends TestCase
     public function test_admin_can_assign_manager_to_company(): void
     {
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/assign-manager", [
+            ->postJson('/api/admin/company/assign-manager', [
                 'manager_id' => $this->manager->id,
             ]);
 
@@ -106,7 +114,7 @@ class AdminCompanyTest extends TestCase
     public function test_admin_cannot_assign_employee_role_as_manager(): void
     {
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/assign-manager", [
+            ->postJson('/api/admin/company/assign-manager', [
                 'manager_id' => $this->employee->id,
             ]);
 
@@ -116,6 +124,8 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_add_employee_to_company_with_manager(): void
     {
+        Company::where('id', '!=', $this->company->id)->delete();
+
         $defaultSchedule = WorkSchedule::factory()->create([
             'company_id' => $this->company->id,
             'is_default' => true,
@@ -124,7 +134,7 @@ class AdminCompanyTest extends TestCase
         $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE, 'company_id' => null]);
 
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/add-employee", [
+            ->postJson('/api/admin/company/add-employee', [
                 'employee_id' => $newEmployee->id,
             ]);
 
@@ -146,7 +156,7 @@ class AdminCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/add-employee", [
+            ->postJson('/api/admin/company/add-employee', [
                 'employee_id' => $existingEmployee->id,
                 'manager_id' => $this->manager->id,
             ]);
@@ -158,10 +168,12 @@ class AdminCompanyTest extends TestCase
     public function test_admin_cannot_add_employee_with_invalid_manager(): void
     {
         $companyWithoutManager = Company::factory()->create(['manager_id' => null]);
+        Company::where('id', '!=', $companyWithoutManager->id)->delete();
+
         $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE, 'company_id' => null]);
 
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$companyWithoutManager->id}/add-employee", [
+            ->postJson('/api/admin/company/add-employee', [
                 'employee_id' => $newEmployee->id,
             ]);
 
@@ -171,6 +183,8 @@ class AdminCompanyTest extends TestCase
 
     public function test_admin_can_remove_employee_from_company_by_id(): void
     {
+        Company::where('id', '!=', $this->company->id)->delete();
+
         $employeeInCompany = User::factory()->create([
             'role' => UserRole::EMPLOYEE,
             'company_id' => $this->company->id,
@@ -178,10 +192,13 @@ class AdminCompanyTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin, 'api')
-            ->deleteJson("/api/admin/companies/{$this->company->id}/remove-employee/{$employeeInCompany->id}");
+            ->deleteJson('/api/admin/company/remove-employee', [
+                'employee_id' => $employeeInCompany->id,
+            ]);
 
-        $response->assertNotFound();
+        $response->assertNoContent();
         $employeeInCompany->refresh();
+        $this->assertNull($employeeInCompany->company_id);
     }
 
     public function test_admin_cannot_remove_employee_not_in_company(): void
@@ -192,8 +209,10 @@ class AdminCompanyTest extends TestCase
             'company_id' => $otherCompany->id,
         ]);
 
+        Company::where('id', '!=', $this->company->id)->delete();
+
         $response = $this->actingAs($this->admin, 'api')
-            ->deleteJson("/api/admin/companies/{$this->company->id}/remove-employee", [
+            ->deleteJson('/api/admin/company/remove-employee', [
                 'employee_id' => $employeeInOtherCompany->id,
             ]);
 
@@ -204,7 +223,7 @@ class AdminCompanyTest extends TestCase
     public function test_non_admin_cannot_assign_manager(): void
     {
         $response = $this->actingAs($this->manager, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/assign-manager", [
+            ->postJson('/api/admin/company/assign-manager', [
                 'manager_id' => $this->manager->id,
             ]);
 
@@ -216,7 +235,7 @@ class AdminCompanyTest extends TestCase
         $newEmployee = User::factory()->create(['role' => UserRole::EMPLOYEE]);
 
         $response = $this->actingAs($this->manager, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/add-employee", [
+            ->postJson('/api/admin/company/add-employee', [
                 'employee_id' => $newEmployee->id,
             ]);
 
@@ -226,7 +245,7 @@ class AdminCompanyTest extends TestCase
     public function test_validation_fails_without_required_fields_for_assign_manager(): void
     {
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/assign-manager", []);
+            ->postJson('/api/admin/company/assign-manager', []);
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['manager_id']);
@@ -235,7 +254,7 @@ class AdminCompanyTest extends TestCase
     public function test_validation_fails_without_required_fields_for_add_employee(): void
     {
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/add-employee", []);
+            ->postJson('/api/admin/company/add-employee', []);
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['employee_id']);
@@ -244,7 +263,7 @@ class AdminCompanyTest extends TestCase
     public function test_validation_fails_with_non_existent_employee(): void
     {
         $response = $this->actingAs($this->admin, 'api')
-            ->postJson("/api/admin/companies/{$this->company->id}/add-employee", [
+            ->postJson('/api/admin/company/add-employee', [
                 'employee_id' => 999999,
             ]);
 

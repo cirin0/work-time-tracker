@@ -3,6 +3,18 @@
 RESTful API for work time tracking built with Laravel 12, JWT authentication, real-time messaging, GPS/QR attendance,
 and Firebase push notifications.
 
+## Deployment Model
+
+**Single-tenant application** - each deployment serves ONE company:
+
+- Each company gets a separate deployment with its own database
+- Admin role = Company Owner/Administrator (not system admin)
+- Manager role = Department Manager
+- Employee role = Regular worker
+- Only one company record exists per instance
+
+**Example:** If you serve 3 client companies, you deploy 3 separate instances (3 databases, 3 URLs).
+
 ## Architecture
 
 The project uses the Repository-Service pattern:
@@ -335,8 +347,7 @@ PIN codes for demo users:
 
 ### Companies
 
-- `GET /api/companies/{company}` - Company details
-- `GET /api/companies/name/{company}` - Search company by name
+- `GET /api/company` - Get company details (singleton - returns the one company in this instance)
 
 ### Time Tracking
 
@@ -393,16 +404,15 @@ PIN codes for demo users:
 
 ### Admin Endpoints (`role: admin`)
 
-- `POST /api/admin/companies` - Create company
-- `PATCH /api/admin/companies/{company}` - Update company
-- `POST /api/admin/companies/{company}/logo` - Upload company logo
-- `DELETE /api/admin/companies/{company}` - Delete company
-- `POST /api/admin/companies/{company}/assign-manager` - Assign manager
-- `POST /api/admin/companies/{company}/add-employee` - Add employee
-- `DELETE /api/admin/companies/{company}/remove-employee` - Remove employee
+- `POST /api/admin/company` - Create company (only if none exists)
+- `PATCH /api/admin/company` - Update company
+- `POST /api/admin/company/logo` - Upload company logo
+- `DELETE /api/admin/company` - Delete company
+- `POST /api/admin/company/assign-manager` - Assign manager
+- `POST /api/admin/company/add-employee` - Add employee
+- `DELETE /api/admin/company/remove-employee` - Remove employee
 - `GET /api/admin/users` - All users
 - `GET /api/admin/users/{user}` - User details
-- `GET /api/admin/companies/{companyId}/users` - Users by company
 - `PATCH /api/admin/users/{user}` - Update user
 - `PATCH /api/admin/users/{user}/role` - Change user role
 - `PATCH /api/admin/users/{user}/work-mode` - Change work mode
