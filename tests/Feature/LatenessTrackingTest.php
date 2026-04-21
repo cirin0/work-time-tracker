@@ -23,7 +23,7 @@ class LatenessTrackingTest extends TestCase
 
     public function test_time_entry_tracks_lateness_when_user_arrives_late(): void
     {
-        // Mock time to 09:15 (15 minutes late)
+        // Mock time to 09:15 (15 minutes late, but with 5 min grace = 10 min late)
         Carbon::setTestNow(Carbon::today()->setTime(9, 15));
 
         $response = $this->actingAs($this->user, 'api')->postJson('/api/time-entries');
@@ -31,7 +31,8 @@ class LatenessTrackingTest extends TestCase
 
         $timeEntry = TimeEntry::query()->where('user_id', $this->user->id)->first();
 
-        $this->assertEquals(15, $timeEntry->lateness_minutes);
+        // With 5 minute grace period, 15 minutes late becomes 10 minutes late
+        $this->assertEquals(10, $timeEntry->lateness_minutes);
         $this->assertEquals('09:00:00', $timeEntry->scheduled_start_time);
 
         Carbon::setTestNow();
@@ -39,7 +40,7 @@ class LatenessTrackingTest extends TestCase
 
     public function test_time_entry_tracks_early_arrival(): void
     {
-        // Mock time to 08:45 (15 minutes early)
+        // Mock time to 08:45 (15 minutes early, within grace period = 0)
         Carbon::setTestNow(Carbon::today()->setTime(8, 45));
 
         $response = $this->actingAs($this->user, 'api')->postJson('/api/time-entries');
@@ -47,7 +48,8 @@ class LatenessTrackingTest extends TestCase
 
         $timeEntry = TimeEntry::query()->where('user_id', $this->user->id)->first();
 
-        $this->assertEquals(-15, $timeEntry->lateness_minutes);
+        // Early arrival is not counted as late (grace period only applies to lateness)
+        $this->assertEquals(0, $timeEntry->lateness_minutes);
         $this->assertEquals('09:00:00', $timeEntry->scheduled_start_time);
 
         Carbon::setTestNow();

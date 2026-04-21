@@ -23,6 +23,8 @@ class CompanyFactory extends Factory
             'latitude' => $this->faker->latitude,
             'longitude' => $this->faker->longitude,
             'radius_meters' => $this->faker->numberBetween(50, 500),
+            'lateness_grace_minutes' => 5,
+            'overtime_threshold_hours' => 0.5,
             'qr_secret' => Str::uuid(),
         ];
     }

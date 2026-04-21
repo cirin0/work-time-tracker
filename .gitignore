@@ -32,3 +32,4 @@ frankenphp-worker.php
 package.json
 package-lock.json
 /.ai/*
+.kiro/*

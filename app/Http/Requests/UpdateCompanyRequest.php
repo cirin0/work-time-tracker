@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Company;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,8 +15,10 @@ class UpdateCompanyRequest extends FormRequest
 
     public function rules(): array
     {
+        $companyId = Company::first()?->id;
+
         return [
-            'name' => ['sometimes', 'string', 'max:255', Rule::unique('companies', 'name')->ignore($this->company)],
+            'name' => ['sometimes', 'string', 'max:255', Rule::unique('companies', 'name')->ignore($companyId)],
             'email' => 'sometimes|nullable|email|max:255',
             'phone' => 'sometimes|nullable|string|max:20',
             'description' => 'sometimes|nullable|string|max:1000',
@@ -24,6 +27,8 @@ class UpdateCompanyRequest extends FormRequest
             'latitude' => 'sometimes|nullable|numeric|between:-90,90',
             'longitude' => 'sometimes|nullable|numeric|between:-180,180',
             'radius_meters' => 'sometimes|nullable|integer|min:1',
+            'lateness_grace_minutes' => 'sometimes|nullable|integer|min:0|max:60',
+            'overtime_threshold_hours' => 'sometimes|nullable|numeric|min:0|max:24',
         ];
     }
 

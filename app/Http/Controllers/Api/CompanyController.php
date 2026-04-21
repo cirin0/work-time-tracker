@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CompanyResource;
-use App\Models\Company;
 use App\Services\CompanyService;
 
 class CompanyController extends Controller
@@ -13,16 +12,9 @@ class CompanyController extends Controller
     {
     }
 
-    public function show(Company $company): CompanyResource
+    public function show(): CompanyResource
     {
-        $data = $this->companyService->getCompanyById($company);
-
-        return new CompanyResource($data['company']);
-    }
-
-    public function showByName(string $company): CompanyResource
-    {
-        $data = $this->companyService->getCompanyByName($company);
+        $data = $this->companyService->getCompany();
 
         return new CompanyResource($data['company']);
     }
