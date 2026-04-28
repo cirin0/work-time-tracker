@@ -115,4 +115,19 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'brand' => [
+        'name' => env('MAIL_BRAND_NAME', env('APP_NAME', 'Work Time Tracker')),
+        'logo_url' => env('MAIL_BRAND_LOGO_URL'),
+        'home_url' => env('MAIL_BRAND_HOME_URL', env('APP_URL', 'http://localhost')),
+        'salutation' => env('MAIL_BRAND_SALUTATION', ''),
+        'footer_text' => env('MAIL_BRAND_FOOTER_TEXT'),
+    ],
+
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'work-time-tracker'),
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
 ];
