@@ -44,6 +44,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/me/avatar', [ProfileController::class, 'updateAvatar']);
     Route::post('/me/request-password-change-code', [ProfileController::class, 'requestPasswordChangeCode']);
     Route::post('/me/change-password', [ProfileController::class, 'changePasswordWithCode']);
+    Route::post('/me/request-email-change', [ProfileController::class, 'requestEmailChangeCode']);
+    Route::post('/me/verify-email-change', [ProfileController::class, 'verifyEmailChange']);
     Route::post('/me/pin-code', [ProfileController::class, 'setupPinCode']);
     Route::patch('/me/pin-code', [ProfileController::class, 'changePinCode']);
     Route::get('/me/work-schedule', [ProfileController::class, 'getWorkSchedule']);

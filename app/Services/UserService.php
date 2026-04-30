@@ -7,11 +7,14 @@ use App\Enums\WorkMode;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
 use App\Models\WorkSchedule;
+use App\Notifications\NewEmailNotification;
+use App\Notifications\ProfileUpdatedNotification;
 use App\Notifications\VerificationCodeNotification;
 use App\Notifications\WorkScheduleUpdatedNotification;
 use App\Repositories\UserRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class UserService
@@ -63,17 +66,45 @@ class UserService
         return ['deleted' => $deleted];
     }
 
-    public function update(User $user, array $data): array
+
+    public function updateProfile(User $user, array $data): array
     {
-        $user->update($data);
+        $profileData = array_intersect_key($data, array_flip(['name']));
+
+        $user->update($profileData);
+        $user->load(['company', 'manager', 'workSchedule']);
 
         return ['user' => $user];
     }
 
-    public function updateProfile(User $user, array $data): array
+    public function updateByAdmin(User $user, array $data): array
     {
+        $oldEmail = $user->email;
+        $oldName = $user->name;
+
         $user->update($data);
         $user->load(['company', 'manager', 'workSchedule']);
+
+        $changes = [];
+
+        if (isset($data['name']) && $data['name'] !== $oldName) {
+            $changes['name'] = $data['name'];
+        }
+
+        if (isset($data['email']) && $data['email'] !== $oldEmail) {
+            $changes['email'] = $data['email'];
+        }
+
+        if (!empty($changes)) {
+            dispatch(function () use ($oldEmail, $changes, $user) {
+                Notification::route('mail', $oldEmail)
+                    ->notify(new ProfileUpdatedNotification($changes));
+
+                if (isset($changes['email'])) {
+                    $user->notify(new NewEmailNotification($oldEmail));
+                }
+            })->afterResponse();
+        }
 
         return ['user' => $user];
     }
