@@ -24,8 +24,6 @@ expert with them all. Ensure you abide by these specific packages & versions.
 - laravel/telescope (TELESCOPE) - v5
 - pestphp/pest (PEST) - v3
 - phpunit/phpunit (PHPUNIT) - v11
-- php-open-source-saver/jwt-auth (JWT-AUTH) - v2
-- maatwebsite/excel (EXCEL) - v3
 
 ## Skills Activation
 
@@ -153,8 +151,6 @@ work in that domain—don't wait until you're stuck.
 
 - When creating new models, create useful factories and seeders for them too. Ask the user if they need any other
   things, using `php artisan make:model --help` to check the available options.
-- Follow existing API conventions in `routes/api.php`: non-versioned `/api/*` routes with JWT guard `auth:api`, and use
-  Resources where that pattern already exists.
 
 ## APIs & Eloquent Resources
 
@@ -230,9 +226,6 @@ $this->app->singleton(Service::class, fn () => new Service(fn () => request()));
 
 # Laravel Pint Code Formatter
 
-- Never execute `vendor/bin/pint` by default.
-- Run `vendor/bin/pint` only after explicit user request (for example, "run pint" or "format code").
-- If style issues are detected, report them and ask whether formatting should be run.
 - If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to
   ensure your code matches the project's expected style.
 - Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting
