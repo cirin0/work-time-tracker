@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\EmailVerificationCode;
+use App\Models\User;
 use App\Notifications\VerificationCodeNotification;
 use App\Repositories\UserRepository;
 use Cache;
+use Illuminate\Support\Facades\Notification;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
@@ -230,5 +232,72 @@ class AuthService
         $user->update(['password' => bcrypt($password)]);
 
         return ['message' => 'Password has been reset successfully'];
+    }
+
+    public function requestEmailChangeCode(User $user, string $newEmail): array
+    {
+        $cacheKey = 'email_change_request:' . $user->id;
+        if (Cache::has($cacheKey)) {
+            return ['error' => true, 'message' => 'Please wait before requesting a new code'];
+        }
+
+        EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('type', 'email_change')
+            ->whereNull('verified_at')
+            ->delete();
+
+        $code = str_pad((string)random_int(100000, 999999), 6, '0', STR_PAD_LEFT);
+
+        EmailVerificationCode::query()->create([
+            'user_id' => $user->id,
+            'code' => $code,
+            'type' => 'email_change',
+            'target' => $newEmail,
+            'expires_at' => now()->addMinutes(15),
+        ]);
+
+        Cache::put($cacheKey, true, now()->addMinute());
+
+        if (config('app.env') === 'local') {
+            return ['message' => 'Email change code generated for local environment: ' . $code];
+        }
+
+        Notification::route('mail', $newEmail)
+            ->notify(new VerificationCodeNotification($code, 'зміни email'));
+
+        return ['message' => 'Verification code has been sent to your new email address'];
+    }
+
+    public function changeEmailWithCode(User $user, string $newEmail, string $code): array
+    {
+        $verificationCode = EmailVerificationCode::query()
+            ->where('user_id', $user->id)
+            ->where('code', $code)
+            ->where('type', 'email_change')
+            ->where('target', $newEmail)
+            ->whereNull('verified_at')
+            ->first();
+
+        if (!$verificationCode) {
+            return ['error' => true, 'message' => 'Invalid verification code'];
+        }
+
+        if ($verificationCode->isExpired()) {
+            return ['error' => true, 'message' => 'Verification code has expired'];
+        }
+
+        $existingUser = $this->repository->findByEmail($newEmail);
+        if ($existingUser && $existingUser->id !== $user->id) {
+            return ['error' => true, 'message' => 'This email is already in use'];
+        }
+
+        $verificationCode->update(['verified_at' => now()]);
+        $user->forceFill([
+            'email' => $newEmail,
+            'email_verified_at' => now(),
+        ])->save();
+
+        return ['message' => 'Email changed successfully'];
     }
 }

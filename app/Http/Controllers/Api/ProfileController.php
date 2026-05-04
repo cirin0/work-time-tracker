@@ -5,18 +5,21 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordWithCodeRequest;
 use App\Http\Requests\ChangePinCodeRequest;
+use App\Http\Requests\RequestEmailChangeRequest;
 use App\Http\Requests\SetupPinCodeRequest;
 use App\Http\Requests\UpdateFcmTokenRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UploadAvatarRequest;
+use App\Http\Requests\VerifyEmailChangeRequest;
 use App\Http\Resources\ProfileResource;
 use App\Http\Resources\WorkScheduleResource;
+use App\Services\AuthService;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 
 class ProfileController extends Controller
 {
-    public function __construct(protected UserService $userService)
+    public function __construct(protected UserService $userService, protected AuthService $authService)
     {
     }
 
@@ -127,5 +130,35 @@ class ProfileController extends Controller
         $user->update(['fcm_token' => $request->validated('fcm_token')]);
 
         return response()->json(['message' => 'FCM token updated successfully']);
+    }
+
+    public function requestEmailChangeCode(RequestEmailChangeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->authService->requestEmailChangeCode($user, $request->validated('new_email'));
+
+        if (isset($data['error'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json(['message' => $data['message']]);
+    }
+
+    public function verifyEmailChange(VerifyEmailChangeRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+        $data = $this->authService->changeEmailWithCode(
+            $user,
+            $request->validated('new_email'),
+            $request->validated('code')
+        );
+
+        if (isset($data['error'])) {
+            return response()->json(['message' => $data['message']], 400);
+        }
+
+        return response()->json([
+            'message' => $data['message'],
+        ]);
     }
 }

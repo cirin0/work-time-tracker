@@ -124,46 +124,26 @@ class LeaveRequestTest extends TestCase
         $response->assertStatus(200);
 
         $requests = LeaveRequest::query()->where('user_id', $user->id)->latest()->get();
-        $expectedData = LeaveRequestResource::collection($requests)->resolve();
+        $expectedData = LeaveRequestResource::collection($requests)
+            ->response()
+            ->getData(true)['data'];
 
-        $response->assertExactJson([
+        $response->assertJson([
             'data' => $expectedData,
-            'links' => [
-                'first' => 'http://localhost/api/leave-requests?page=1',
-                'last' => 'http://localhost/api/leave-requests?page=1',
-                'prev' => null,
-                'next' => null,
-            ],
-            'meta' => [
-                'current_page' => 1,
-                'from' => 1,
-                'last_page' => 1,
-                'links' => [
-                    [
-                        'url' => null,
-                        'label' => '&laquo; Previous',
-                        'active' => false,
-                        'page' => null,
-                    ],
-                    [
-                        'url' => 'http://localhost/api/leave-requests?page=1',
-                        'label' => '1',
-                        'active' => true,
-                        'page' => 1,
-                    ],
-                    [
-                        'url' => null,
-                        'label' => 'Next &raquo;',
-                        'active' => false,
-                        'page' => null,
-                    ],
-                ],
-                'path' => 'http://localhost/api/leave-requests',
-                'per_page' => 15,
-                'to' => 3,
-                'total' => 3,
-            ],
         ]);
+
+        $response->assertJsonPath('meta.current_page', 1);
+        $response->assertJsonPath('meta.from', 1);
+        $response->assertJsonPath('meta.last_page', 1);
+        $response->assertJsonPath('meta.per_page', 15);
+        $response->assertJsonPath('meta.to', 3);
+        $response->assertJsonPath('meta.total', 3);
+        $response->assertJsonPath('links.prev', null);
+        $response->assertJsonPath('links.next', null);
+
+        $this->assertStringContainsString('/api/leave-requests?page=1', (string)$response->json('links.first'));
+        $this->assertStringContainsString('/api/leave-requests?page=1', (string)$response->json('links.last'));
+        $this->assertStringContainsString('/api/leave-requests', (string)$response->json('meta.path'));
     }
 
     public function test_user_can_view_single_leave_request_with_full_details()

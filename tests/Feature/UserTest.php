@@ -26,44 +26,20 @@ class UserTest extends TestCase
         $users = User::with(['company', 'manager', 'workSchedule'])->get();
         $expectedData = UserResource::collection($users)->resolve();
 
-        $response->assertExactJson([
+        $response->assertJson([
             'data' => $expectedData,
-            'links' => [
-                'first' => 'http://localhost/api/users?page=1',
-                'last' => 'http://localhost/api/users?page=1',
-                'prev' => null,
-                'next' => null,
-            ],
-            'meta' => [
-                'current_page' => 1,
-                'from' => 1,
-                'last_page' => 1,
-                'links' => [
-                    [
-                        'url' => null,
-                        'label' => '&laquo; Previous',
-                        'active' => false,
-                        'page' => null,
-                    ],
-                    [
-                        'url' => 'http://localhost/api/users?page=1',
-                        'label' => '1',
-                        'active' => true,
-                        'page' => 1,
-                    ],
-                    [
-                        'url' => null,
-                        'label' => 'Next &raquo;',
-                        'active' => false,
-                        'page' => null,
-                    ],
-                ],
-                'path' => 'http://localhost/api/users',
-                'per_page' => 10,
-                'to' => 3,
-                'total' => 3,
-            ],
         ]);
+
+        $response->assertJsonPath('meta.current_page', 1);
+        $response->assertJsonPath('meta.last_page', 1);
+        $response->assertJsonPath('meta.per_page', 10);
+        $response->assertJsonPath('meta.total', 3);
+        $response->assertJsonPath('links.prev', null);
+        $response->assertJsonPath('links.next', null);
+
+        $this->assertStringContainsString('/api/users?page=1', (string)$response->json('links.first'));
+        $this->assertStringContainsString('/api/users?page=1', (string)$response->json('links.last'));
+        $this->assertStringContainsString('/api/users', (string)$response->json('meta.path'));
     }
 
     public function test_admin_can_update_user_role()

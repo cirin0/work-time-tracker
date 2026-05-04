@@ -11,6 +11,7 @@ class EmailVerificationCode extends Model
         'user_id',
         'code',
         'type',
+        'target',
         'expires_at',
         'verified_at',
     ];

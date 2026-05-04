@@ -72,7 +72,7 @@ class AdminUserController extends Controller
 
     public function updateUser(AdminUpdateUserRequest $request, User $user): JsonResponse
     {
-        $data = $this->userService->update($user, $request->validated());
+        $data = $this->userService->updateByAdmin($user, $request->validated());
 
         return response()->json([
             'message' => 'User updated successfully.',
