@@ -45,9 +45,9 @@ class ForceCache
         $uri = $request->path();
 
         if ($request->getQueryString()) {
-            $uri .= '?' . $request->getQueryString();
+            $uri .= '?'.$request->getQueryString();
         }
 
-        return md5($uri . ':' . time());
+        return md5($uri.':'.time());
     }
 }
