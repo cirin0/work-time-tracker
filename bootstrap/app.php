@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__ . '/../routes/api.php',
         channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
+        then: function () {
+            Route::middleware('static')
+                ->group(base_path('routes/static.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
@@ -30,6 +35,11 @@ return Application::configure(basePath: dirname(__DIR__))
             Request::HEADER_X_FORWARDED_PROTO |
             Request::HEADER_X_FORWARDED_PREFIX
         );
+
+        $middleware->group('static', [
+            \App\Http\Middleware\SetCacheControlHeader::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ]);
     })
     ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions) {
         $exceptions->render(function (TokenExpiredException $e, $request) {
