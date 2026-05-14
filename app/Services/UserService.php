@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Enums\WorkMode;
+use App\Models\Company;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
 use App\Models\WorkSchedule;
@@ -40,6 +41,13 @@ class UserService
 
     public function updateRole(User $user, UserRole $role): array
     {
+        if ($role === UserRole::EMPLOYEE && UserRole::ADMIN && Company::where('manager_id', $user->id)->exists()) {
+            return [
+                'error' => true,
+                'message' => 'Неможливо змінити роль головного менеджера компанії на "працівник". Спочатку призначте іншого менеджера для компанії.'
+            ];
+        }
+
         $user->role = $role;
         $user->save();
 
@@ -61,6 +69,13 @@ class UserService
 
     public function delete(User $user): array
     {
+        if (Company::where('manager_id', $user->id)->exists()) {
+            return [
+                'error' => true,
+                'message' => 'Неможливо видалити користувача, який є головним менеджером компанії. Спочатку призначте іншого менеджера.'
+            ];
+        }
+
         $deleted = $this->repository->delete($user);
 
         return ['deleted' => $deleted];

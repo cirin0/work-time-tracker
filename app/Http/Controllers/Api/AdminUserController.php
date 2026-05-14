@@ -85,6 +85,12 @@ class AdminUserController extends Controller
         $role = UserRole::from($request->validated('role'));
         $data = $this->userService->updateRole($user, $role);
 
+        if (isset($data['error'])) {
+            return response()->json([
+                'message' => $data['message'],
+            ], 422);
+        }
+
         return response()->json([
             'message' => 'User role updated successfully.',
             'data' => new AdminUserResource($data['user']),
@@ -114,7 +120,13 @@ class AdminUserController extends Controller
 
     public function deleteUser(User $user): JsonResponse
     {
-        $this->userService->delete($user);
+        $result = $this->userService->delete($user);
+
+        if (isset($result['error'])) {
+            return response()->json([
+                'message' => $result['message'],
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'User deleted successfully.',

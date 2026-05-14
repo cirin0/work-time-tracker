@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\User;
+use App\Notifications\AddedToCompanyNotification;
 use App\Repositories\CompanyRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -60,7 +62,15 @@ class CompanyService
 
         $company->update(['manager_id' => $managerId]);
 
-        $manager->update(['company_id' => $company->id]);
+        $manager->update([
+            'company_id' => $company->id,
+            'manager_id' => null,
+        ]);
+
+        User::where('company_id', $company->id)
+            ->where('id', '!=', $managerId)
+            ->where('role', '!=', UserRole::ADMIN->value)
+            ->update(['manager_id' => $managerId]);
 
         return ['company' => $company->fresh()];
     }
@@ -101,9 +111,11 @@ class CompanyService
 
         $employee->update([
             'company_id' => $company->id,
-            'manager_id' => $company->manager_id,
+            'manager_id' => $employee->isAdmin() ? null : $company->manager_id,
             'work_schedule_id' => $defaultSchedule?->id,
         ]);
+
+        $employee->notify(new AddedToCompanyNotification($company->fresh()));
 
         return ['employee' => $employee->fresh()];
     }
